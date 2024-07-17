@@ -1,5 +1,4 @@
-#ifndef PIXELFORMATTYPE_H
-#define PIXELFORMATTYPE_H
+#pragma once
 
 #include <QString>
 
@@ -20,4 +19,3 @@ inline QString toString(PixelFormatType format)
     }
 }
 
-#endif // PIXELFORMATTYPE_H

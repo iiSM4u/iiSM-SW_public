@@ -1,5 +1,4 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#pragma once
 
 #include <QMainWindow>
 #include <QMediaPlayer>
@@ -14,8 +13,11 @@
 #include <QPainter>
 
 #include <miicam.h>
-#include "PixelFormatType.h"
-#include "constants.h"
+
+// C 라이브러리를 참조할 떄는 extern C로 묶는 것이 링킹 문제를 방지하는데 도움이 됨
+extern "C" {
+#include <gegl.h>
+}
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -60,19 +62,25 @@ private slots:
     void btnPlayVideo_Click();
     void btnStopVideo_Click();
 
+    void onVideoStatusChanged(QMediaPlayer::MediaStatus status);
+
+
+
     // frame
     void btnLoadFrame_Click();
 
+    void onSelecteImage(const QModelIndex &index);
 
-    // comm
+
+    // common
     void onTimerCallback();
 
 
     // mii camera
     void FindCamera();
-    void openCamera();
-    void closeCamera();
-    void startCamera();
+    void OpenCamera();
+    void CloseCamera();
+    void StartCamera();
 
     void onMiiCameraCallback(unsigned nEvent);
     void handleImageEvent();
@@ -82,12 +90,13 @@ private slots:
     static void __stdcall eventCallBack(unsigned nEvent, void* pCallbackCtx);
 
 
-    void onVideoStatusChanged(QMediaPlayer::MediaStatus status);
+    // gegl
+    void btnBrightnessContrast_Click();
+
+
+    // custom
+    void SetupModel(const QString& capturePath);
     void SetPlayVideo(bool value);
-
-    void onSelecteImage(const QModelIndex &index);
-
-    void setupModel(const QString& capturePath);
 
 private:
     Ui::MainWindow *ui;
@@ -115,4 +124,3 @@ private:
 
     QString captureDir = "";
 };
-#endif // MAINWINDOW_H

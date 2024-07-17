@@ -1,5 +1,7 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
+#include "constants.h"
+#include "PixelFormatType.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -69,7 +71,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 
     // tab frame
-    setupModel(captureDir);
+    SetupModel(captureDir);
 
     ui->lvFrames->setModel(modelFrames);
     ui->lvFrames->setRootIndex(modelFrames->index(captureDir)); // Set the root index
@@ -78,6 +80,11 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->lvFrames, &QListView::clicked, this, &MainWindow::onSelecteImage);
 
     connect(ui->btnLoadFrame, &QPushButton::clicked, this, &MainWindow::btnLoadFrame_Click);
+
+
+
+    // gegl
+    connect(ui->btnBrightnessContrast, &QPushButton::clicked, this, &MainWindow::btnBrightnessContrast_Click);
 
 
     // ui 초기화 후에 우선 카메라부터 찾는다.
@@ -91,7 +98,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::closeEvent(QCloseEvent*)
 {
-    closeCamera();
+    CloseCamera();
 }
 
 void MainWindow::cbResoution_SelectedIndexChanged(int index)
@@ -150,7 +157,7 @@ void MainWindow::btnPlayCamera_Click()
     // camera가 run이 아니었으면 시작
     if (!isCameraRun)
     {
-        startCamera();
+        StartCamera();
         isCameraPlay = true;
 
         ui->btnPlayCamera->setText(MENU_PAUSE);
@@ -234,7 +241,7 @@ void MainWindow::FindCamera()
 {
     if (miiHcam)
     {
-        closeCamera();
+        CloseCamera();
     }
     else
     {
@@ -249,7 +256,7 @@ void MainWindow::FindCamera()
                 ui->lbDeviceName->setText(QString::fromWCharArray(miiDevice.displayname));
             }
 
-            openCamera();
+            OpenCamera();
         }
         else
         {
@@ -258,7 +265,7 @@ void MainWindow::FindCamera()
     }
 }
 
-void MainWindow::openCamera()
+void MainWindow::OpenCamera()
 {
     miiHcam = Miicam_Open(miiDevice.id);
 
@@ -289,7 +296,7 @@ void MainWindow::openCamera()
     }
 }
 
-void MainWindow::closeCamera()
+void MainWindow::CloseCamera()
 {
     if (miiHcam)
     {
@@ -313,7 +320,7 @@ void MainWindow::closeCamera()
     // m_cmb_res->clear();
 }
 
-void MainWindow::startCamera()
+void MainWindow::StartCamera()
 {
     if (imageData)
     {
@@ -356,7 +363,7 @@ void MainWindow::startCamera()
     }
     else
     {
-        closeCamera();
+        CloseCamera();
         QMessageBox::warning(this, "Warning", "Failed to start camera.");
     }
 }
@@ -400,12 +407,12 @@ void MainWindow::onMiiCameraCallback(unsigned nEvent)
         }
         else if (MIICAM_EVENT_ERROR == nEvent)
         {
-            closeCamera();
+            CloseCamera();
             QMessageBox::warning(this, "Warning", "Generic error.");
         }
         else if (MIICAM_EVENT_DISCONNECTED == nEvent)
         {
-            closeCamera();
+            CloseCamera();
             QMessageBox::warning(this, "Warning", "Camera disconnect.");
         }
     }
@@ -576,7 +583,7 @@ void MainWindow::SetPlayVideo(bool value)
     }
 }
 
-void MainWindow::setupModel(const QString& capturePath)
+void MainWindow::SetupModel(const QString& capturePath)
 {
     // Check if the captures directory exists, and create it if it doesn't
     QDir dir(capturePath);
@@ -608,10 +615,87 @@ void MainWindow::onSelecteImage(const QModelIndex &index)
     ui->lbFrameCapture->setPixmap(pixmap.scaled(ui->lbFrameCapture->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
 }
 
-// void MainWindow::resizeEvent(QResizeEvent* event)
+// void MainWindow::btnBrightnessContrast_Click()
 // {
-//     QMainWindow::resizeEvent(event);
-//     if (!currentPixmap.isNull()) {
-//         ui->lbFrameCapture->setPixmap(currentPixmap.scaled(ui->lbFrameCapture->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
-//     }
+//     QImage originalImage;
+//     QImage processedImage;
+
+//     QString filePath = "D:/Freelancer/iiSM-SW_public/SIMP/SIMP/build/Desktop_Qt_6_7_2_MinGW_64_bit-Debug/captures/2024_07_17_14_52_18.jpg";
+//     originalImage.load(filePath);
+
+//     double contrast = 1.0;
+//     double brightness = 0.0;
+
+//     gegl_init(nullptr, nullptr);
+
+//     GeglNode *graph = gegl_node_new();
+//     GeglNode *load = gegl_node_new_child(graph, "gegl:load", "path", &originalImage, nullptr);
+//     GeglNode *brightnessContrast = gegl_node_new_child(graph, "gegl:brightness-contrast", "brightness", brightness, "contrast", contrast, nullptr);
+//     GeglNode *save = gegl_node_new_child(graph, "gegl:save", "path", &processedImage, nullptr);
+
+//     gegl_node_link_many(load, brightnessContrast, save, nullptr);
+//     gegl_node_process(save);
+
+//     // Unref the nodes
+//     //gegl_node_unref(load);
+//     //gegl_node_unref(brightnessContrast);
+//     //gegl_node_unref(save);
+//     //gegl_node_unref(graph);
+
+//     gegl_exit();
+
+//     ui->lbFrameCapture->setPixmap(QPixmap::fromImage(processedImage));
 // }
+
+void MainWindow::btnBrightnessContrast_Click()
+{
+
+    // QImage originalImage;
+    // QImage processedImage;
+
+    // QString filePath = "D:/Freelancer/iiSM-SW_public/SIMP/SIMP/build/Desktop_Qt_6_7_2_MinGW_64_bit-Debug/captures/2024_07_17_14_52_18.jpg";
+    // originalImage.load(filePath);
+
+    // double contrast = 1.0;
+    // double brightness = 0.0;
+
+    // gegl_init(nullptr, nullptr);
+
+    // GeglNode *graph = gegl_node_new();
+    // GeglNode *load = gegl_node_new_child(graph, "gegl:load", "path", filePath.toStdString().c_str(), nullptr);
+    // GeglNode *brightnessContrast = gegl_node_new_child(graph, "gegl:brightness-contrast", "brightness", brightness, "contrast", contrast, nullptr);
+    // GeglNode *save = gegl_node_new_child(graph, "gegl:save-buffer", nullptr);
+
+    // gegl_node_link_many(load, brightnessContrast, save, nullptr);
+    // gegl_node_process(save);
+
+    // GeglBuffer *buffer = gegl_node_get_buffer(save);
+    // if (buffer)
+    // {
+    //     gint width = gegl_buffer_get_width(buffer);
+    //     gint height = gegl_buffer_get_height(buffer);
+    //     gint rowstride = width * 4;
+    //     processedImage = QImage(width, height, QImage::Format_RGB32);
+
+    //     gegl_buffer_get(buffer, GEGL_RECTANGLE(0, 0, width, height), 1.0, processedImage.bits(), GEGL_AUTO_ROWSTRIDE, GEGL_ABYSS_NONE);
+    // }
+
+    // // Unref the nodes
+    // gegl_node_unref(load);
+    // gegl_node_unref(brightnessContrast);
+    // gegl_node_unref(save);
+    // gegl_node_unref(graph);
+
+    // gegl_exit();
+
+    // if (!processedImage.isNull())
+    // {
+    //     ui->lbFrameCapture->setPixmap(QPixmap::fromImage(processedImage));
+    // }
+    // else
+    // {
+    //     // Handle error
+    //     qDebug() << "Failed to process image";
+    // }
+}
+
