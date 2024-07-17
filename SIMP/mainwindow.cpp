@@ -649,53 +649,52 @@ void MainWindow::onSelecteImage(const QModelIndex &index)
 
 void MainWindow::btnBrightnessContrast_Click()
 {
+    QImage originalImage;
+    QImage processedImage;
 
-    // QImage originalImage;
-    // QImage processedImage;
+    QString filePath = "D:/Freelancer/iiSM-SW_public/SIMP/SIMP/build/Desktop_Qt_6_7_2_MinGW_64_bit-Debug/captures/2024_07_17_14_52_18.jpg";
+    originalImage.load(filePath);
 
-    // QString filePath = "D:/Freelancer/iiSM-SW_public/SIMP/SIMP/build/Desktop_Qt_6_7_2_MinGW_64_bit-Debug/captures/2024_07_17_14_52_18.jpg";
-    // originalImage.load(filePath);
+    double contrast = 1.0;
+    double brightness = 0.0;
 
-    // double contrast = 1.0;
-    // double brightness = 0.0;
+    gegl_init(nullptr, nullptr);
 
-    // gegl_init(nullptr, nullptr);
+    GeglNode *graph = gegl_node_new();
+    GeglNode *load = gegl_node_new_child(graph, "gegl:load", "path", filePath.toStdString().c_str(), nullptr);
+    GeglNode *brightnessContrast = gegl_node_new_child(graph, "gegl:brightness-contrast", "brightness", brightness, "contrast", contrast, nullptr);
+    GeglNode *save = gegl_node_new_child(graph, "gegl:save-buffer", nullptr);
 
-    // GeglNode *graph = gegl_node_new();
-    // GeglNode *load = gegl_node_new_child(graph, "gegl:load", "path", filePath.toStdString().c_str(), nullptr);
-    // GeglNode *brightnessContrast = gegl_node_new_child(graph, "gegl:brightness-contrast", "brightness", brightness, "contrast", contrast, nullptr);
-    // GeglNode *save = gegl_node_new_child(graph, "gegl:save-buffer", nullptr);
+    gegl_node_link_many(load, brightnessContrast, save, nullptr);
+    gegl_node_process(save);
 
-    // gegl_node_link_many(load, brightnessContrast, save, nullptr);
-    // gegl_node_process(save);
+    GeglBuffer *buffer = gegl_node_get_buffer(save);
+    if (buffer)
+    {
+        gint width = gegl_buffer_get_width(buffer);
+        gint height = gegl_buffer_get_height(buffer);
+        gint rowstride = width * 4;
+        processedImage = QImage(width, height, QImage::Format_RGB32);
 
-    // GeglBuffer *buffer = gegl_node_get_buffer(save);
-    // if (buffer)
-    // {
-    //     gint width = gegl_buffer_get_width(buffer);
-    //     gint height = gegl_buffer_get_height(buffer);
-    //     gint rowstride = width * 4;
-    //     processedImage = QImage(width, height, QImage::Format_RGB32);
+        gegl_buffer_get(buffer, GEGL_RECTANGLE(0, 0, width, height), 1.0, processedImage.bits(), GEGL_AUTO_ROWSTRIDE, GEGL_ABYSS_NONE);
+    }
 
-    //     gegl_buffer_get(buffer, GEGL_RECTANGLE(0, 0, width, height), 1.0, processedImage.bits(), GEGL_AUTO_ROWSTRIDE, GEGL_ABYSS_NONE);
-    // }
+    // Unref the nodes
+    gegl_node_unref(load);
+    gegl_node_unref(brightnessContrast);
+    gegl_node_unref(save);
+    gegl_node_unref(graph);
 
-    // // Unref the nodes
-    // gegl_node_unref(load);
-    // gegl_node_unref(brightnessContrast);
-    // gegl_node_unref(save);
-    // gegl_node_unref(graph);
+    gegl_exit();
 
-    // gegl_exit();
-
-    // if (!processedImage.isNull())
-    // {
-    //     ui->lbFrameCapture->setPixmap(QPixmap::fromImage(processedImage));
-    // }
-    // else
-    // {
-    //     // Handle error
-    //     qDebug() << "Failed to process image";
-    // }
+    if (!processedImage.isNull())
+    {
+        ui->lbFrameCapture->setPixmap(QPixmap::fromImage(processedImage));
+    }
+    else
+    {
+        // Handle error
+        qDebug() << "Failed to process image";
+    }
 }
 

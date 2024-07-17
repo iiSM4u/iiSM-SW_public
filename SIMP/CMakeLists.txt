@@ -16,14 +16,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Define paths for DLL and LIB files
 set(MIICAM_DLL_PATH "${CMAKE_SOURCE_DIR}/bin/miicam.dll")
 set(MIICAM_LIB_PATH "${CMAKE_SOURCE_DIR}/lib/miicam.lib")
-set(GEGL_DLL_PATH "${CMAKE_SOURCE_DIR}/bin/libgegl-0.4-0.dll")
-set(BABL_DLL_PATH "${CMAKE_SOURCE_DIR}/bin/libbabl-0.1-0.dll")
-set(GIO_DLL_PATH "${CMAKE_SOURCE_DIR}/bin/libgio-2.0-0.dll")
-set(GLIB_DLL_PATH "${CMAKE_SOURCE_DIR}/bin/libglib-2.0-0.dll")
-set(GMODULE_DLL_PATH "${CMAKE_SOURCE_DIR}/bin/libgmodule-2.0-0.dll")
-set(GOBJECT_DLL_PATH "${CMAKE_SOURCE_DIR}/bin/libgobject-2.0-0.dll")
-set(GTHREAD_DLL_PATH "${CMAKE_SOURCE_DIR}/bin/libgthread-2.0-0.dll")
-set(INTL_DLL_PATH "${CMAKE_SOURCE_DIR}/bin/libintl-8.dll")
 
 # Project source files
 set(PROJECT_SOURCES
@@ -36,11 +28,9 @@ set(PROJECT_SOURCES
 )
 
 # Check if the DLL files exist
-foreach(dll ${MIICAM_DLL_PATH} ${GEGL_DLL_PATH} ${BABL_DLL_PATH} ${GIO_DLL_PATH} ${GLIB_DLL_PATH} ${GMODULE_DLL_PATH} ${GOBJECT_DLL_PATH} ${GTHREAD_DLL_PATH} ${INTL_DLL_PATH})
-    if(NOT EXISTS ${dll})
-        message(FATAL_ERROR "DLL file not found: ${dll}")
-    endif()
-endforeach()
+if(NOT EXISTS ${MIICAM_DLL_PATH})
+    message(FATAL_ERROR "DLL file not found: ${MIICAM_DLL_PATH}")
+endif()
 
 # Check if the LIB file exists
 if(NOT EXISTS ${MIICAM_LIB_PATH})
@@ -55,12 +45,25 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Gui Multimedia Multi
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GEGL REQUIRED gegl-0.4)
 pkg_check_modules(BABL REQUIRED babl-0.1)
+pkg_check_modules(GLIB REQUIRED glib-2.0)
+pkg_check_modules(GETTEXT REQUIRED gettext)
 
 # header 파일들 - C/C++ -> 일반 -> 추가포함 디렉터리와 같다.
-include_directories(${GEGL_INCLUDE_DIRS} ${BABL_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/external)
+include_directories(
+    ${GEGL_INCLUDE_DIRS}
+    ${BABL_INCLUDE_DIRS}
+    ${GLIB_INCLUDE_DIRS}
+    ${GETTEXT_INCLUDE_DIRS}
+    ${CMAKE_SOURCE_DIR}/external
+)
 
 # lib 파일이 존재하는 directory - linker -> 일반 -> 추가 라이브러리 디렉터리와 같다.
-link_directories(${GEGL_LIBRARY_DIRS} ${BABL_LIBRARY_DIRS})
+link_directories(
+    ${GEGL_LIBRARY_DIRS}
+    ${BABL_LIBRARY_DIRS}
+    ${GLIB_LIBRARY_DIRS}
+    ${GETTEXT_LIBRARY_DIRS}
+)
 
 # Add executable
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -86,22 +89,16 @@ target_link_libraries(SIMP PRIVATE
     Qt${QT_VERSION_MAJOR}::Gui
     Qt${QT_VERSION_MAJOR}::Multimedia
     Qt${QT_VERSION_MAJOR}::MultimediaWidgets
-    ${MIICAM_LIB_PATH}
     ${GEGL_LIBRARIES}
     ${BABL_LIBRARIES}
+    ${GLIB_LIBRARIES}
+    ${GETTEXT_LIBRARIES}
+    ${MIICAM_LIB_PATH}
 )
 
-# Add a post-build step to copy the DLL to the output directory
+# Add a post-build step to copy the DLL to the output directory. dll 파일 복사
 add_custom_command(TARGET SIMP POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${MIICAM_DLL_PATH} $<TARGET_FILE_DIR:SIMP>
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${GEGL_DLL_PATH} $<TARGET_FILE_DIR:SIMP>
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BABL_DLL_PATH} $<TARGET_FILE_DIR:SIMP>
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${GIO_DLL_PATH} $<TARGET_FILE_DIR:SIMP>
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${GLIB_DLL_PATH} $<TARGET_FILE_DIR:SIMP>
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${GMODULE_DLL_PATH} $<TARGET_FILE_DIR:SIMP>
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${GOBJECT_DLL_PATH} $<TARGET_FILE_DIR:SIMP>
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${GTHREAD_DLL_PATH} $<TARGET_FILE_DIR:SIMP>
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${INTL_DLL_PATH} $<TARGET_FILE_DIR:SIMP>
 )
 
 # Set target properties
