@@ -33,15 +33,15 @@ signals:
     void evtCallback(unsigned nEvent);
 
 private slots:
-    // void onClickConnectCamera();
-    // void handleImageEvent();
-    // void handleExpoEvent();
-    // void handleTempTintEvent();
-    // void handleStillImageEvent();
-    // void openCamera();
-    // void closeCamera();
-    // void startCamera();
-    // static void __stdcall eventCallBack(unsigned nEvent, void* pCallbackCtx);
+    void onClickConnectCamera();
+    void handleImageEvent();
+    void handleExpoEvent();
+    void handleTempTintEvent();
+    void handleStillImageEvent();
+    void openCamera();
+    void closeCamera();
+    void startCamera();
+    static void __stdcall eventCallBack(unsigned nEvent, void* pCallbackCtx);
 
     void onClickOpenVideo();
     void onClickPlayVideo();
@@ -59,18 +59,18 @@ private:
     QMediaPlayer *mpVideoFile;
     QFileSystemModel *modelFrames;
 
-    // MiicamDeviceV2 miiDevice;
-    // HMiicam miiHcam;
-    // uchar* pData;
-    // unsigned imgWidth;
-    // unsigned imgHeight;
-    // QTimer* timer;
-    // int resolutionIndex;
-    // unsigned count;
-    //std::unique_ptr<QSortFilterProxyModel> proxyModel;
-    //QPixmap currentPixmap;
+    MiicamDeviceV2 miiDevice;
+    HMiicam miiHcam;
+    uchar* pData;
+    unsigned imgWidth;
+    unsigned imgHeight;
+    QTimer* timer;
+    int resolutionIndex;
+    unsigned count;
+    std::unique_ptr<QSortFilterProxyModel> proxyModel;
+    QPixmap currentPixmap;
 
-    // void resizeEvent(QResizeEvent* event) override;
+    void resizeEvent(QResizeEvent* event) override;
 
     bool isVideoPlay = false;
 };

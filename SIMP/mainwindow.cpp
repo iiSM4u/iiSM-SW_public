@@ -73,7 +73,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(mpVideoFile, &QMediaPlayer::mediaStatusChanged, this, &MainWindow::onVideoStatusChanged);
 
     ui->btnPlayVideo->setEnabled(false);
-    ui->btnStopVideo->setEnabled(false)
+    ui->btnStopVideo->setEnabled(false);
 
     // Set up the QListView
     ui->lvFrames->setModel(modelFrames);
@@ -107,182 +107,182 @@ void MainWindow::setupModel(const QString& capturesPath)
     modelFrames->setNameFilterDisables(false);
 }
 
-// void MainWindow::onClickConnectCamera()
-// {
-//     if (miiHcam) //step 1: stop camera
-//         Miicam_Stop(miiHcam);
+void MainWindow::onClickConnectCamera()
+{
+    if (miiHcam) //step 1: stop camera
+        Miicam_Stop(miiHcam);
 
-//     int m_res = 0;
-//     //m_imgWidth = m_cur.model->res[index].width;
-//     //m_imgHeight = m_cur.model->res[index].height;
+    int m_res = 0;
+    //m_imgWidth = m_cur.model->res[index].width;
+    //m_imgHeight = m_cur.model->res[index].height;
 
-//     if (miiHcam) //step 2: restart camera
-//     {
-//         Miicam_put_eSize(miiHcam, static_cast<unsigned>(m_res));
-//         startCamera();
-//     }
-// }
+    if (miiHcam) //step 2: restart camera
+    {
+        Miicam_put_eSize(miiHcam, static_cast<unsigned>(m_res));
+        startCamera();
+    }
+}
 
-// void MainWindow::startCamera()
-// {
-//     if (pData)
-//     {
-//         delete[] pData;
-//         pData = nullptr;
-//     }
+void MainWindow::startCamera()
+{
+    if (pData)
+    {
+        delete[] pData;
+        pData = nullptr;
+    }
 
-//     pData = new uchar[TDIBWIDTHBYTES(imgWidth * 24) * imgHeight];
-//     unsigned uimax = 0, uimin = 0, uidef = 0;
-//     unsigned short usmax = 0, usmin = 0, usdef = 0;
-//     Miicam_get_ExpTimeRange(miiHcam, &uimin, &uimax, &uidef);
+    pData = new uchar[TDIBWIDTHBYTES(imgWidth * 24) * imgHeight];
+    unsigned uimax = 0, uimin = 0, uidef = 0;
+    unsigned short usmax = 0, usmin = 0, usdef = 0;
+    Miicam_get_ExpTimeRange(miiHcam, &uimin, &uimax, &uidef);
 
-//     //m_slider_expoTime->setRange(uimin, uimax);
-//     Miicam_get_ExpoAGainRange(miiHcam, &usmin, &usmax, &usdef);
-//     //m_slider_expoGain->setRange(usmin, usmax);
-//     if (0 == (miiDevice.model->flag & MIICAM_FLAG_MONO))
-//     {
-//         handleTempTintEvent();
-//     }
-//     handleExpoEvent();
+    //m_slider_expoTime->setRange(uimin, uimax);
+    Miicam_get_ExpoAGainRange(miiHcam, &usmin, &usmax, &usdef);
+    //m_slider_expoGain->setRange(usmin, usmax);
+    if (0 == (miiDevice.model->flag & MIICAM_FLAG_MONO))
+    {
+        handleTempTintEvent();
+    }
+    handleExpoEvent();
 
-//     if (SUCCEEDED(Miicam_StartPullModeWithCallback(miiHcam, eventCallBack, this)))
-//     {
-//         //m_cmb_res->setEnabled(true);
-//         //m_cbox_auto->setEnabled(true);
-//         //m_btn_autoWB->setEnabled(0 == (m_cur.model->flag & MIICAM_FLAG_MONO));
-//         //m_slider_temp->setEnabled(0 == (m_cur.model->flag & MIICAM_FLAG_MONO));
-//         //m_slider_tint->setEnabled(0 == (m_cur.model->flag & MIICAM_FLAG_MONO));
-//         //m_btn_open->setText("Close");
-//         //m_btn_snap->setEnabled(true);
+    if (SUCCEEDED(Miicam_StartPullModeWithCallback(miiHcam, eventCallBack, this)))
+    {
+        //m_cmb_res->setEnabled(true);
+        //m_cbox_auto->setEnabled(true);
+        //m_btn_autoWB->setEnabled(0 == (m_cur.model->flag & MIICAM_FLAG_MONO));
+        //m_slider_temp->setEnabled(0 == (m_cur.model->flag & MIICAM_FLAG_MONO));
+        //m_slider_tint->setEnabled(0 == (m_cur.model->flag & MIICAM_FLAG_MONO));
+        //m_btn_open->setText("Close");
+        //m_btn_snap->setEnabled(true);
 
-//         int bAuto = 0;
-//         Miicam_get_AutoExpoEnable(miiHcam, &bAuto);
-//         //m_cbox_auto->setChecked(1 == bAuto);
+        int bAuto = 0;
+        Miicam_get_AutoExpoEnable(miiHcam, &bAuto);
+        //m_cbox_auto->setChecked(1 == bAuto);
 
-//         timer->start(1000);
-//     }
-//     else
-//     {
-//         closeCamera();
-//         QMessageBox::warning(this, "Warning", "Failed to start camera.");
-//     }
-// }
+        timer->start(1000);
+    }
+    else
+    {
+        closeCamera();
+        QMessageBox::warning(this, "Warning", "Failed to start camera.");
+    }
+}
 
-// void MainWindow::openCamera()
-// {
-//     miiHcam = Miicam_Open(miiDevice.id);
-//     if (miiHcam)
-//     {
-//         Miicam_get_eSize(miiHcam, (unsigned*)&resolutionIndex);
-//         imgWidth = miiDevice.model->res[resolutionIndex].width;
-//         imgHeight = miiDevice.model->res[resolutionIndex].height;
+void MainWindow::openCamera()
+{
+    miiHcam = Miicam_Open(miiDevice.id);
+    if (miiHcam)
+    {
+        Miicam_get_eSize(miiHcam, (unsigned*)&resolutionIndex);
+        imgWidth = miiDevice.model->res[resolutionIndex].width;
+        imgHeight = miiDevice.model->res[resolutionIndex].height;
 
-//         // {
-//         //     const QSignalBlocker blocker(m_cmb_res);
-//         //     m_cmb_res->clear();
-//         //     for (unsigned i = 0; i < m_cur.model->preview; ++i)
-//         //         m_cmb_res->addItem(QString::asprintf("%u*%u", m_cur.model->res[i].width, m_cur.model->res[i].height));
-//         //     m_cmb_res->setCurrentIndex(m_res);
-//         //     m_cmb_res->setEnabled(true);
-//         // }
+        // {
+        //     const QSignalBlocker blocker(m_cmb_res);
+        //     m_cmb_res->clear();
+        //     for (unsigned i = 0; i < m_cur.model->preview; ++i)
+        //         m_cmb_res->addItem(QString::asprintf("%u*%u", m_cur.model->res[i].width, m_cur.model->res[i].height));
+        //     m_cmb_res->setCurrentIndex(m_res);
+        //     m_cmb_res->setEnabled(true);
+        // }
 
-//         Miicam_put_Option(miiHcam, MIICAM_OPTION_BYTEORDER, 0); //Qimage use RGB byte order
-//         Miicam_put_AutoExpoEnable(miiHcam, 1);
-//         startCamera();
-//     }
-// }
+        Miicam_put_Option(miiHcam, MIICAM_OPTION_BYTEORDER, 0); //Qimage use RGB byte order
+        Miicam_put_AutoExpoEnable(miiHcam, 1);
+        startCamera();
+    }
+}
 
-// void MainWindow::closeCamera()
-// {
-//     if (miiHcam)
-//     {
-//         Miicam_Close(miiHcam);
-//         miiHcam = nullptr;
-//     }
-//     delete[] pData;
-//     pData = nullptr;
+void MainWindow::closeCamera()
+{
+    if (miiHcam)
+    {
+        Miicam_Close(miiHcam);
+        miiHcam = nullptr;
+    }
+    delete[] pData;
+    pData = nullptr;
 
-//     // m_btn_open->setText("Open");
-//     // m_timer->stop();
-//     // m_lbl_frame->clear();
-//     // m_cbox_auto->setEnabled(false);
-//     // m_slider_expoGain->setEnabled(false);
-//     // m_slider_expoTime->setEnabled(false);
-//     // m_btn_autoWB->setEnabled(false);
-//     // m_slider_temp->setEnabled(false);
-//     // m_slider_tint->setEnabled(false);
-//     // m_btn_snap->setEnabled(false);
-//     // m_cmb_res->setEnabled(false);
-//     // m_cmb_res->clear();
-// }
+    // m_btn_open->setText("Open");
+    // m_timer->stop();
+    // m_lbl_frame->clear();
+    // m_cbox_auto->setEnabled(false);
+    // m_slider_expoGain->setEnabled(false);
+    // m_slider_expoTime->setEnabled(false);
+    // m_btn_autoWB->setEnabled(false);
+    // m_slider_temp->setEnabled(false);
+    // m_slider_tint->setEnabled(false);
+    // m_btn_snap->setEnabled(false);
+    // m_cmb_res->setEnabled(false);
+    // m_cmb_res->clear();
+}
 
-// void MainWindow::eventCallBack(unsigned nEvent, void* pCallbackCtx)
-// {
-//     MainWindow* pThis = reinterpret_cast<MainWindow*>(pCallbackCtx);
-//     emit pThis->evtCallback(nEvent);
-// }
+void MainWindow::eventCallBack(unsigned nEvent, void* pCallbackCtx)
+{
+    MainWindow* pThis = reinterpret_cast<MainWindow*>(pCallbackCtx);
+    emit pThis->evtCallback(nEvent);
+}
 
-// void MainWindow::handleImageEvent()
-// {
-//     unsigned width = 0, height = 0;
-//     if (SUCCEEDED(Miicam_PullImage(miiHcam, pData, 24, &width, &height)))
-//     {
-//         QImage image(pData, width, height, QImage::Format_RGB888);
-//         QImage newimage = image.scaled(ui->lbPreview->width(), ui->lbPreview->height(), Qt::KeepAspectRatio, Qt::FastTransformation);
-//         ui->lbPreview->setPixmap(QPixmap::fromImage(newimage));
-//     }
-// }
+void MainWindow::handleImageEvent()
+{
+    unsigned width = 0, height = 0;
+    if (SUCCEEDED(Miicam_PullImage(miiHcam, pData, 24, &width, &height)))
+    {
+        QImage image(pData, width, height, QImage::Format_RGB888);
+        QImage newimage = image.scaled(ui->lbPreview->width(), ui->lbPreview->height(), Qt::KeepAspectRatio, Qt::FastTransformation);
+        ui->lbPreview->setPixmap(QPixmap::fromImage(newimage));
+    }
+}
 
-// void MainWindow::handleExpoEvent()
-// {
-//     unsigned time = 0;
-//     unsigned short gain = 0;
-//     Miicam_get_ExpoTime(miiHcam, &time);
-//     Miicam_get_ExpoAGain(miiHcam, &gain);
+void MainWindow::handleExpoEvent()
+{
+    unsigned time = 0;
+    unsigned short gain = 0;
+    Miicam_get_ExpoTime(miiHcam, &time);
+    Miicam_get_ExpoAGain(miiHcam, &gain);
 
-//     // {
-//     //     const QSignalBlocker blocker(m_slider_expoTime);
-//     //     m_slider_expoTime->setValue(int(time));
-//     // }
-//     // {
-//     //     const QSignalBlocker blocker(m_slider_expoGain);
-//     //     m_slider_expoGain->setValue(int(gain));
-//     // }
-//     // m_lbl_expoTime->setText(QString::number(time));
-//     // m_lbl_expoGain->setText(QString::number(gain));
-// }
+    // {
+    //     const QSignalBlocker blocker(m_slider_expoTime);
+    //     m_slider_expoTime->setValue(int(time));
+    // }
+    // {
+    //     const QSignalBlocker blocker(m_slider_expoGain);
+    //     m_slider_expoGain->setValue(int(gain));
+    // }
+    // m_lbl_expoTime->setText(QString::number(time));
+    // m_lbl_expoGain->setText(QString::number(gain));
+}
 
-// void MainWindow::handleTempTintEvent()
-// {
-//     int nTemp = 0, nTint = 0;
-//     if (SUCCEEDED(Miicam_get_TempTint(miiHcam, &nTemp, &nTint)))
-//     {
-//         // {
-//         //     const QSignalBlocker blocker(m_slider_temp);
-//         //     m_slider_temp->setValue(nTemp);
-//         // }
-//         // {
-//         //     const QSignalBlocker blocker(m_slider_tint);
-//         //     m_slider_tint->setValue(nTint);
-//         // }
-//         // m_lbl_temp->setText(QString::number(nTemp));
-//         // m_lbl_tint->setText(QString::number(nTint));
-//     }
-// }
+void MainWindow::handleTempTintEvent()
+{
+    int nTemp = 0, nTint = 0;
+    if (SUCCEEDED(Miicam_get_TempTint(miiHcam, &nTemp, &nTint)))
+    {
+        // {
+        //     const QSignalBlocker blocker(m_slider_temp);
+        //     m_slider_temp->setValue(nTemp);
+        // }
+        // {
+        //     const QSignalBlocker blocker(m_slider_tint);
+        //     m_slider_tint->setValue(nTint);
+        // }
+        // m_lbl_temp->setText(QString::number(nTemp));
+        // m_lbl_tint->setText(QString::number(nTint));
+    }
+}
 
-// void MainWindow::handleStillImageEvent()
-// {
-//     unsigned width = 0, height = 0;
-//     if (SUCCEEDED(Miicam_PullStillImage(miiHcam, nullptr, 24, &width, &height))) // peek
-//     {
-//         std::vector<uchar> vec(TDIBWIDTHBYTES(width * 24) * height);
-//         if (SUCCEEDED(Miicam_PullStillImage(miiHcam, &vec[0], 24, &width, &height)))
-//         {
-//             QImage image(&vec[0], width, height, QImage::Format_RGB888);
-//             image.save(QString::asprintf("demoqt_%u.jpg", ++count));
-//         }
-//     }
-// }
+void MainWindow::handleStillImageEvent()
+{
+    unsigned width = 0, height = 0;
+    if (SUCCEEDED(Miicam_PullStillImage(miiHcam, nullptr, 24, &width, &height))) // peek
+    {
+        std::vector<uchar> vec(TDIBWIDTHBYTES(width * 24) * height);
+        if (SUCCEEDED(Miicam_PullStillImage(miiHcam, &vec[0], 24, &width, &height)))
+        {
+            QImage image(&vec[0], width, height, QImage::Format_RGB888);
+            image.save(QString::asprintf("demoqt_%u.jpg", ++count));
+        }
+    }
+}
 
 
 void MainWindow::onClickOpenVideo()
@@ -366,11 +366,10 @@ void MainWindow::onSelecteImage(const QModelIndex &index)
     ui->lbFrameCapture->setPixmap(pixmap.scaled(ui->lbFrameCapture->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
 }
 
-
-// void MainWindow::resizeEvent(QResizeEvent* event)
-// {
-//     QMainWindow::resizeEvent(event);
-//     if (!currentPixmap.isNull()) {
-//         ui->lbFrameCapture->setPixmap(currentPixmap.scaled(ui->lbFrameCapture->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
-//     }
-// }
+void MainWindow::resizeEvent(QResizeEvent* event)
+{
+    QMainWindow::resizeEvent(event);
+    if (!currentPixmap.isNull()) {
+        ui->lbFrameCapture->setPixmap(currentPixmap.scaled(ui->lbFrameCapture->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    }
+}
