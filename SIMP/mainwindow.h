@@ -10,7 +10,10 @@
 #include <QLabel>
 #include <QListView>
 #include <QRegularExpression>
+#include <QMessageBox>
+
 #include <miicam.h>
+#include "PixelFormatType.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -33,45 +36,76 @@ signals:
     void evtCallback(unsigned nEvent);
 
 private slots:
-    void onClickConnectCamera();
+    // ui events
+
+    // preview
+    void cbResoution_SelectedIndexChanged(int index);
+    void cbFormat_SelectedIndexChanged(int index);
+
+    void chkRecord_CheckedChanged();
+
+    void btnPlayCamera_Click();
+    void btnStopCamera_Click();
+    void btnCaptureCamera_Click();
+    void btnRecordOption_Click();
+
+
+    // video
+    void btnLoadVideo_Click();
+    void btnPlayVideo_Click();
+    void btnStopVideo_Click();
+
+    // frame
+    void btnLoadFrame_Click();
+
+
+    // comm
+    void onTimerCallback();
+
+
+    // mii camera
+    void FindCamera();
+    void openCamera();
+    void closeCamera();
+    void startCamera();
+
+    void onMiiCameraCallback(unsigned nEvent);
     void handleImageEvent();
     void handleExpoEvent();
     void handleTempTintEvent();
     void handleStillImageEvent();
-    void openCamera();
-    void closeCamera();
-    void startCamera();
     static void __stdcall eventCallBack(unsigned nEvent, void* pCallbackCtx);
 
-    void onClickOpenVideo();
-    void onClickPlayVideo();
-    void onClickStopVideo();
+
     void onVideoStatusChanged(QMediaPlayer::MediaStatus status);
     void SetPlayVideo(bool value);
 
-    void onClickLoadFrames();
     void onSelecteImage(const QModelIndex &index);
 
     void setupModel(const QString& capturePath);
 
 private:
     Ui::MainWindow *ui;
+
     QMediaPlayer *mpVideoFile;
     QFileSystemModel *modelFrames;
+    QTimer* timer;
+    //QPixmap currentPixmap;
 
     MiicamDeviceV2 miiDevice;
-    HMiicam miiHcam;
-    uchar* pData;
-    unsigned imgWidth;
-    unsigned imgHeight;
-    QTimer* timer;
-    int resolutionIndex;
-    unsigned count;
-    std::unique_ptr<QSortFilterProxyModel> proxyModel;
-    QPixmap currentPixmap;
+    HMiicam miiHcam = nullptr;
 
-    void resizeEvent(QResizeEvent* event) override;
+    uchar* imageData = nullptr;
+    int resolutionIndex = 0;
+    unsigned imageWidth = 0;
+    unsigned imageHeight = 0;
 
-    bool isVideoPlay = false;
+    //void resizeEvent(QResizeEvent* event) override;
+
+    bool isCameraRun = false;
+    bool isCameraPlay = false;
+    bool isVideoPlay = false;    
+
+    QString captureDir = "";
 };
 #endif // MAINWINDOW_H

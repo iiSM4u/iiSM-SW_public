@@ -1,3 +1,4 @@
+
 cmake_minimum_required(VERSION 3.5)
 
 project(SIMP VERSION 0.1 LANGUAGES CXX)
@@ -31,12 +32,14 @@ set(PROJECT_SOURCES
     mainwindow.cpp
     mainwindow.h
     mainwindow.ui
+    PixelFormatType.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(SIMP
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
+        PixelFormatType.h
     )
 else()
     if(ANDROID)

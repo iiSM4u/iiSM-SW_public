@@ -1,6 +1,5 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
-#include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -8,79 +7,76 @@ MainWindow::MainWindow(QWidget *parent)
     , modelFrames(new QFileSystemModel(this))
     , mpVideoFile(new QMediaPlayer(this))
     , timer(new QTimer(this))
-    , miiHcam(nullptr)
-    , pData(nullptr)
-    , imgWidth(0)
-    , imgHeight(0)
+    , captureDir(QCoreApplication::applicationDirPath() + "/captures")
 {
     ui->setupUi(this);
 
-    // Get the path of the current executable
-    QString capturesPath = QCoreApplication::applicationDirPath() + "/captures";
-    setupModel(capturesPath);
+    qApp->setStyleSheet(
+        "QPushButton:disabled { background-color: lightgray; color: darkgray; }"
+        "QComboBox:disabled { background-color: lightgray; color: darkgray; }"
+        "QCheckbox:disabled { background-color: lightgray; color: darkgray; }"
+        "QPlainTextEdit:disabled { background-color: lightgray; color: darkgray; }"
+        "QSlider:disabled { background-color: lightgray; color: darkgray; }"
+        "QRadioButton:disabled { background-color: lightgray; color: darkgray; }"
+    );
+
 
     // tab preview
-    connect(ui->btnZoomIn, &QPushButton::clicked, this, &MainWindow::onClickConnectCamera);
+    connect(this, &MainWindow::evtCallback, this, &MainWindow::onMiiCameraCallback);
 
-    connect(this, &MainWindow::evtCallback, this, [this](unsigned nEvent)
-            {
-                /* this run in the UI thread */
-                if (miiHcam)
-                {
-                    if (MIICAM_EVENT_IMAGE == nEvent)
-                    {
-                        handleImageEvent();
-                    }
-                    else if (MIICAM_EVENT_EXPOSURE == nEvent)
-                    {
-                        handleExpoEvent();
-                    }
-                    else if (MIICAM_EVENT_TEMPTINT == nEvent)
-                    {
-                        handleTempTintEvent();
-                    }
-                    else if (MIICAM_EVENT_STILLIMAGE == nEvent)
-                    {
-                        handleStillImageEvent();
-                    }
-                    else if (MIICAM_EVENT_ERROR == nEvent)
-                    {
-                        closeCamera();
-                        QMessageBox::warning(this, "Warning", "Generic error.");
-                    }
-                    else if (MIICAM_EVENT_DISCONNECTED == nEvent)
-                    {
-                        closeCamera();
-                        QMessageBox::warning(this, "Warning", "Camera disconnect.");
-                    }
-                }
-            });
+    connect(ui->cbResolution, &QComboBox::currentIndexChanged, this, &MainWindow::cbResoution_SelectedIndexChanged);
+    connect(ui->cbFormat, &QComboBox::currentIndexChanged, this, &MainWindow::cbFormat_SelectedIndexChanged);
 
-    connect(timer, &QTimer::timeout, this, [this]()
-            {
-                unsigned nFrame = 0, nTime = 0, nTotalFrame = 0;
-                if (miiHcam && SUCCEEDED(Miicam_get_FrameRate(miiHcam, &nFrame, &nTime, &nTotalFrame)) && (nTime > 0))
-                    ui->lbFPS->setText(QString::asprintf("%u, fps = %.1f", nTotalFrame, nFrame * 1000.0 / nTime));
-            });
+    connect(ui->btnPlayCamera, &QPushButton::clicked, this, &MainWindow::btnPlayCamera_Click);
+    connect(ui->btnStopCamera, &QPushButton::clicked, this, &MainWindow::btnStopCamera_Click);
+    connect(ui->btnCaptureCamera, &QPushButton::clicked, this, &MainWindow::btnCaptureCamera_Click);
+
+    connect(timer, &QTimer::timeout, this, &MainWindow::onTimerCallback);
+
+    // update combobox - 나중에 옮길 것.
+    ui->cbFormat->clear();
+    for (const auto& format : {PixelFormatType::RGB24, PixelFormatType::RGB32, PixelFormatType::Raw})
+    {
+        ui->cbFormat->addItem(toString(format));
+    }
+    ui->cbFormat->setCurrentIndex(0);
+
+    ui->cbResolution->setEnabled(false);
+    ui->cbFormat->setEnabled(false);
+
+    ui->btnPlayCamera->setEnabled(false);
+    ui->btnStopCamera->setEnabled(false);
+    ui->btnCaptureCamera->setEnabled(false);
+
 
     // tab video
     mpVideoFile->setVideoOutput(ui->videoFile);
 
-    connect(ui->btnLoadVideo, &QPushButton::clicked, this, &MainWindow::onClickOpenVideo);
-    connect(ui->btnPlayVideo, &QPushButton::clicked, this, &MainWindow::onClickPlayVideo);
-    connect(ui->btnStopVideo, &QPushButton::clicked, this, &MainWindow::onClickStopVideo);
-
     connect(mpVideoFile, &QMediaPlayer::mediaStatusChanged, this, &MainWindow::onVideoStatusChanged);
+
+    connect(ui->btnLoadVideo, &QPushButton::clicked, this, &MainWindow::btnLoadVideo_Click);
+    connect(ui->btnPlayVideo, &QPushButton::clicked, this, &MainWindow::btnPlayVideo_Click);
+    connect(ui->btnStopVideo, &QPushButton::clicked, this, &MainWindow::btnStopVideo_Click);
 
     ui->btnPlayVideo->setEnabled(false);
     ui->btnStopVideo->setEnabled(false);
 
-    // Set up the QListView
+
+
+    // tab frame
+    setupModel(captureDir);
+
     ui->lvFrames->setModel(modelFrames);
-    ui->lvFrames->setRootIndex(modelFrames->index(capturesPath)); // Set the root index
-    ui->lbDirFrames->setText(capturesPath);
+    ui->lvFrames->setRootIndex(modelFrames->index(captureDir)); // Set the root index
+    ui->lbDirFrames->setText(captureDir);
+
     connect(ui->lvFrames, &QListView::clicked, this, &MainWindow::onSelecteImage);
-    connect(ui->btnLoadFrame, &QPushButton::clicked, this, &MainWindow::onClickLoadFrames);
+
+    connect(ui->btnLoadFrame, &QPushButton::clicked, this, &MainWindow::btnLoadFrame_Click);
+
+
+    // ui 초기화 후에 우선 카메라부터 찾는다.
+    MainWindow::FindCamera();
 }
 
 MainWindow::~MainWindow()
@@ -93,21 +89,120 @@ void MainWindow::closeEvent(QCloseEvent*)
     closeCamera();
 }
 
-void MainWindow::setupModel(const QString& capturesPath)
+void MainWindow::cbResoution_SelectedIndexChanged(int index)
 {
-    // Check if the captures directory exists, and create it if it doesn't
-    QDir dir(capturesPath);
-    if (!dir.exists()) {
-        dir.mkpath(capturesPath);
+    resolutionIndex = index;
+    imageWidth = miiDevice.model->res[index].width;
+    imageHeight = miiDevice.model->res[index].height;
+
+    if (miiHcam) //step 1: stop camera
+    {
+        Miicam_Stop(miiHcam);
     }
 
-    // Set model properties
-    modelFrames->setRootPath(capturesPath);
-    modelFrames->setNameFilters(QStringList() << "*.png" << "*.jpg" << "*.jpeg" << "*.bmp" << "*.gif");
-    modelFrames->setNameFilterDisables(false);
+    Miicam_put_eSize(miiHcam, static_cast<unsigned>(resolutionIndex));
+
+    ui->btnPlayCamera->setEnabled(true);
 }
 
-void MainWindow::onClickConnectCamera()
+void MainWindow::cbFormat_SelectedIndexChanged(int index)
+{
+    /* MIICAM_OPTION_RGB
+     * 0 => RGB24;
+     * 1 => enable RGB48 format when bitdepth > 8;
+     * 2 => RGB32;
+     * 3 => 8 Bits Grey (only for mono camera);
+     * 4 => 16 Bits Grey (only for mono camera when bitdepth > 8);
+     * 5 => 64(RGB64)
+     *
+     * MIICAM_OPTION_RAW
+     * 0 = rgb,
+     * 1 = raw,
+     * default value: 0
+    */
+    if (index == static_cast<int>(PixelFormatType::RGB24))
+    {
+        // Handle RGB24 case
+        Miicam_put_Option(miiHcam, MIICAM_OPTION_RGB, 0);
+    }
+    else if (index == static_cast<int>(PixelFormatType::RGB32))
+    {
+        Miicam_put_Option(miiHcam, MIICAM_OPTION_RGB, 2);
+    }
+    else if (index == static_cast<int>(PixelFormatType::Raw))
+    {
+        Miicam_put_Option(miiHcam, MIICAM_OPTION_RAW, 1);
+    }
+}
+
+void MainWindow::chkRecord_CheckedChanged()
+{
+
+}
+
+void MainWindow::btnPlayCamera_Click()
+{
+    // camera가 run이 아니었으면 시작
+    if (!isCameraRun)
+    {
+        startCamera();
+        isCameraPlay = true;
+
+        ui->btnPlayCamera->setText("Pause");
+        ui->btnStopCamera->setEnabled(true);
+        ui->btnCaptureCamera->setEnabled(true);
+
+        // play가 시작되면 resolution과 format은 변경 불가
+        ui->cbResolution->setEnabled(false);
+        ui->cbFormat->setEnabled(false);
+    }
+    else
+    {
+        isCameraPlay = !isCameraPlay;
+
+        if (isCameraPlay)
+        {
+            // resume camera
+            Miicam_Pause(miiHcam, 0);  /* 1 => pause, 0 => continue */
+            ui->btnPlayCamera->setText("Pause");
+        }
+        else
+        {
+            // pause camera
+            Miicam_Pause(miiHcam, 1);  /* 1 => pause, 0 => continue */
+            ui->btnPlayCamera->setText("Play");
+        }
+    }
+}
+
+
+void MainWindow::btnStopCamera_Click()
+{
+    Miicam_Stop(miiHcam);
+    isCameraRun = false;
+
+    ui->cbResolution->setEnabled(true);
+    ui->cbFormat->setEnabled(true);
+
+    ui->btnPlayCamera->setText("Play");
+    ui->btnPlayCamera->setEnabled(true);
+    ui->btnStopCamera->setEnabled(false);
+    ui->btnCaptureCamera->setEnabled(false);
+}
+
+
+void MainWindow::btnCaptureCamera_Click()
+{
+    Miicam_Snap(miiHcam, resolutionIndex);
+}
+
+
+void MainWindow::btnRecordOption_Click()
+{
+
+}
+
+void MainWindow::FindCamera()
 {
     if (miiHcam)
     {
@@ -117,58 +212,52 @@ void MainWindow::onClickConnectCamera()
     {
         MiicamDeviceV2 arr[MIICAM_MAX] = { 0 };
         unsigned count = Miicam_EnumV2(arr);
-        if (0 == count)
+        if (count > 0)
+        {
+            miiDevice = arr[0];
+
+            {
+                const QSignalBlocker blocker(ui->lbDeviceName);
+                ui->lbDeviceName->setText(QString::fromWCharArray(miiDevice.displayname));
+            }
+
+            openCamera();
+        }
+        else
         {
             QMessageBox::warning(this, "Warning", "No camera found.");
         }
-        else if (1 == count)
-        {
-            miiDevice = arr[0];
-            openCamera();
-        }
-//         else
-//         {
-//             QMenu menu;
-//             for (unsigned i = 0; i < count; ++i)
-//             {
-//                 menu.addAction(
-// #if defined(_WIN32)
-//                     QString::fromWCharArray(arr[i].displayname)
-// #else
-//                     arr[i].displayname
-// #endif
-//                     , this, [this, i, arr](bool)
-//                     {
-//                         miiDevice = arr[i];
-//                         openCamera();
-//                     });
-//             }
-//             //menu.exec(mapToGlobal(m_btn_snap->pos()));
-//         }
     }
 }
 
 void MainWindow::openCamera()
 {
     miiHcam = Miicam_Open(miiDevice.id);
+
     if (miiHcam)
     {
         Miicam_get_eSize(miiHcam, (unsigned*)&resolutionIndex);
-        imgWidth = miiDevice.model->res[resolutionIndex].width;
-        imgHeight = miiDevice.model->res[resolutionIndex].height;
+        imageWidth = miiDevice.model->res[resolutionIndex].width;
+        imageHeight = miiDevice.model->res[resolutionIndex].height;
 
-        // {
-        //     const QSignalBlocker blocker(m_cmb_res);
-        //     m_cmb_res->clear();
-        //     for (unsigned i = 0; i < m_cur.model->preview; ++i)
-        //         m_cmb_res->addItem(QString::asprintf("%u*%u", m_cur.model->res[i].width, m_cur.model->res[i].height));
-        //     m_cmb_res->setCurrentIndex(m_res);
-        //     m_cmb_res->setEnabled(true);
-        // }
+        // open에 성공하면 resolution 업데이트
+        {
+            const QSignalBlocker blocker(ui->cbResolution);
+            ui->cbResolution->clear();
+            for (unsigned i = 0; i < miiDevice.model->preview; ++i)
+            {
+                ui->cbResolution->addItem(QString::asprintf("%u x %u", miiDevice.model->res[i].width, miiDevice.model->res[i].height));
+            }
+            ui->cbResolution->setCurrentIndex(resolutionIndex);
+
+            ui->cbResolution->setEnabled(true);
+            ui->cbFormat->setEnabled(true);
+
+            ui->btnPlayCamera->setEnabled(true);
+        }
 
         Miicam_put_Option(miiHcam, MIICAM_OPTION_BYTEORDER, 0); //Qimage use RGB byte order
         Miicam_put_AutoExpoEnable(miiHcam, 1);
-        startCamera();
     }
 }
 
@@ -179,8 +268,8 @@ void MainWindow::closeCamera()
         Miicam_Close(miiHcam);
         miiHcam = nullptr;
     }
-    delete[] pData;
-    pData = nullptr;
+    delete[] imageData;
+    imageData = nullptr;
 
     // m_btn_open->setText("Open");
     // m_timer->stop();
@@ -198,13 +287,13 @@ void MainWindow::closeCamera()
 
 void MainWindow::startCamera()
 {
-    if (pData)
+    if (imageData)
     {
-        delete[] pData;
-        pData = nullptr;
+        delete[] imageData;
+        imageData = nullptr;
     }
 
-    pData = new uchar[TDIBWIDTHBYTES(imgWidth * 24) * imgHeight];
+    imageData = new uchar[TDIBWIDTHBYTES(imageWidth * 24) * imageHeight];
     unsigned uimax = 0, uimin = 0, uidef = 0;
     unsigned short usmax = 0, usmin = 0, usdef = 0;
     Miicam_get_ExpTimeRange(miiHcam, &uimin, &uimax, &uidef);
@@ -220,6 +309,8 @@ void MainWindow::startCamera()
 
     if (SUCCEEDED(Miicam_StartPullModeWithCallback(miiHcam, eventCallBack, this)))
     {
+        isCameraRun = true;
+
         //m_cmb_res->setEnabled(true);
         //m_cbox_auto->setEnabled(true);
         //m_btn_autoWB->setEnabled(0 == (m_cur.model->flag & MIICAM_FLAG_MONO));
@@ -232,6 +323,7 @@ void MainWindow::startCamera()
         Miicam_get_AutoExpoEnable(miiHcam, &bAuto);
         //m_cbox_auto->setChecked(1 == bAuto);
 
+        // fps update
         timer->start(1000);
     }
     else
@@ -241,18 +333,62 @@ void MainWindow::startCamera()
     }
 }
 
+void MainWindow::onTimerCallback()
+{
+    unsigned nFrame = 0, nTime = 0, nTotalFrame = 0;
+
+    if (miiHcam && SUCCEEDED(Miicam_get_FrameRate(miiHcam, &nFrame, &nTime, &nTotalFrame)) && (nTime > 0))
+    {
+        ui->lbFPS->setText(QString::asprintf("%u, fps = %.1f", nTotalFrame, nFrame * 1000.0 / nTime));
+    }
+}
+
 void MainWindow::eventCallBack(unsigned nEvent, void* pCallbackCtx)
 {
     MainWindow* pThis = reinterpret_cast<MainWindow*>(pCallbackCtx);
     emit pThis->evtCallback(nEvent);
 }
 
+void MainWindow::onMiiCameraCallback(unsigned nEvent)
+{
+    /* this run in the UI thread */
+    if (miiHcam)
+    {
+        if (MIICAM_EVENT_IMAGE == nEvent)
+        {
+            handleImageEvent();
+        }
+        else if (MIICAM_EVENT_EXPOSURE == nEvent)
+        {
+            handleExpoEvent();
+        }
+        else if (MIICAM_EVENT_TEMPTINT == nEvent)
+        {
+            handleTempTintEvent();
+        }
+        else if (MIICAM_EVENT_STILLIMAGE == nEvent)
+        {
+            handleStillImageEvent();
+        }
+        else if (MIICAM_EVENT_ERROR == nEvent)
+        {
+            closeCamera();
+            QMessageBox::warning(this, "Warning", "Generic error.");
+        }
+        else if (MIICAM_EVENT_DISCONNECTED == nEvent)
+        {
+            closeCamera();
+            QMessageBox::warning(this, "Warning", "Camera disconnect.");
+        }
+    }
+}
+
 void MainWindow::handleImageEvent()
 {
     unsigned width = 0, height = 0;
-    if (SUCCEEDED(Miicam_PullImage(miiHcam, pData, 24, &width, &height)))
+    if (SUCCEEDED(Miicam_PullImage(miiHcam, imageData, 24, &width, &height)))
     {
-        QImage image(pData, width, height, QImage::Format_RGB888);
+        QImage image(imageData, width, height, QImage::Format_RGB888);
         QImage newimage = image.scaled(ui->lbPreview->width(), ui->lbPreview->height(), Qt::KeepAspectRatio, Qt::FastTransformation);
 
         ui->lbPreview->setAlignment(Qt::AlignCenter);
@@ -306,13 +442,25 @@ void MainWindow::handleStillImageEvent()
         if (SUCCEEDED(Miicam_PullStillImage(miiHcam, &vec[0], 24, &width, &height)))
         {
             QImage image(&vec[0], width, height, QImage::Format_RGB888);
-            image.save(QString::asprintf("demoqt_%u.jpg", ++count));
+
+            // 현재 날짜와 시간을 가져오기
+            QDateTime currentDateTime = QDateTime::currentDateTime();
+            QString formattedDateTime = currentDateTime.toString("yyyy_MM_dd_hh_mm_ss");
+
+            QString filename = captureDir + QString("/%1.jpg").arg(formattedDateTime);
+
+             // 디렉토리가 존재하지 않으면 생성
+            QDir dir(captureDir);
+            if (!dir.exists()) {
+                dir.mkpath(captureDir);
+            }
+            image.save(filename);
         }
     }
 }
 
 
-void MainWindow::onClickOpenVideo()
+void MainWindow::btnLoadVideo_Click()
 {
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open Video"), "", tr("Video Files (*.mp4 *.avi *.mkv)"));
 
@@ -330,7 +478,7 @@ void MainWindow::onClickOpenVideo()
     }
 }
 
-void MainWindow::onClickPlayVideo()
+void MainWindow::btnPlayVideo_Click()
 {
     if (isVideoPlay)
     {
@@ -345,7 +493,7 @@ void MainWindow::onClickPlayVideo()
 }
 
 
-void MainWindow::onClickStopVideo()
+void MainWindow::btnStopVideo_Click()
 {
     mpVideoFile->stop();
     MainWindow::SetPlayVideo(false);
@@ -373,8 +521,21 @@ void MainWindow::SetPlayVideo(bool value)
     }
 }
 
+void MainWindow::setupModel(const QString& capturePath)
+{
+    // Check if the captures directory exists, and create it if it doesn't
+    QDir dir(capturePath);
+    if (!dir.exists()) {
+        dir.mkpath(capturePath);
+    }
 
-void MainWindow::onClickLoadFrames()
+    // Set model properties
+    modelFrames->setRootPath(capturePath);
+    modelFrames->setNameFilters(QStringList() << "*.png" << "*.jpg" << "*.jpeg" << "*.bmp" << "*.gif");
+    modelFrames->setNameFilterDisables(false);
+}
+
+void MainWindow::btnLoadFrame_Click()
 {
     QString dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"), "", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
 
@@ -385,7 +546,6 @@ void MainWindow::onClickLoadFrames()
     }
 }
 
-
 void MainWindow::onSelecteImage(const QModelIndex &index)
 {
     QString filePath = modelFrames->filePath(index);
@@ -393,10 +553,10 @@ void MainWindow::onSelecteImage(const QModelIndex &index)
     ui->lbFrameCapture->setPixmap(pixmap.scaled(ui->lbFrameCapture->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
 }
 
-void MainWindow::resizeEvent(QResizeEvent* event)
-{
-    QMainWindow::resizeEvent(event);
-    if (!currentPixmap.isNull()) {
-        ui->lbFrameCapture->setPixmap(currentPixmap.scaled(ui->lbFrameCapture->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
-    }
-}
+// void MainWindow::resizeEvent(QResizeEvent* event)
+// {
+//     QMainWindow::resizeEvent(event);
+//     if (!currentPixmap.isNull()) {
+//         ui->lbFrameCapture->setPixmap(currentPixmap.scaled(ui->lbFrameCapture->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+//     }
+// }
