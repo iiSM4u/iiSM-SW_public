@@ -7,10 +7,11 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
     , modelFrames(new QFileSystemModel(this))
     , mpVideoFile(new QMediaPlayer(this))
-    //, miiHcam(nullptr)
-    //, pData(nullptr)
-    //, imgWidth(0)
-    //, imgHeight(0)
+    , timer(new QTimer(this))
+    , miiHcam(nullptr)
+    , pData(nullptr)
+    , imgWidth(0)
+    , imgHeight(0)
 {
     ui->setupUi(this);
 
@@ -18,50 +19,49 @@ MainWindow::MainWindow(QWidget *parent)
     QString capturesPath = QCoreApplication::applicationDirPath() + "/captures";
     setupModel(capturesPath);
 
-    // // tab preview
-    // connect(ui->btnZoomIn, &QPushButton::clicked, this, &MainWindow::onClickConnectCamera);
+    // tab preview
+    connect(ui->btnZoomIn, &QPushButton::clicked, this, &MainWindow::onClickConnectCamera);
 
+    connect(this, &MainWindow::evtCallback, this, [this](unsigned nEvent)
+            {
+                /* this run in the UI thread */
+                if (miiHcam)
+                {
+                    if (MIICAM_EVENT_IMAGE == nEvent)
+                    {
+                        handleImageEvent();
+                    }
+                    else if (MIICAM_EVENT_EXPOSURE == nEvent)
+                    {
+                        handleExpoEvent();
+                    }
+                    else if (MIICAM_EVENT_TEMPTINT == nEvent)
+                    {
+                        handleTempTintEvent();
+                    }
+                    else if (MIICAM_EVENT_STILLIMAGE == nEvent)
+                    {
+                        handleStillImageEvent();
+                    }
+                    else if (MIICAM_EVENT_ERROR == nEvent)
+                    {
+                        closeCamera();
+                        QMessageBox::warning(this, "Warning", "Generic error.");
+                    }
+                    else if (MIICAM_EVENT_DISCONNECTED == nEvent)
+                    {
+                        closeCamera();
+                        QMessageBox::warning(this, "Warning", "Camera disconnect.");
+                    }
+                }
+            });
 
-    // connect(this, &MainWindow::evtCallback, this, [this](unsigned nEvent)
-    //         {
-    //             /* this run in the UI thread */
-    //             if (miiHcam)
-    //             {
-    //                 if (MIICAM_EVENT_IMAGE == nEvent)
-    //                 {
-    //                     handleImageEvent();
-    //                 }
-    //                 else if (MIICAM_EVENT_EXPOSURE == nEvent)
-    //                 {
-    //                     handleExpoEvent();
-    //                 }
-    //                 else if (MIICAM_EVENT_TEMPTINT == nEvent)
-    //                 {
-    //                     handleTempTintEvent();
-    //                 }
-    //                 else if (MIICAM_EVENT_STILLIMAGE == nEvent)
-    //                 {
-    //                     handleStillImageEvent();
-    //                 }
-    //                 else if (MIICAM_EVENT_ERROR == nEvent)
-    //                 {
-    //                     closeCamera();
-    //                     QMessageBox::warning(this, "Warning", "Generic error.");
-    //                 }
-    //                 else if (MIICAM_EVENT_DISCONNECTED == nEvent)
-    //                 {
-    //                     closeCamera();
-    //                     QMessageBox::warning(this, "Warning", "Camera disconnect.");
-    //                 }
-    //             }
-    //         });
-
-    // connect(timer, &QTimer::timeout, this, [this]()
-    //         {
-    //             unsigned nFrame = 0, nTime = 0, nTotalFrame = 0;
-    //             if (miiHcam && SUCCEEDED(Miicam_get_FrameRate(miiHcam, &nFrame, &nTime, &nTotalFrame)) && (nTime > 0))
-    //                 ui->lbFPS->setText(QString::asprintf("%u, fps = %.1f", nTotalFrame, nFrame * 1000.0 / nTime));
-    //         });
+    connect(timer, &QTimer::timeout, this, [this]()
+            {
+                unsigned nFrame = 0, nTime = 0, nTotalFrame = 0;
+                if (miiHcam && SUCCEEDED(Miicam_get_FrameRate(miiHcam, &nFrame, &nTime, &nTotalFrame)) && (nTime > 0))
+                    ui->lbFPS->setText(QString::asprintf("%u, fps = %.1f", nTotalFrame, nFrame * 1000.0 / nTime));
+            });
 
     // tab video
     mpVideoFile->setVideoOutput(ui->videoFile);
@@ -90,7 +90,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::closeEvent(QCloseEvent*)
 {
-    //closeCamera();
+    closeCamera();
 }
 
 void MainWindow::setupModel(const QString& capturesPath)
@@ -109,62 +109,42 @@ void MainWindow::setupModel(const QString& capturesPath)
 
 void MainWindow::onClickConnectCamera()
 {
-    if (miiHcam) //step 1: stop camera
-        Miicam_Stop(miiHcam);
-
-    int m_res = 0;
-    //m_imgWidth = m_cur.model->res[index].width;
-    //m_imgHeight = m_cur.model->res[index].height;
-
-    if (miiHcam) //step 2: restart camera
+    if (miiHcam)
     {
-        Miicam_put_eSize(miiHcam, static_cast<unsigned>(m_res));
-        startCamera();
-    }
-}
-
-void MainWindow::startCamera()
-{
-    if (pData)
-    {
-        delete[] pData;
-        pData = nullptr;
-    }
-
-    pData = new uchar[TDIBWIDTHBYTES(imgWidth * 24) * imgHeight];
-    unsigned uimax = 0, uimin = 0, uidef = 0;
-    unsigned short usmax = 0, usmin = 0, usdef = 0;
-    Miicam_get_ExpTimeRange(miiHcam, &uimin, &uimax, &uidef);
-
-    //m_slider_expoTime->setRange(uimin, uimax);
-    Miicam_get_ExpoAGainRange(miiHcam, &usmin, &usmax, &usdef);
-    //m_slider_expoGain->setRange(usmin, usmax);
-    if (0 == (miiDevice.model->flag & MIICAM_FLAG_MONO))
-    {
-        handleTempTintEvent();
-    }
-    handleExpoEvent();
-
-    if (SUCCEEDED(Miicam_StartPullModeWithCallback(miiHcam, eventCallBack, this)))
-    {
-        //m_cmb_res->setEnabled(true);
-        //m_cbox_auto->setEnabled(true);
-        //m_btn_autoWB->setEnabled(0 == (m_cur.model->flag & MIICAM_FLAG_MONO));
-        //m_slider_temp->setEnabled(0 == (m_cur.model->flag & MIICAM_FLAG_MONO));
-        //m_slider_tint->setEnabled(0 == (m_cur.model->flag & MIICAM_FLAG_MONO));
-        //m_btn_open->setText("Close");
-        //m_btn_snap->setEnabled(true);
-
-        int bAuto = 0;
-        Miicam_get_AutoExpoEnable(miiHcam, &bAuto);
-        //m_cbox_auto->setChecked(1 == bAuto);
-
-        timer->start(1000);
+        closeCamera();
     }
     else
     {
-        closeCamera();
-        QMessageBox::warning(this, "Warning", "Failed to start camera.");
+        MiicamDeviceV2 arr[MIICAM_MAX] = { 0 };
+        unsigned count = Miicam_EnumV2(arr);
+        if (0 == count)
+        {
+            QMessageBox::warning(this, "Warning", "No camera found.");
+        }
+        else if (1 == count)
+        {
+            miiDevice = arr[0];
+            openCamera();
+        }
+//         else
+//         {
+//             QMenu menu;
+//             for (unsigned i = 0; i < count; ++i)
+//             {
+//                 menu.addAction(
+// #if defined(_WIN32)
+//                     QString::fromWCharArray(arr[i].displayname)
+// #else
+//                     arr[i].displayname
+// #endif
+//                     , this, [this, i, arr](bool)
+//                     {
+//                         miiDevice = arr[i];
+//                         openCamera();
+//                     });
+//             }
+//             //menu.exec(mapToGlobal(m_btn_snap->pos()));
+//         }
     }
 }
 
@@ -214,6 +194,51 @@ void MainWindow::closeCamera()
     // m_btn_snap->setEnabled(false);
     // m_cmb_res->setEnabled(false);
     // m_cmb_res->clear();
+}
+
+void MainWindow::startCamera()
+{
+    if (pData)
+    {
+        delete[] pData;
+        pData = nullptr;
+    }
+
+    pData = new uchar[TDIBWIDTHBYTES(imgWidth * 24) * imgHeight];
+    unsigned uimax = 0, uimin = 0, uidef = 0;
+    unsigned short usmax = 0, usmin = 0, usdef = 0;
+    Miicam_get_ExpTimeRange(miiHcam, &uimin, &uimax, &uidef);
+
+    //m_slider_expoTime->setRange(uimin, uimax);
+    Miicam_get_ExpoAGainRange(miiHcam, &usmin, &usmax, &usdef);
+    //m_slider_expoGain->setRange(usmin, usmax);
+    if (0 == (miiDevice.model->flag & MIICAM_FLAG_MONO))
+    {
+        handleTempTintEvent();
+    }
+    handleExpoEvent();
+
+    if (SUCCEEDED(Miicam_StartPullModeWithCallback(miiHcam, eventCallBack, this)))
+    {
+        //m_cmb_res->setEnabled(true);
+        //m_cbox_auto->setEnabled(true);
+        //m_btn_autoWB->setEnabled(0 == (m_cur.model->flag & MIICAM_FLAG_MONO));
+        //m_slider_temp->setEnabled(0 == (m_cur.model->flag & MIICAM_FLAG_MONO));
+        //m_slider_tint->setEnabled(0 == (m_cur.model->flag & MIICAM_FLAG_MONO));
+        //m_btn_open->setText("Close");
+        //m_btn_snap->setEnabled(true);
+
+        int bAuto = 0;
+        Miicam_get_AutoExpoEnable(miiHcam, &bAuto);
+        //m_cbox_auto->setChecked(1 == bAuto);
+
+        timer->start(1000);
+    }
+    else
+    {
+        closeCamera();
+        QMessageBox::warning(this, "Warning", "Failed to start camera.");
+    }
 }
 
 void MainWindow::eventCallBack(unsigned nEvent, void* pCallbackCtx)
