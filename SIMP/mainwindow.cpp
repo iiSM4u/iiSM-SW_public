@@ -254,6 +254,8 @@ void MainWindow::handleImageEvent()
     {
         QImage image(pData, width, height, QImage::Format_RGB888);
         QImage newimage = image.scaled(ui->lbPreview->width(), ui->lbPreview->height(), Qt::KeepAspectRatio, Qt::FastTransformation);
+
+        ui->lbPreview->setAlignment(Qt::AlignCenter);
         ui->lbPreview->setPixmap(QPixmap::fromImage(newimage));
     }
 }
