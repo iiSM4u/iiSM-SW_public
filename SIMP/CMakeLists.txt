@@ -33,13 +33,13 @@ set(PROJECT_SOURCES
     mainwindow.h
     mainwindow.ui
     PixelFormatType.h
+    constants.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(SIMP
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-        PixelFormatType.h
     )
 else()
     if(ANDROID)

@@ -7,7 +7,7 @@ MainWindow::MainWindow(QWidget *parent)
     , modelFrames(new QFileSystemModel(this))
     , mpVideoFile(new QMediaPlayer(this))
     , timer(new QTimer(this))
-    , captureDir(QCoreApplication::applicationDirPath() + "/captures")
+    , captureDir(QCoreApplication::applicationDirPath() + PATH_CAPTURE)
 {
     ui->setupUi(this);
 
@@ -31,6 +31,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->btnStopCamera, &QPushButton::clicked, this, &MainWindow::btnStopCamera_Click);
     connect(ui->btnCaptureCamera, &QPushButton::clicked, this, &MainWindow::btnCaptureCamera_Click);
 
+    connect(ui->btnZoomIn, &QPushButton::clicked, this, &MainWindow::btnZoomIn_Click);
+    connect(ui->btnZoomOut, &QPushButton::clicked, this, &MainWindow::btnZoomOut_Click);
+
     connect(timer, &QTimer::timeout, this, &MainWindow::onTimerCallback);
 
     // update combobox - 나중에 옮길 것.
@@ -48,6 +51,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->btnStopCamera->setEnabled(false);
     ui->btnCaptureCamera->setEnabled(false);
 
+    ui->btnZoomIn->setEnabled(false);
+    ui->btnZoomOut->setEnabled(false);
 
     // tab video
     mpVideoFile->setVideoOutput(ui->videoFile);
@@ -148,9 +153,11 @@ void MainWindow::btnPlayCamera_Click()
         startCamera();
         isCameraPlay = true;
 
-        ui->btnPlayCamera->setText("Pause");
+        ui->btnPlayCamera->setText(MENU_PAUSE);
         ui->btnStopCamera->setEnabled(true);
         ui->btnCaptureCamera->setEnabled(true);
+        ui->btnZoomIn->setEnabled(true);
+        ui->btnZoomOut->setEnabled(true);
 
         // play가 시작되면 resolution과 format은 변경 불가
         ui->cbResolution->setEnabled(false);
@@ -164,13 +171,13 @@ void MainWindow::btnPlayCamera_Click()
         {
             // resume camera
             Miicam_Pause(miiHcam, 0);  /* 1 => pause, 0 => continue */
-            ui->btnPlayCamera->setText("Pause");
+            ui->btnPlayCamera->setText(MENU_PAUSE);
         }
         else
         {
             // pause camera
             Miicam_Pause(miiHcam, 1);  /* 1 => pause, 0 => continue */
-            ui->btnPlayCamera->setText("Play");
+            ui->btnPlayCamera->setText(MENU_PLAY);
         }
     }
 }
@@ -184,10 +191,12 @@ void MainWindow::btnStopCamera_Click()
     ui->cbResolution->setEnabled(true);
     ui->cbFormat->setEnabled(true);
 
-    ui->btnPlayCamera->setText("Play");
+    ui->btnPlayCamera->setText(MENU_PLAY);
     ui->btnPlayCamera->setEnabled(true);
     ui->btnStopCamera->setEnabled(false);
     ui->btnCaptureCamera->setEnabled(false);
+    ui->btnZoomIn->setEnabled(false);
+    ui->btnZoomOut->setEnabled(false);
 }
 
 
@@ -196,10 +205,29 @@ void MainWindow::btnCaptureCamera_Click()
     Miicam_Snap(miiHcam, resolutionIndex);
 }
 
-
 void MainWindow::btnRecordOption_Click()
 {
 
+}
+
+void MainWindow::btnZoomIn_Click()
+{
+    zoomFactor += ZOOM_VALUE;
+
+    if (zoomFactor > ZOOM_MAX)
+    {
+        zoomFactor = ZOOM_MAX;
+    }
+}
+
+void MainWindow::btnZoomOut_Click()
+{
+    zoomFactor -= ZOOM_VALUE;
+
+    if (zoomFactor < ZOOM_MIN)
+    {
+        zoomFactor = ZOOM_MIN;
+    }
 }
 
 void MainWindow::FindCamera()
@@ -388,11 +416,38 @@ void MainWindow::handleImageEvent()
     unsigned width = 0, height = 0;
     if (SUCCEEDED(Miicam_PullImage(miiHcam, imageData, 24, &width, &height)))
     {
+        // 가만보니 기본 ui도 좀 문제긴 하네.
         QImage image(imageData, width, height, QImage::Format_RGB888);
         QImage newimage = image.scaled(ui->lbPreview->width(), ui->lbPreview->height(), Qt::KeepAspectRatio, Qt::FastTransformation);
 
         ui->lbPreview->setAlignment(Qt::AlignCenter);
         ui->lbPreview->setPixmap(QPixmap::fromImage(newimage));
+
+        // 이렇게 하면 UI가 자꾸 문제가 되서 일단 위의 것으로 함
+        // QImage image(imageData, width, height, QImage::Format_RGB888);
+
+        // int scaledWidth = ui->lbPreview->width() * zoomFactor;
+        // int scaledHeight = ui->lbPreview->height() * zoomFactor;
+        // QImage newimage = image.scaled(scaledWidth, scaledHeight, Qt::KeepAspectRatio, Qt::FastTransformation);
+
+        // //ui->lbPreview->setAlignment(Qt::AlignCenter);
+        // //ui->lbPreview->setPixmap(QPixmap::fromImage(newimage));
+
+
+        // // QLabel 크기 얻기
+        // int labelWidth = ui->lbPreview->width();
+        // int labelHeight = ui->lbPreview->height();
+
+        // // QPixmap 생성 및 QPainter로 그리기
+        // QPixmap pixmap(labelWidth, labelHeight);
+        // pixmap.fill(Qt::transparent); // 배경 투명하게 설정
+        // QPainter painter(&pixmap);
+        // int x = (labelWidth - newimage.width()) / 2;
+        // int y = (labelHeight - newimage.height()) / 2;
+        // painter.drawImage(x, y, newimage);
+        // painter.end();
+
+        // ui->lbPreview->setPixmap(pixmap);
     }
 }
 
@@ -511,12 +566,12 @@ void MainWindow::SetPlayVideo(bool value)
 {
     if (!value)
     {
-        ui->btnPlayVideo->setText("Play");
+        ui->btnPlayVideo->setText(MENU_PLAY);
         isVideoPlay = false;
     }
     else
     {
-        ui->btnPlayVideo->setText("Pause");
+        ui->btnPlayVideo->setText(MENU_PAUSE);
         isVideoPlay = true;
     }
 }

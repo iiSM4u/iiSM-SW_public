@@ -11,9 +11,11 @@
 #include <QListView>
 #include <QRegularExpression>
 #include <QMessageBox>
+#include <QPainter>
 
 #include <miicam.h>
 #include "PixelFormatType.h"
+#include "constants.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -48,6 +50,9 @@ private slots:
     void btnStopCamera_Click();
     void btnCaptureCamera_Click();
     void btnRecordOption_Click();
+
+    void btnZoomIn_Click();
+    void btnZoomOut_Click();
 
 
     // video
@@ -104,7 +109,9 @@ private:
 
     bool isCameraRun = false;
     bool isCameraPlay = false;
-    bool isVideoPlay = false;    
+    bool isVideoPlay = false;
+
+    float zoomFactor = 1.0f;
 
     QString captureDir = "";
 };
