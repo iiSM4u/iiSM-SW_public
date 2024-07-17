@@ -6,10 +6,11 @@
 #include <QFileDialog>
 #include <QFileSystemModel>
 #include <QSortFilterProxyModel>
-#include <memory>
+#include <QTimer>
 #include <QLabel>
 #include <QListView>
 #include <QRegularExpression>
+#include <miicam.h>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -25,9 +26,22 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+protected:
+    void closeEvent(QCloseEvent*) override;
+
+signals:
+    void evtCallback(unsigned nEvent);
+
 private slots:
-    void onClickLoadFrames();
-    void onSelecteImage(const QModelIndex &index);
+    // void onClickConnectCamera();
+    // void handleImageEvent();
+    // void handleExpoEvent();
+    // void handleTempTintEvent();
+    // void handleStillImageEvent();
+    // void openCamera();
+    // void closeCamera();
+    // void startCamera();
+    // static void __stdcall eventCallBack(unsigned nEvent, void* pCallbackCtx);
 
     void onClickOpenVideo();
     void onClickPlayVideo();
@@ -35,10 +49,24 @@ private slots:
     void onVideoStatusChanged(QMediaPlayer::MediaStatus status);
     void SetPlayVideo(bool value);
 
+    void onClickLoadFrames();
+    void onSelecteImage(const QModelIndex &index);
+
+    void setupModel(const QString& capturePath);
+
 private:
     Ui::MainWindow *ui;
-    QMediaPlayer *mediaPlayer;
-    std::unique_ptr<QFileSystemModel> model;
+    QMediaPlayer *mpVideoFile;
+    QFileSystemModel *modelFrames;
+
+    // MiicamDeviceV2 miiDevice;
+    // HMiicam miiHcam;
+    // uchar* pData;
+    // unsigned imgWidth;
+    // unsigned imgHeight;
+    // QTimer* timer;
+    // int resolutionIndex;
+    // unsigned count;
     //std::unique_ptr<QSortFilterProxyModel> proxyModel;
     //QPixmap currentPixmap;
 
