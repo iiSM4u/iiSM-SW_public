@@ -11,13 +11,29 @@
 #include <QRegularExpression>
 #include <QMessageBox>
 #include <QPainter>
+#include <QImage>
+#include <QByteArray>
+#include <QBuffer>
+#include <QFile>
+#include <QProcessEnvironment>
+#include <QDebug>
+#include <QCoreApplication>
+#include <QDebug>
+#include <QLibrary>
+
 
 #include <miicam.h>
 
 // C 라이브러리를 참조할 떄는 extern C로 묶는 것이 링킹 문제를 방지하는데 도움이 됨
 extern "C" {
+#include <glib.h>
 #include <gegl.h>
+#include <gegl-0.4/gegl.h>
+#include <gegl-0.4/gegl-init.h>
+#include <gegl-0.4/gegl-node.h>
+#include <gegl-0.4/gegl-buffer.h>
 }
+
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -56,6 +72,10 @@ private slots:
     void btnZoomIn_Click();
     void btnZoomOut_Click();
 
+    // ui thread
+    void updatePreview(QImage outputImage);
+    void updateFrame(QImage outputImage);
+
 
     // video
     void btnLoadVideo_Click();
@@ -90,13 +110,18 @@ private slots:
     static void __stdcall eventCallBack(unsigned nEvent, void* pCallbackCtx);
 
 
-    // gegl
+    // gegl    
+    void InitGegl();
+    void CloseGegl();
     void btnBrightnessContrast_Click();
+    void btnStress_Click();
+    void btnStretchContrast_Click();
 
 
     // custom
     void SetupModel(const QString& capturePath);
     void SetPlayVideo(bool value);
+
 
 private:
     Ui::MainWindow *ui;

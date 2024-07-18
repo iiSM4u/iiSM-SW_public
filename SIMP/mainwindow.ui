@@ -31,7 +31,7 @@
      <widget class="QScrollArea" name="scrollArea">
       <property name="maximumSize">
        <size>
-        <width>200</width>
+        <width>220</width>
         <height>16777215</height>
        </size>
       </property>
@@ -43,37 +43,11 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>181</width>
-         <height>1279</height>
+         <width>201</width>
+         <height>1217</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_5">
-        <item>
-         <widget class="QPushButton" name="btnOpen">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>25</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>File Open</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="btnSave">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>25</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>File Save</string>
-          </property>
-         </widget>
-        </item>
         <item>
          <widget class="QLabel" name="lbDeviceName">
           <property name="minimumSize">
@@ -87,6 +61,12 @@
             <width>16777215</width>
             <height>16777215</height>
            </size>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>11</pointsize>
+            <bold>true</bold>
+           </font>
           </property>
           <property name="text">
            <string>Device Name</string>
@@ -797,7 +777,7 @@
        <item>
         <widget class="QTabWidget" name="tabWidget">
          <property name="currentIndex">
-          <number>2</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="tabPreview">
           <attribute name="title">
@@ -841,15 +821,28 @@
                </widget>
               </item>
               <item>
+               <spacer name="horizontalSpacer_5">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
                <widget class="QPushButton" name="btnLoadVideo">
                 <property name="maximumSize">
                  <size>
-                  <width>60</width>
+                  <width>16777215</width>
                   <height>16777215</height>
                  </size>
                 </property>
                 <property name="text">
-                 <string>Load</string>
+                 <string>File Open</string>
                 </property>
                </widget>
               </item>
@@ -956,6 +949,19 @@
                </widget>
               </item>
               <item>
+               <spacer name="horizontalSpacer_6">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
                <widget class="QPushButton" name="btnLoadFrame">
                 <property name="minimumSize">
                  <size>
@@ -965,12 +971,12 @@
                 </property>
                 <property name="maximumSize">
                  <size>
-                  <width>60</width>
+                  <width>16777215</width>
                   <height>16777215</height>
                  </size>
                 </property>
                 <property name="text">
-                 <string>Load</string>
+                 <string>Folder Open</string>
                 </property>
                </widget>
               </item>
