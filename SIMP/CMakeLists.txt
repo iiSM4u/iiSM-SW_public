@@ -46,13 +46,19 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(GEGL REQUIRED gegl-0.4)
 pkg_check_modules(BABL REQUIRED babl-0.1)
 pkg_check_modules(GLIB REQUIRED glib-2.0)
-pkg_check_modules(GETTEXT REQUIRED gettext)
+pkg_check_modules(GOBJECT REQUIRED gobject-2.0)
+
+# Manually specify the gettext paths
+set(GETTEXT_INCLUDE_DIRS "C:/msys64/mingw64/include")
+set(GETTEXT_LIBRARY_DIRS "C:/msys64/mingw64/lib")
+set(GETTEXT_LIBRARIES "C:/msys64/mingw64/lib/libintl.a")
 
 # header 파일들 - C/C++ -> 일반 -> 추가포함 디렉터리와 같다.
 include_directories(
     ${GEGL_INCLUDE_DIRS}
     ${BABL_INCLUDE_DIRS}
     ${GLIB_INCLUDE_DIRS}
+    ${GOBJECT_INCLUDE_DIRS}
     ${GETTEXT_INCLUDE_DIRS}
     ${CMAKE_SOURCE_DIR}/external
 )
@@ -62,6 +68,7 @@ link_directories(
     ${GEGL_LIBRARY_DIRS}
     ${BABL_LIBRARY_DIRS}
     ${GLIB_LIBRARY_DIRS}
+    ${GOBJECT_LIBRARY_DIRS}
     ${GETTEXT_LIBRARY_DIRS}
 )
 
@@ -92,11 +99,12 @@ target_link_libraries(SIMP PRIVATE
     ${GEGL_LIBRARIES}
     ${BABL_LIBRARIES}
     ${GLIB_LIBRARIES}
+    ${GOBJECT_LIBRARIES}
     ${GETTEXT_LIBRARIES}
     ${MIICAM_LIB_PATH}
 )
 
-# Add a post-build step to copy the DLL to the output directory. dll 파일 복사
+# Add a post-build step to copy the DLL to the output directory
 add_custom_command(TARGET SIMP POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${MIICAM_DLL_PATH} $<TARGET_FILE_DIR:SIMP>
 )
