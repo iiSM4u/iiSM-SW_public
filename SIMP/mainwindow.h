@@ -2,37 +2,11 @@
 
 #include <QMainWindow>
 #include <QMediaPlayer>
-#include <QFileDialog>
 #include <QFileSystemModel>
-#include <QSortFilterProxyModel>
 #include <QTimer>
-#include <QLabel>
-#include <QListView>
-#include <QRegularExpression>
-#include <QMessageBox>
-#include <QPainter>
-#include <QImage>
-#include <QByteArray>
-#include <QBuffer>
-#include <QFile>
-#include <QProcessEnvironment>
-#include <QDebug>
-#include <QCoreApplication>
-#include <QDebug>
-#include <QLibrary>
 
+#include <opencv2/opencv.hpp>
 #include <miicam.h>
-
-// C 라이브러리를 참조할 떄는 extern C로 묶는 것이 링킹 문제를 방지하는데 도움이 됨
-extern "C" {
-#include <glib.h>
-#include <gegl.h>
-#include <gegl-0.4/gegl.h>
-#include <gegl-0.4/gegl-init.h>
-#include <gegl-0.4/gegl-node.h>
-#include <gegl-0.4/gegl-buffer.h>
-}
-
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -117,6 +91,7 @@ private slots:
     void btnStretchContrast_Click();
 
 
+
     // custom
     void SetupModel(const QString& capturePath);
     void SetPlayVideo(bool value);
@@ -133,6 +108,7 @@ private:
     MiicamDeviceV2 miiDevice;
     HMiicam miiHcam = nullptr;
 
+    std::vector<cv::Mat> videoFrames;
     uchar* imageData = nullptr;
     int resolutionIndex = 0;
     unsigned imageWidth = 0;

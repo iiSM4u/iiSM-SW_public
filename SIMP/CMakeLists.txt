@@ -16,8 +16,18 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Gui Multimedia MultimediaWidgets Widgets)
 
+# Project source files
+set(PROJECT_SOURCES
+    main.cpp
+    mainwindow.cpp
+    mainwindow.h
+    mainwindow.ui
+    PixelFormatType.h
+    constants.h
+)
+
 # Set OpenCV_DIR to the directory containing OpenCVConfig.cmake
-set(OpenCV_DIR "C:/opencv/build/x64/vc16/lib")
+set(OpenCV_DIR "C:/opencv_mingw/")
 find_package(OpenCV REQUIRED)
 
 # Find GEGL and BABL using pkg-config
@@ -41,16 +51,6 @@ link_directories(
     ${BABL_LIBRARY_DIRS}
     ${GLIB_LIBRARY_DIRS}
     ${CMAKE_SOURCE_DIR}/lib
-)
-
-# Project source files
-set(PROJECT_SOURCES
-    main.cpp
-    mainwindow.cpp
-    mainwindow.h
-    mainwindow.ui
-    PixelFormatType.h
-    constants.h
 )
 
 # Add executable
@@ -101,17 +101,7 @@ foreach(dll ${SIMP_DLLS})
     )
 endforeach()
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(OpenCV_DLLS
-        "${OpenCV_DIR}/../bin/opencv_world4100d.dll"
-        "${OpenCV_DIR}/../bin/opencv_videoio_ffmpeg4100_64.dll"
-    )
-else()
-    set(OpenCV_DLLS
-        "${OpenCV_DIR}/../bin/opencv_world4100.dll"
-        "${OpenCV_DIR}/../bin/opencv_videoio_ffmpeg4100_64.dll"
-    )
-endif()
+file(GLOB OpenCV_DLLS "${OpenCV_DIR}/x64/mingw/bin/*.dll")
 
 foreach(dll ${OpenCV_DLLS})
     add_custom_command(TARGET SIMP POST_BUILD
