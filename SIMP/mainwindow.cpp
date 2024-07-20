@@ -88,6 +88,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->btnStress, &QPushButton::clicked, this, &MainWindow::btnStress_Click);
     connect(ui->btnStretchContrast, &QPushButton::clicked, this, &MainWindow::btnStretchContrast_Click);
 
+
     MainWindow::InitGegl();
 
     // ui 초기화 후에 우선 카메라부터 찾는다.
@@ -239,6 +240,23 @@ void MainWindow::btnZoomOut_Click()
     {
         zoomFactor = ZOOM_MIN;
     }
+}
+
+void MainWindow::InitGegl()
+{
+    // 프로그램 사용 중에만 사용하는 환경 변수 등록. 이걸 안하면 dll을 못 찾음
+    QString appDir = QCoreApplication::applicationDirPath();
+    qputenv("BABL_PATH", (appDir + "/lib/babl-0.1").toUtf8());
+    qputenv("GEGL_PATH", (appDir + "/lib/gegl-0.4").toUtf8());
+
+    // gegl 초기화
+    gegl_init(nullptr, nullptr);
+}
+
+void MainWindow::CloseGegl()
+{
+    // gegl 종료
+    gegl_exit();
 }
 
 void MainWindow::FindCamera()
@@ -601,23 +619,6 @@ void MainWindow::SetupModel(const QString& capturePath)
     modelFrames->setNameFilterDisables(false);
 }
 
-void MainWindow::InitGegl()
-{
-    // 프로그램 사용 중에만 사용하는 환경 변수 등록. 이걸 안하면 dll을 못 찾음
-    QString appDir = QCoreApplication::applicationDirPath();
-    qputenv("BABL_PATH", (appDir + "/lib/babl-0.1").toUtf8());
-    qputenv("GEGL_PATH", (appDir + "/lib/gegl-0.4").toUtf8());
-
-    // gegl 초기화
-    gegl_init(nullptr, nullptr);
-}
-
-void MainWindow::CloseGegl()
-{
-    // gegl 종료
-    gegl_exit();
-}
-
 void MainWindow::btnLoadFrame_Click()
 {
     QString dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"), "", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
@@ -636,60 +637,60 @@ void MainWindow::onSelecteImage(const QModelIndex &index)
     ui->lbFrameCapture->setPixmap(pixmap.scaled(ui->lbFrameCapture->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
 }
 
-void MainWindow::btnBrightnessContrast_Click()
-{
-    // 테스트용. 임시
-    QString appDir = QCoreApplication::applicationDirPath();
+// void MainWindow::btnBrightnessContrast_Click()
+// {
+//     // 테스트용. 임시
+//     QString appDir = QCoreApplication::applicationDirPath();
 
-    QString input_file = appDir + "/captures/input.jpg";
-    QImage inputImage;
-    if (!inputImage.load(input_file)) {
-        qDebug() << "Failed to load input image";
-        return;
-    }
+//     QString input_file = appDir + "/captures/input.jpg";
+//     QImage inputImage;
+//     if (!inputImage.load(input_file)) {
+//         qDebug() << "Failed to load input image";
+//         return;
+//     }
 
-    double brightness = 0.1;
-    double contrast = 1.5;
+//     double brightness = 0.1;
+//     double contrast = 1.5;
 
-    qDebug() << "Processing BrightnessContrast";
+//     qDebug() << "Processing BrightnessContrast";
 
-    GeglBuffer* input_buffer = gegl_buffer_new(GEGL_RECTANGLE(0, 0, inputImage.width(), inputImage.height()), babl_format("R'G'B'A u8"));
-    GeglBuffer* output_buffer = gegl_buffer_new(GEGL_RECTANGLE(0, 0, inputImage.width(), inputImage.height()), babl_format("R'G'B'A u8"));
+//     GeglBuffer* input_buffer = gegl_buffer_new(GEGL_RECTANGLE(0, 0, inputImage.width(), inputImage.height()), babl_format("R'G'B'A u8"));
+//     GeglBuffer* output_buffer = gegl_buffer_new(GEGL_RECTANGLE(0, 0, inputImage.width(), inputImage.height()), babl_format("R'G'B'A u8"));
 
-    gegl_buffer_set(input_buffer, nullptr, 0, babl_format("R'G'B'A u8"), inputImage.bits(), GEGL_AUTO_ROWSTRIDE);
+//     gegl_buffer_set(input_buffer, nullptr, 0, babl_format("R'G'B'A u8"), inputImage.bits(), GEGL_AUTO_ROWSTRIDE);
 
-    GeglNode* graph = gegl_node_new();
-    GeglNode* input = gegl_node_new_child(graph, "operation", "gegl:buffer-source", "buffer", input_buffer, nullptr);
-    GeglNode* action = gegl_node_new_child(graph, "operation", "gegl:brightness-contrast", nullptr);
-    GeglNode* output = gegl_node_new_child(graph, "operation", "gegl:write-buffer", "buffer", output_buffer, nullptr);
+//     GeglNode* graph = gegl_node_new();
+//     GeglNode* input = gegl_node_new_child(graph, "operation", "gegl:buffer-source", "buffer", input_buffer, nullptr);
+//     GeglNode* action = gegl_node_new_child(graph, "operation", "gegl:brightness-contrast", nullptr);
+//     GeglNode* output = gegl_node_new_child(graph, "operation", "gegl:write-buffer", "buffer", output_buffer, nullptr);
 
-    gegl_node_set(action, "brightness", brightness, "contrast", contrast, nullptr);
-    gegl_node_link_many(input, action, output, nullptr);
+//     gegl_node_set(action, "brightness", brightness, "contrast", contrast, nullptr);
+//     gegl_node_link_many(input, action, output, nullptr);
 
-    qDebug() << "Processing graph...";
-    gegl_node_process(output);
+//     qDebug() << "Processing graph...";
+//     gegl_node_process(output);
 
-    QImage outputImage(inputImage.width(), inputImage.height(), QImage::Format_RGBA8888);
-    gegl_buffer_get(output_buffer, nullptr, 1.0, babl_format("R'G'B'A u8"), outputImage.bits(), GEGL_AUTO_ROWSTRIDE, GEGL_ABYSS_NONE);
+//     QImage outputImage(inputImage.width(), inputImage.height(), QImage::Format_RGBA8888);
+//     gegl_buffer_get(output_buffer, nullptr, 1.0, babl_format("R'G'B'A u8"), outputImage.bits(), GEGL_AUTO_ROWSTRIDE, GEGL_ABYSS_NONE);
 
-    g_object_unref(input_buffer);
-    g_object_unref(output_buffer);
-    g_object_unref(graph);
+//     g_object_unref(input_buffer);
+//     g_object_unref(output_buffer);
+//     g_object_unref(graph);
 
-    if (!outputImage.isNull()) {
-        qDebug() << "Processing completed. Showing image.";
-        ui->lbFrameCapture->setPixmap(QPixmap::fromImage(outputImage));
-    } else {
-        // error
-        qDebug() << "Failed to process image";
-    }
-}
+//     if (!outputImage.isNull()) {
+//         qDebug() << "Processing completed. Showing image.";
+//         ui->lbFrameCapture->setPixmap(QPixmap::fromImage(outputImage));
+//     } else {
+//         // error
+//         qDebug() << "Failed to process image";
+//     }
+// }
 
 void MainWindow::btnStress_Click()
 {
     // 테스트용. 임시
     QString appDir = QCoreApplication::applicationDirPath();
-    QString input_file = appDir + "/captures/input.jpg";
+    QString input_file = appDir + "/captures/input.png";
 
     QImage inputImage;
     if (!inputImage.load(input_file)) {
@@ -739,7 +740,7 @@ void MainWindow::btnStretchContrast_Click()
 {
     // 테스트용. 임시. 실제로는 여기서 설정만 저장하고, handleImageEvent()에서 업데이트해야 함.
     QString appDir = QCoreApplication::applicationDirPath();
-    QString input_file = appDir + "/captures/input.jpg";
+    QString input_file = appDir + "/captures/input.png";
 
     QImage inputImage;
     if (!inputImage.load(input_file)) {
@@ -782,6 +783,113 @@ void MainWindow::btnStretchContrast_Click()
         qDebug() << "Failed to process image";
     }
 }
+
+// contrast curve
+void MainWindow::btnBrightnessContrast_Click()
+{
+    QString appDir = QCoreApplication::applicationDirPath();
+
+    QString input_file = appDir + "/captures/input.png";
+    QImage inputImage;
+    if (!inputImage.load(input_file)) {
+        qDebug() << "Failed to load input image";
+        return;
+    }
+
+    double brightness = 0.1;
+    double contrast = 1.5;
+
+    qDebug() << "Processing BrightnessContrast and ContrastCurve";
+
+    GeglBuffer* input_buffer = gegl_buffer_new(GEGL_RECTANGLE(0, 0, inputImage.width(), inputImage.height()), babl_format("R'G'B'A u8"));
+    if (!input_buffer) {
+        qDebug() << "Failed to create input buffer";
+        return;
+    }
+
+    GeglBuffer* output_buffer = gegl_buffer_new(GEGL_RECTANGLE(0, 0, inputImage.width(), inputImage.height()), babl_format("R'G'B'A u8"));
+    if (!output_buffer) {
+        qDebug() << "Failed to create output buffer";
+        g_object_unref(input_buffer);
+        return;
+    }
+
+    gegl_buffer_set(input_buffer, nullptr, 0, babl_format("R'G'B'A u8"), inputImage.bits(), GEGL_AUTO_ROWSTRIDE);
+
+    GeglNode* graph = gegl_node_new();
+    if (!graph) {
+        qDebug() << "Failed to create graph";
+        g_object_unref(input_buffer);
+        g_object_unref(output_buffer);
+        return;
+    }
+
+    GeglNode* input = gegl_node_new_child(graph, "operation", "gegl:buffer-source", "buffer", input_buffer, nullptr);
+    if (!input) {
+        qDebug() << "Failed to create buffer-source node";
+        g_object_unref(input_buffer);
+        g_object_unref(output_buffer);
+        g_object_unref(graph);
+        return;
+    }
+
+    GeglNode* bc = gegl_node_new_child(graph, "operation", "gegl:brightness-contrast", nullptr);
+    if (!bc) {
+        qDebug() << "Failed to create brightness-contrast node";
+        g_object_unref(input_buffer);
+        g_object_unref(output_buffer);
+        g_object_unref(graph);
+        return;
+    }
+
+    GeglNode* cc = gegl_node_new_child(graph, "operation", "gegl:contrast-curve", nullptr);
+    if (!cc) {
+        qDebug() << "Failed to create contrast-curve node";
+        g_object_unref(input_buffer);
+        g_object_unref(output_buffer);
+        g_object_unref(graph);
+        return;
+    }
+
+    GeglNode* output = gegl_node_new_child(graph, "operation", "gegl:write-buffer", "buffer", output_buffer, nullptr);
+    if (!output) {
+        qDebug() << "Failed to create write-buffer node";
+        g_object_unref(input_buffer);
+        g_object_unref(output_buffer);
+        g_object_unref(graph);
+        return;
+    }
+
+    // Set properties for brightness-contrast
+    gegl_node_set(bc, "brightness", brightness, "contrast", contrast, nullptr);
+
+    // Define the contrast curve points
+    const gchar* curve_str = "(0.0,0.0) (0.3,0.4) (0.7,0.6) (1.0,1.0)";
+    gegl_node_set(cc, "curve", curve_str, "sampling-points", 256, nullptr);
+
+    // Link the nodes
+    gegl_node_link_many(input, bc, cc, output, nullptr);
+
+    qDebug() << "Processing graph...";
+    gegl_node_process(output);
+
+    QImage outputImage(inputImage.width(), inputImage.height(), QImage::Format_RGBA8888);
+    gegl_buffer_get(output_buffer, nullptr, 1.0, babl_format("R'G'B'A u8"), outputImage.bits(), GEGL_AUTO_ROWSTRIDE, GEGL_ABYSS_NONE);
+
+    g_object_unref(input_buffer);
+    g_object_unref(output_buffer);
+    g_object_unref(graph);
+
+    if (!outputImage.isNull()) {
+        qDebug() << "Processing completed. Showing image.";
+        ui->lbFrameCapture->setPixmap(QPixmap::fromImage(outputImage));
+    } else {
+        qDebug() << "Failed to process image";
+    }
+}
+
+
+
 
 void MainWindow::updatePreview(QImage outputImage)
 {

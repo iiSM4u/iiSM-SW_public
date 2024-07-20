@@ -21,7 +21,6 @@
 #include <QDebug>
 #include <QLibrary>
 
-
 #include <miicam.h>
 
 // C 라이브러리를 참조할 떄는 extern C로 묶는 것이 링킹 문제를 방지하는데 도움이 됨
@@ -110,7 +109,7 @@ private slots:
     static void __stdcall eventCallBack(unsigned nEvent, void* pCallbackCtx);
 
 
-    // gegl    
+    // gegl
     void InitGegl();
     void CloseGegl();
     void btnBrightnessContrast_Click();

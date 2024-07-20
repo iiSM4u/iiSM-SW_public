@@ -1,4 +1,3 @@
-# CMake minimum version required
 cmake_minimum_required(VERSION 3.5)
 
 # Project name and version
@@ -13,35 +12,6 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Define paths for DLL and LIB files
-set(GIMP_PATH "C:/Program Files/GIMP 2")
-set(GEGL_DLL_PATHS
-    "${GIMP_PATH}/bin/libbabl-0.1-0.dll"
-    "${GIMP_PATH}/bin/libgegl-0.4-0.dll"
-    "${GIMP_PATH}/bin/libgio-2.0-0.dll"
-    "${GIMP_PATH}/bin/libglib-2.0-0.dll"
-    "${GIMP_PATH}/bin/libgmodule-2.0-0.dll"
-    "${GIMP_PATH}/bin/libgobject-2.0-0.dll"
-    "${GIMP_PATH}/bin/libgthread-2.0-0.dll"
-    "${GIMP_PATH}/bin/libintl-8.dll"
-)
-
-set(GEGL_PLUGIN_DIR "${GIMP_PATH}/lib/gegl-0.4")
-set(BABL_PLUGIN_DIR "${GIMP_PATH}/lib/babl-0.1")
-
-set(MIICAM_DLL_PATH "${CMAKE_SOURCE_DIR}/bin/miicam.dll")
-set(MIICAM_LIB_PATH "${CMAKE_SOURCE_DIR}/lib/miicam.lib")
-
-# Project source files
-set(PROJECT_SOURCES
-    main.cpp
-    mainwindow.cpp
-    mainwindow.h
-    mainwindow.ui
-    PixelFormatType.h
-    constants.h
-)
-
 # Find Qt packages
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Gui Multimedia MultimediaWidgets Widgets)
@@ -51,21 +21,13 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(GEGL REQUIRED gegl-0.4)
 pkg_check_modules(BABL REQUIRED babl-0.1)
 pkg_check_modules(GLIB REQUIRED glib-2.0)
-pkg_check_modules(GOBJECT REQUIRED gobject-2.0)
-
-# Manually specify the gettext paths
-set(GETTEXT_INCLUDE_DIRS "C:/msys64/mingw64/include")
-set(GETTEXT_LIBRARY_DIRS "C:/msys64/mingw64/lib")
-set(GETTEXT_LIBRARIES "C:/msys64/mingw64/lib/libintl.a")
 
 # Include directories
 include_directories(
     ${GEGL_INCLUDE_DIRS}
     ${BABL_INCLUDE_DIRS}
     ${GLIB_INCLUDE_DIRS}
-    ${GOBJECT_INCLUDE_DIRS}
-    ${GETTEXT_INCLUDE_DIRS}
-    ${CMAKE_SOURCE_DIR}/external
+    ${CMAKE_SOURCE_DIR}/include
 )
 
 # Link directories
@@ -73,8 +35,17 @@ link_directories(
     ${GEGL_LIBRARY_DIRS}
     ${BABL_LIBRARY_DIRS}
     ${GLIB_LIBRARY_DIRS}
-    ${GOBJECT_LIBRARY_DIRS}
-    ${GETTEXT_LIBRARY_DIRS}
+    ${CMAKE_SOURCE_DIR}/lib
+)
+
+# Project source files
+set(PROJECT_SOURCES
+    main.cpp
+    mainwindow.cpp
+    mainwindow.h
+    mainwindow.ui
+    PixelFormatType.h
+    constants.h
 )
 
 # Add executable
@@ -95,6 +66,12 @@ else()
     endif()
 endif()
 
+# Find all libraries in the lib directory
+file(GLOB SIMP_LIBS
+    "${CMAKE_SOURCE_DIR}/lib/*.lib"
+    "${CMAKE_SOURCE_DIR}/lib/*.dll.a"
+)
+
 # Link libraries
 target_link_libraries(SIMP PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
@@ -104,31 +81,45 @@ target_link_libraries(SIMP PRIVATE
     ${GEGL_LIBRARIES}
     ${BABL_LIBRARIES}
     ${GLIB_LIBRARIES}
-    ${GOBJECT_LIBRARIES}
-    ${GETTEXT_LIBRARIES}
-    ${MIICAM_LIB_PATH}
+    ${SIMP_LIBS}
 )
 
-# Add a post-build step to copy the DLLs to the output directory
-foreach(DLL ${GEGL_DLL_PATHS})
+# Find all DLLs in the bin directory
+file(GLOB SIMP_DLLS "${CMAKE_SOURCE_DIR}/bin/*.dll")
+
+foreach(dll ${SIMP_DLLS})
     add_custom_command(TARGET SIMP POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${DLL}
+        ${dll}
         $<TARGET_FILE_DIR:SIMP>
     )
 endforeach()
 
-add_custom_command(TARGET SIMP POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    ${MIICAM_DLL_PATH}
-    $<TARGET_FILE_DIR:SIMP>
+set(MINGW_DIRS "C:/msys64/mingw64/bin")
+
+set(GEGL_DLLS
+    "${MINGW_DIRS}/libgegl-0.4-0.dll"
+    "${MINGW_DIRS}/libbabl-0.1-0.dll"
+    "${MINGW_DIRS}/libglib-2.0-0.dll"
+    "${MINGW_DIRS}/libgobject-2.0-0.dll"
+    "${MINGW_DIRS}/libgmodule-2.0-0.dll"
+    "${MINGW_DIRS}/libgthread-2.0-0.dll"
+    "${MINGW_DIRS}/libgio-2.0-0.dll"
+    "${MINGW_DIRS}/libintl-8.dll"
 )
 
-# Add a post-build step to copy GEGL and BABL plugin files to the output directory
-file(GLOB GEGL_PLUGINS "${GEGL_PLUGIN_DIR}/*.dll")
-file(GLOB BABL_PLUGINS "${BABL_PLUGIN_DIR}/*.dll")
+foreach(dll ${GEGL_DLLS})
+    add_custom_command(TARGET SIMP POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${dll}
+        $<TARGET_FILE_DIR:SIMP>
+    )
+endforeach()
 
-foreach(PLUGIN ${GEGL_PLUGINS})
+# Copy GEGL plugin DLLs to the target directory
+file(GLOB GEGL_PLUGIN_DLLS "${GEGL_LIBRARY_DIRS}/gegl-0.4/*.dll")
+
+foreach(PLUGIN ${GEGL_PLUGIN_DLLS})
     add_custom_command(TARGET SIMP POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:SIMP>/lib/gegl-0.4
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -137,7 +128,10 @@ foreach(PLUGIN ${GEGL_PLUGINS})
     )
 endforeach()
 
-foreach(PLUGIN ${BABL_PLUGINS})
+# Copy BABL plugin DLLs to the target directory
+file(GLOB BABL_PLUGIN_DLLS "${BABL_LIBRARY_DIRS}/babl-0.1/*.dll")
+
+foreach(PLUGIN ${BABL_PLUGIN_DLLS})
     add_custom_command(TARGET SIMP POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:SIMP>/lib/babl-0.1
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
