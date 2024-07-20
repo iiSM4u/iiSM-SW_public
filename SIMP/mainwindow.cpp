@@ -787,88 +787,43 @@ void MainWindow::btnStretchContrast_Click()
 // contrast curve
 void MainWindow::btnBrightnessContrast_Click()
 {
+    // 테스트용. 임시
     QString appDir = QCoreApplication::applicationDirPath();
-
     QString input_file = appDir + "/captures/input.png";
+
     QImage inputImage;
     if (!inputImage.load(input_file)) {
         qDebug() << "Failed to load input image";
         return;
     }
 
-    double brightness = 0.1;
-    double contrast = 1.5;
+    int radius = 300;
+    int samples = 5;
+    int iterations = 5;
+    bool enhanceShadows = false;
 
-    qDebug() << "Processing BrightnessContrast and ContrastCurve";
+    qDebug() << "Processing contrast curve";
 
     GeglBuffer* input_buffer = gegl_buffer_new(GEGL_RECTANGLE(0, 0, inputImage.width(), inputImage.height()), babl_format("R'G'B'A u8"));
-    if (!input_buffer) {
-        qDebug() << "Failed to create input buffer";
-        return;
-    }
-
     GeglBuffer* output_buffer = gegl_buffer_new(GEGL_RECTANGLE(0, 0, inputImage.width(), inputImage.height()), babl_format("R'G'B'A u8"));
-    if (!output_buffer) {
-        qDebug() << "Failed to create output buffer";
-        g_object_unref(input_buffer);
-        return;
-    }
 
     gegl_buffer_set(input_buffer, nullptr, 0, babl_format("R'G'B'A u8"), inputImage.bits(), GEGL_AUTO_ROWSTRIDE);
 
     GeglNode* graph = gegl_node_new();
-    if (!graph) {
-        qDebug() << "Failed to create graph";
-        g_object_unref(input_buffer);
-        g_object_unref(output_buffer);
-        return;
-    }
-
     GeglNode* input = gegl_node_new_child(graph, "operation", "gegl:buffer-source", "buffer", input_buffer, nullptr);
-    if (!input) {
-        qDebug() << "Failed to create buffer-source node";
-        g_object_unref(input_buffer);
-        g_object_unref(output_buffer);
-        g_object_unref(graph);
-        return;
-    }
-
-    GeglNode* bc = gegl_node_new_child(graph, "operation", "gegl:brightness-contrast", nullptr);
-    if (!bc) {
-        qDebug() << "Failed to create brightness-contrast node";
-        g_object_unref(input_buffer);
-        g_object_unref(output_buffer);
-        g_object_unref(graph);
-        return;
-    }
-
-    GeglNode* cc = gegl_node_new_child(graph, "operation", "gegl:contrast-curve", nullptr);
-    if (!cc) {
-        qDebug() << "Failed to create contrast-curve node";
-        g_object_unref(input_buffer);
-        g_object_unref(output_buffer);
-        g_object_unref(graph);
-        return;
-    }
-
+    GeglNode* action = gegl_node_new_child(graph, "operation", "gegl:contrast-curve", nullptr);
     GeglNode* output = gegl_node_new_child(graph, "operation", "gegl:write-buffer", "buffer", output_buffer, nullptr);
-    if (!output) {
-        qDebug() << "Failed to create write-buffer node";
-        g_object_unref(input_buffer);
-        g_object_unref(output_buffer);
-        g_object_unref(graph);
-        return;
-    }
 
-    // Set properties for brightness-contrast
-    gegl_node_set(bc, "brightness", brightness, "contrast", contrast, nullptr);
+    // 커브 설정
+    GeglCurve* curve = gegl_curve_new(0.0, 1.0);
+    gegl_curve_add_point(curve, 0.0, 0.0);
+    gegl_curve_add_point(curve, 0.25, 0.2);
+    gegl_curve_add_point(curve, 0.5, 0.5);
+    gegl_curve_add_point(curve, 0.75, 0.8);
+    gegl_curve_add_point(curve, 1.0, 1.0);
 
-    // Define the contrast curve points
-    const gchar* curve_str = "(0.0,0.0) (0.3,0.4) (0.7,0.6) (1.0,1.0)";
-    gegl_node_set(cc, "curve", curve_str, "sampling-points", 256, nullptr);
-
-    // Link the nodes
-    gegl_node_link_many(input, bc, cc, output, nullptr);
+    gegl_node_set(action, "curve", curve, "sampling-points", 0, nullptr);
+    gegl_node_link_many(input, action, output, nullptr);
 
     qDebug() << "Processing graph...";
     gegl_node_process(output);
