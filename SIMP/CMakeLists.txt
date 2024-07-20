@@ -16,6 +16,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Gui Multimedia MultimediaWidgets Widgets)
 
+# Set OpenCV_DIR to the directory containing OpenCVConfig.cmake
+set(OpenCV_DIR "C:/opencv/build/x64/vc16/lib")
+find_package(OpenCV REQUIRED)
+
 # Find GEGL and BABL using pkg-config
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GEGL REQUIRED gegl-0.4)
@@ -27,6 +31,7 @@ include_directories(
     ${GEGL_INCLUDE_DIRS}
     ${BABL_INCLUDE_DIRS}
     ${GLIB_INCLUDE_DIRS}
+    ${OpenCV_INCLUDE_DIRS}
     ${CMAKE_SOURCE_DIR}/include
 )
 
@@ -81,6 +86,7 @@ target_link_libraries(SIMP PRIVATE
     ${GEGL_LIBRARIES}
     ${BABL_LIBRARIES}
     ${GLIB_LIBRARIES}
+    ${OpenCV_LIBS}
     ${SIMP_LIBS}
 )
 
@@ -95,17 +101,37 @@ foreach(dll ${SIMP_DLLS})
     )
 endforeach()
 
-set(MINGW_DIRS "C:/msys64/mingw64/bin")
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(OpenCV_DLLS
+        "${OpenCV_DIR}/../bin/opencv_world4100d.dll"
+        "${OpenCV_DIR}/../bin/opencv_videoio_ffmpeg4100_64.dll"
+    )
+else()
+    set(OpenCV_DLLS
+        "${OpenCV_DIR}/../bin/opencv_world4100.dll"
+        "${OpenCV_DIR}/../bin/opencv_videoio_ffmpeg4100_64.dll"
+    )
+endif()
+
+foreach(dll ${OpenCV_DLLS})
+    add_custom_command(TARGET SIMP POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${dll}
+        $<TARGET_FILE_DIR:SIMP>
+    )
+endforeach()
+
+set(GEGL_BIN_DIRS "${GEGL_LIBRARY_DIRS}/../bin")
 
 set(GEGL_DLLS
-    "${MINGW_DIRS}/libgegl-0.4-0.dll"
-    "${MINGW_DIRS}/libbabl-0.1-0.dll"
-    "${MINGW_DIRS}/libglib-2.0-0.dll"
-    "${MINGW_DIRS}/libgobject-2.0-0.dll"
-    "${MINGW_DIRS}/libgmodule-2.0-0.dll"
-    "${MINGW_DIRS}/libgthread-2.0-0.dll"
-    "${MINGW_DIRS}/libgio-2.0-0.dll"
-    "${MINGW_DIRS}/libintl-8.dll"
+    "${GEGL_BIN_DIRS}/libgegl-0.4-0.dll"
+    "${GEGL_BIN_DIRS}/libbabl-0.1-0.dll"
+    "${GEGL_BIN_DIRS}/libglib-2.0-0.dll"
+    "${GEGL_BIN_DIRS}/libgobject-2.0-0.dll"
+    "${GEGL_BIN_DIRS}/libgmodule-2.0-0.dll"
+    "${GEGL_BIN_DIRS}/libgthread-2.0-0.dll"
+    "${GEGL_BIN_DIRS}/libgio-2.0-0.dll"
+    "${GEGL_BIN_DIRS}/libintl-8.dll"
 )
 
 foreach(dll ${GEGL_DLLS})
