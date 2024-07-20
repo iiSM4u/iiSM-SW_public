@@ -3,6 +3,7 @@
 #include "constants.h"
 #include "PixelFormatType.h"
 
+#include <QGraphicsPixmapItem>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QImage>
@@ -28,6 +29,7 @@ extern "C" {
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
+    , scene(new QGraphicsScene(this))
     , modelFrames(new QFileSystemModel(this))
     , mpVideoFile(new QMediaPlayer(this))
     , timer(new QTimer(this))
@@ -655,8 +657,15 @@ void MainWindow::btnLoadFrame_Click()
 void MainWindow::onSelecteImage(const QModelIndex &index)
 {
     QString filePath = modelFrames->filePath(index);
-    QPixmap pixmap(filePath);
-    ui->lbFrameCapture->setPixmap(pixmap.scaled(ui->lbFrameCapture->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    QPixmap pixmap(filePath);    
+    QGraphicsPixmapItem *item = new QGraphicsPixmapItem(pixmap);
+
+    scene->addItem(item);
+    ui->gvFrameCapture->setScene(scene);
+    ui->gvFrameCapture->fitInView(item, Qt::KeepAspectRatio);
+
+
+    //ui->lbFrameCapture->setPixmap(pixmap.scaled(ui->lbFrameCapture->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
 }
 
 // void MainWindow::btnBrightnessContrast_Click()
@@ -752,7 +761,7 @@ void MainWindow::btnStress_Click()
 
     if (!outputImage.isNull()) {
         qDebug() << "Processing completed. Showing image.";
-        ui->lbFrameCapture->setPixmap(QPixmap::fromImage(outputImage));
+        //ui->lbFrameCapture->setPixmap(QPixmap::fromImage(outputImage));
     } else {
         qDebug() << "Failed to process image";
     }
@@ -800,7 +809,7 @@ void MainWindow::btnStretchContrast_Click()
 
     if (!outputImage.isNull()) {
         qDebug() << "Processing completed. Showing image.";
-        ui->lbFrameCapture->setPixmap(QPixmap::fromImage(outputImage));
+        //ui->lbFrameCapture->setPixmap(QPixmap::fromImage(outputImage));
     } else {
         qDebug() << "Failed to process image";
     }
@@ -877,7 +886,15 @@ void MainWindow::btnBrightnessContrast_Click()
     cv::cvtColor(mat, rgb, cv::COLOR_BGR2RGB);
 
     QImage qimg(rgb.data, rgb.cols, rgb.rows, rgb.step, QImage::Format_RGB888);
-    ui->lbFrameCapture->setPixmap(QPixmap::fromImage(qimg));
+
+
+    QPixmap pixmap = QPixmap::fromImage(qimg);
+    QGraphicsPixmapItem *item = new QGraphicsPixmapItem(pixmap);
+
+    scene->addItem(item);
+    ui->gvFrameCapture->setScene(scene);
+    ui->gvFrameCapture->fitInView(item, Qt::KeepAspectRatio);
+
 }
 
 
@@ -889,7 +906,7 @@ void MainWindow::updatePreview(QImage outputImage)
 
 void MainWindow::updateFrame(QImage outputImage)
 {
-    ui->lbFrameCapture->setPixmap(QPixmap::fromImage(outputImage));
+    //ui->lbFrameCapture->setPixmap(QPixmap::fromImage(outputImage));
 }
 
 

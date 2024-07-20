@@ -4,6 +4,7 @@
 #include <QMediaPlayer>
 #include <QFileSystemModel>
 #include <QTimer>
+#include <QGraphicsScene>
 
 #include <opencv2/opencv.hpp>
 #include <miicam.h>
@@ -99,6 +100,7 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+    QGraphicsScene *scene;
 
     QMediaPlayer *mpVideoFile;
     QFileSystemModel *modelFrames;

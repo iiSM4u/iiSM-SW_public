@@ -777,7 +777,7 @@
        <item>
         <widget class="QTabWidget" name="tabWidget">
          <property name="currentIndex">
-          <number>0</number>
+          <number>2</number>
          </property>
          <widget class="QWidget" name="tabPreview">
           <attribute name="title">
@@ -987,14 +987,7 @@
             <widget class="QWidget" name="widget_4" native="true">
              <layout class="QHBoxLayout" name="horizontalLayout_6">
               <item>
-               <widget class="QLabel" name="lbFrameCapture">
-                <property name="styleSheet">
-                 <string notr="true">background: black;</string>
-                </property>
-                <property name="text">
-                 <string/>
-                </property>
-               </widget>
+               <widget class="QGraphicsView" name="gvFrameCapture"/>
               </item>
               <item>
                <widget class="QListView" name="lvFrames">
