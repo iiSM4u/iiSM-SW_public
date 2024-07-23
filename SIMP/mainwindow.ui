@@ -48,9 +48,9 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>0</y>
+         <y>-518</y>
          <width>241</width>
-         <height>1217</height>
+         <height>1245</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -375,7 +375,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QPlainTextEdit" name="editConstast">
+            <widget class="QPlainTextEdit" name="editContrast">
              <property name="minimumSize">
               <size>
                <width>0</width>
@@ -669,7 +669,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QPlainTextEdit" name="plainTextEdit">
+            <widget class="QPlainTextEdit" name="editTemperature">
              <property name="minimumSize">
               <size>
                <width>0</width>
@@ -680,6 +680,13 @@
               <font>
                <bold>false</bold>
               </font>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QSlider" name="sliderTemperature">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
              </property>
             </widget>
            </item>

@@ -53,6 +53,12 @@ private slots:
 
     void chkRecord_CheckedChanged(Qt::CheckState checkState);
 
+    void sliderExposureTime_sliderMoved(int position);
+    void sliderGain_sliderMoved(int position);
+    void sliderContrast_sliderMoved(int position);
+    void sliderGamma_sliderMoved(int position);
+    void sliderTemperature_sliderMoved(int position);
+
     void btnPlayCamera_Click();
     void btnStopCamera_Click();
     void btnCaptureCamera_Click();
@@ -60,7 +66,6 @@ private slots:
 
     void btnZoomIn_Click();
     void btnZoomOut_Click();
-
 
     void btnBrightnessContrast_Click();
     void btnStress_Click();
@@ -102,7 +107,7 @@ private:
     unsigned rawCameraHeight = 0;
     int resolutionIndex = 0;
     int recordFormat = cv::VideoWriter::fourcc('M', 'J', 'P', 'G');
-    QString recordFormatExtension = "avi";
+    QString recordFormatExtension = ".avi";
 
     //void resizeEvent(QResizeEvent* event) override;
     bool isOn = false;

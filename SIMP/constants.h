@@ -22,9 +22,6 @@ const bool DEFAULT_STRETCH_CONTRAST_PERCEPTUAL = false;
 
 const int DEFAULT_CONTRAST_CURVE_SAMPLING_PLINTS = 0;
 
-
-const int FPS_RECROD_VIDEO = 30;
-
 const QString PATH_CAPTURE_FRAME = "/captures";
 const QString PATH_RECORD_VIDEO = "/videos";
 

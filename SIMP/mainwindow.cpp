@@ -14,6 +14,8 @@
 #include <QDebug>
 #include <QLibrary>
 #include <QGraphicsView>
+#include <QKeyEvent>
+#include <QPlainTextEdit>
 #include <thread>
 
 
@@ -52,10 +54,19 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->btnCaptureCamera, &QPushButton::clicked, this, &MainWindow::btnCaptureCamera_Click);
     connect(ui->chkRecord, &QCheckBox::checkStateChanged, this, &MainWindow::chkRecord_CheckedChanged);
 
+    connect(ui->sliderExposureTime, &QSlider::sliderMoved, this, &MainWindow::sliderExposureTime_sliderMoved);
+    connect(ui->sliderGain, &QSlider::sliderMoved, this, &MainWindow::sliderGain_sliderMoved);
+    connect(ui->sliderContrast, &QSlider::sliderMoved, this, &MainWindow::sliderContrast_sliderMoved);
+    connect(ui->sliderGamma, &QSlider::sliderMoved, this, &MainWindow::sliderGamma_sliderMoved);
+    connect(ui->sliderTemperature, &QSlider::sliderMoved, this, &MainWindow::sliderTemperature_sliderMoved);
+
+
     connect(ui->btnZoomIn, &QPushButton::clicked, this, &MainWindow::btnZoomIn_Click);
     connect(ui->btnZoomOut, &QPushButton::clicked, this, &MainWindow::btnZoomOut_Click);
 
     connect(timer, &QTimer::timeout, this, &MainWindow::onTimerCallback);
+
+    ui->cbResolution->setEnabled(false);
 
     // update combobox - 나중에 옮길 것.
     ui->cbFormat->clear();
@@ -64,9 +75,31 @@ MainWindow::MainWindow(QWidget *parent)
         ui->cbFormat->addItem(toString(format));
     }
     ui->cbFormat->setCurrentIndex(0);
-
-    ui->cbResolution->setEnabled(false);
     ui->cbFormat->setEnabled(false);
+
+    // init gain, contrast, gamma
+    int MIICAM_EXPOGAIN_MAX = 5000;
+    ui->sliderGain->setMinimum(MIICAM_EXPOGAIN_MIN);
+    ui->sliderGain->setMaximum(MIICAM_EXPOGAIN_MAX);
+    ui->sliderGain->setValue(MIICAM_EXPOGAIN_DEF);
+    ui->editGain->setPlainText(QString::number(round(MIICAM_EXPOGAIN_DEF)));
+    ui->sliderGain->setEnabled(false);
+    ui->editGain->setEnabled(false);
+
+    ui->sliderContrast->setMinimum(MIICAM_CONTRAST_MIN);
+    ui->sliderContrast->setMaximum(MIICAM_CONTRAST_MAX);
+    ui->sliderContrast->setValue(MIICAM_CONTRAST_DEF);
+    ui->editContrast->setPlainText(QString::number(round(MIICAM_CONTRAST_DEF)));
+    ui->sliderContrast->setEnabled(false);
+    ui->editContrast->setEnabled(false);
+
+    ui->sliderGamma->setMinimum(MIICAM_GAMMA_MIN);
+    ui->sliderGamma->setMaximum(MIICAM_GAMMA_MAX);
+    ui->sliderGamma->setValue(MIICAM_GAMMA_DEF);
+    ui->editGamma->setPlainText(QString::number(round(MIICAM_GAMMA_DEF)));
+    ui->sliderGamma->setEnabled(false);
+    ui->editGamma->setEnabled(false);
+
 
     ui->btnPlayCamera->setEnabled(false);
     ui->btnStopCamera->setEnabled(false);
@@ -291,13 +324,15 @@ void MainWindow::chkRecord_CheckedChanged(Qt::CheckState checkState)
 {
     if (checkState == Qt::CheckState::Checked)
     {
+        this->isRecordOn = true;
         this->videoFrames.clear();
     }
     else if (checkState == Qt::CheckState::Unchecked)
     {
+        this->isRecordOn = false;
         if (this->videoFrames.size() > 0)
         {
-            QString pathDir = QCoreApplication::applicationDirPath() + PATH_CAPTURE_FRAME;
+            QString pathDir = QCoreApplication::applicationDirPath() + PATH_RECORD_VIDEO;
 
             QDir dir(pathDir);
             if (!dir.exists())
@@ -309,7 +344,7 @@ void MainWindow::chkRecord_CheckedChanged(Qt::CheckState checkState)
             QString timestamp = currentDateTime.toString(FORMAT_DATE_TIME);
             QString filePath = dir.absoluteFilePath(timestamp + this->recordFormatExtension);
 
-            cv::VideoWriter writer(filePath.toStdString(), this->recordFormat, FPS_RECROD_VIDEO, cv::Size(this->videoFrames[0].cols, this->videoFrames[0].rows));
+            cv::VideoWriter writer(filePath.toStdString(), this->recordFormat, FRAME_PER_SECOND, cv::Size(this->videoFrames[0].cols, this->videoFrames[0].rows));
 
             for (const cv::Mat& mat : this->videoFrames)
             {
@@ -326,6 +361,71 @@ void MainWindow::chkRecord_CheckedChanged(Qt::CheckState checkState)
 void MainWindow::btnRecordOption_Click()
 {
 
+}
+
+
+void MainWindow::sliderExposureTime_sliderMoved(int position)
+{
+    // trackbar가 정수이므로 0.1을 곱한다.
+    double value = ui->sliderExposureTime->value() * 0.1;
+
+    // time이 microsecond이고 range가 0.1-50000이기 때문에 0.01을 곱한다.
+    Miicam_put_ExpoTime(this->miiHcam, (unsigned int)(value * 100.0));
+
+    {
+        const QSignalBlocker blocker(ui->editExposureTime);
+        ui->editExposureTime->setPlainText(QString::number(round(value)));
+    }
+}
+
+void MainWindow::sliderGain_sliderMoved(int position)
+{
+    int value = ui->sliderGain->value();
+
+    Miicam_put_ExpoAGain(this->miiHcam, (unsigned short)(value));
+
+    {
+        const QSignalBlocker blocker(ui->editGain);
+        ui->editGain->setPlainText(QString::number(round(value)));
+    }
+}
+
+void MainWindow::sliderContrast_sliderMoved(int position)
+{
+    int value = ui->sliderContrast->value();
+
+    Miicam_put_Contrast(this->miiHcam, value);
+
+    {
+        const QSignalBlocker blocker(ui->editContrast);
+        ui->editContrast->setPlainText(QString::number(round(value)));
+    }
+}
+
+void MainWindow::sliderGamma_sliderMoved(int position)
+{
+    int value = ui->sliderGamma->value();
+
+    Miicam_put_Gamma(this->miiHcam, value);
+
+    {
+        const QSignalBlocker blocker(ui->editGamma);
+        ui->editGamma->setPlainText(QString::number(round(value)));
+    }
+}
+
+void MainWindow::sliderTemperature_sliderMoved(int position)
+{
+    // trackbar가 정수이므로 0.1을 곱한다.
+    int value = ui->sliderTemperature->value() * 0.1;
+
+    // temperature는 3.2도를 32로 받기 때문에 10을 곱한다.
+    Miicam_put_Temperature(this->miiHcam, (short)(value * 10.0));
+
+    {
+        const QSignalBlocker blocker(ui->editTemperature);
+        ui->editTemperature->setPlainText(QString::number(round(value)));
+    }
 }
 
 void MainWindow::btnZoomIn_Click()
@@ -450,7 +550,6 @@ void MainWindow::UpdatePreview()
     {
         if (this->isCameraPlay && this->rawCameraData)
         {
-            // 여기서 format은 combobox에서 선택한 format이 되어야 함
             QImage source = QImage(this->rawCameraData, this->rawCameraWidth, this->rawCameraHeight, QImage::Format_RGB888);
 
             // gegl에서는 rgba를 받기 때문에 무조건 rgba로 바꿔야 한다.
@@ -577,6 +676,38 @@ void MainWindow::OpenCamera()
         this->imageWidth = this->miiDevice.model->res[this->resolutionIndex].width;
         this->imageHeight = this->miiDevice.model->res[this->resolutionIndex].height;
 
+        unsigned int nMin, nMax, nDef, nTime;
+        Miicam_get_ExpTimeRange(this->miiHcam, &nMin, &nMax, &nDef);
+        Miicam_get_ExpoTime(this->miiHcam, &nTime);
+
+        // time이 microsecond이고 range가 0.1-5000ms이기 때문에 0.01을 곱한다.
+        double min = nMin * 0.01;
+        double max = nMax * 0.01;
+        double def = nDef * 0.01;
+        double value = nTime * 0.01;
+
+        double exposureTimeMin = 0.1;
+        double exposureTimeMax = 5000.0;
+
+        double temperatureMin = -50.0;
+        double temperatureMax = 40.0;
+
+        if (min < exposureTimeMin)
+        {
+            min = exposureTimeMin;
+        }
+
+        if (max > exposureTimeMax)
+        {
+            max = exposureTimeMax;
+        }
+
+        short temperature;
+        Miicam_get_Temperature(this->miiHcam, &temperature);
+
+        // temperature는 3.2도를 32로 받기 때문에 0.1을 곱한다.
+        double tempValue = temperature * 0.1;
+
         // open에 성공하면 resolution 업데이트
         {
             const QSignalBlocker blocker(ui->cbResolution);
@@ -586,6 +717,18 @@ void MainWindow::OpenCamera()
                 ui->cbResolution->addItem(QString::asprintf("%u x %u", this->miiDevice.model->res[i].width, this->miiDevice.model->res[i].height));
             }
             ui->cbResolution->setCurrentIndex(this->resolutionIndex);
+
+            ui->sliderExposureTime->setMinimum((int)(min * 10.0));
+            ui->sliderExposureTime->setMaximum((int)(max * 10.0));
+            ui->sliderExposureTime->setValue((int)(value * 10.0));
+            ui->editExposureTime->setPlainText(QString::number(round(value)));
+
+            double MIICAM_TEMPERATURE_MIN = -50.0;
+            double MIICAM_TEMPERATURE_MAX = 40.0;
+            ui->sliderTemperature->setMinimum((int)(MIICAM_TEMPERATURE_MIN * 10.0));
+            ui->sliderTemperature->setMaximum((int)(MIICAM_TEMPERATURE_MAX * 10.0));
+            ui->sliderTemperature->setValue((int)(tempValue * 10.0));
+            ui->editTemperature->setPlainText(QString::number(round(tempValue)));
 
             ui->cbResolution->setEnabled(true);
             ui->cbFormat->setEnabled(true);
@@ -740,6 +883,7 @@ void MainWindow::onMiiCameraCallback(unsigned nEvent)
 void MainWindow::handleImageEvent()
 {
     QMutexLocker locker(&imageMutex);
+
     if (SUCCEEDED(Miicam_PullImage(this->miiHcam, this->rawCameraData, 24, &this->rawCameraWidth, &this->rawCameraHeight)))
     {
     }
