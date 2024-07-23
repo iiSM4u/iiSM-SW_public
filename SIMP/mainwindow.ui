@@ -29,9 +29,15 @@
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
      <widget class="QScrollArea" name="scrollArea">
+      <property name="minimumSize">
+       <size>
+        <width>260</width>
+        <height>0</height>
+       </size>
+      </property>
       <property name="maximumSize">
        <size>
-        <width>220</width>
+        <width>260</width>
         <height>16777215</height>
        </size>
       </property>
@@ -43,7 +49,7 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>201</width>
+         <width>241</width>
          <height>1217</height>
         </rect>
        </property>
@@ -777,7 +783,7 @@
        <item>
         <widget class="QTabWidget" name="tabWidget">
          <property name="currentIndex">
-          <number>2</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="tabPreview">
           <attribute name="title">
@@ -785,14 +791,7 @@
           </attribute>
           <layout class="QHBoxLayout" name="horizontalLayout_4">
            <item>
-            <widget class="QLabel" name="lbPreview">
-             <property name="styleSheet">
-              <string notr="true">background: black;</string>
-             </property>
-             <property name="text">
-              <string/>
-             </property>
-            </widget>
+            <widget class="QGraphicsView" name="gvPreview"/>
            </item>
           </layout>
          </widget>
