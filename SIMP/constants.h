@@ -31,3 +31,5 @@ const QString PATH_RECORD_VIDEO = "/videos";
 const QString MENU_PLAY = "Play";
 const QString MENU_PAUSE = "Pause";
 
+const QString EXTENSION_CAPTURE_IMAGE = ".png";
+const QString FORMAT_DATE_TIME = "yyyy_MM_dd_hh_mm_ss";

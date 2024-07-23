@@ -279,8 +279,8 @@ void MainWindow::btnCaptureCamera_Click()
         }
 
         QDateTime currentDateTime = QDateTime::currentDateTime();
-        QString timestamp = currentDateTime.toString("yyyy_MM_dd_hh_mm_ss");
-        QString filePath = dir.absoluteFilePath(timestamp + ".png");
+        QString timestamp = currentDateTime.toString(FORMAT_DATE_TIME);
+        QString filePath = dir.absoluteFilePath(timestamp + EXTENSION_CAPTURE_IMAGE);
 
         this->resultImage.save(filePath);
     }
@@ -305,7 +305,7 @@ void MainWindow::chkRecord_CheckedChanged(Qt::CheckState checkState)
             }
 
             QDateTime currentDateTime = QDateTime::currentDateTime();
-            QString timestamp = currentDateTime.toString("yyyy_MM_dd_hh_mm_ss");
+            QString timestamp = currentDateTime.toString(FORMAT_DATE_TIME);
             QString filePath = dir.absoluteFilePath(timestamp + this->recordFormatExtension);
 
             cv::VideoWriter writer(filePath.toStdString(), this->recordFormat, FPS_RECROD_VIDEO, cv::Size(this->videoFrames[0].cols, this->videoFrames[0].rows));
@@ -502,9 +502,9 @@ void MainWindow::UpdateGraphicsView()
     }
 
     {
-        const QSignalBlocker blocker(ui->gvFrameCapture);
+        const QSignalBlocker blocker(ui->gvPreview);
         this->pmiPreview = this->scenePreview->addPixmap(QPixmap::fromImage(this->resultImage));
-        ui->gvFrameCapture->fitInView(this->pmiPreview, Qt::KeepAspectRatio);
+        ui->gvPreview->fitInView(this->pmiPreview, Qt::KeepAspectRatio);
     }
 }
 
