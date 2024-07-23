@@ -27,7 +27,7 @@ MainWindow::MainWindow(QWidget *parent)
     , timer(new QTimer(this))
     , captureDir(QCoreApplication::applicationDirPath() + PATH_CAPTURE_FRAME)
 {
-    ui->setupUi(this);    
+    ui->setupUi(this);
     ui->gvPreview->setScene(scenePreview);
     ui->gvFrameCapture->setScene(sceneFrame);
 
@@ -38,7 +38,7 @@ MainWindow::MainWindow(QWidget *parent)
         "QPlainTextEdit:disabled { background-color: lightgray; color: darkgray; }"
         "QSlider:disabled { background-color: lightgray; color: darkgray; }"
         "QRadioButton:disabled { background-color: lightgray; color: darkgray; }"
-    );
+        );
 
 
     // tab preview
@@ -144,7 +144,7 @@ void MainWindow::resizeEvent(QResizeEvent *event)
     {
         if (this->pmiPreview)
         {
-            ui->gvFrameCapture->fitInView(this->pmiPreview, Qt::KeepAspectRatio);
+            //ui->gvFrameCapture->fitInView(this->pmiPreview, Qt::KeepAspectRatio);
         }
     }
     else if (currentWidget == ui->tabVideo)
@@ -414,14 +414,17 @@ void MainWindow::onSelecteImage(const QModelIndex &index)
 
 void MainWindow::btnBrightnessContrast_Click()
 {
+    this->isUpdateBrightnessContrast = !this->isUpdateBrightnessContrast;
 }
 
 void MainWindow::btnStress_Click()
 {
+    //this->isUpdateStress = !this->isUpdateStress;
 }
 
 void MainWindow::btnStretchContrast_Click()
 {
+    this->isUpdateStretchContrast = !this->isUpdateStretchContrast;
 }
 
 void MainWindow::onVideoStatusChanged(QMediaPlayer::MediaStatus status)
@@ -442,27 +445,34 @@ void MainWindow::UpdatePreview()
     {
         if (this->isCameraPlay && this->rawCameraData)
         {
+            // 여기서 format은 combobox에서 선택한 format이 되어야 함
             QImage source = QImage(this->rawCameraData, this->rawCameraWidth, this->rawCameraHeight, QImage::Format_RGB888);
 
-            // if (this->isUpdateBrightnessContrast)
-            // {
-            //     UpdateBrightnessContrast(source, this->brightness, this->contrast);
-            // }
+            // gegl에서는 rgba를 받기 때문에 무조건 rgba로 바꿔야 한다.
+            QImage formattedSource = source.convertToFormat(QImage::Format_RGBA8888);
 
-            // if (this->isUpdateStress)
-            // {
-            //     //UpdateStress(source, this->stressRadius, this->stressSamples, this->stressIterations, this->stressEnhanceShadows);
-            // }
+            if (this->isUpdateBrightnessContrast)
+            {
+                UpdateBrightnessContrast(formattedSource, this->brightness, this->contrast);
+            }
 
-            // if (this->isUpdateStretchContrast)
-            // {
-            //     UpdateStretchContrast(source, this->stretchContrastKeepColors, this->stretchContrastPerceptual);
-            // }
+            if (this->isUpdateStress)
+            {
+                UpdateStress(formattedSource, this->stressRadius, this->stressSamples, this->stressIterations, this->stressEnhanceShadows);
+            }
 
-            // if (this->isUpdateContrastCurve)
-            // {
-            //     UpdateContrastCurve(source, this->contrastCurves, this->contrastCurveSamplingPoints);
-            // }
+            if (this->isUpdateStretchContrast)
+            {
+                UpdateStretchContrast(formattedSource, this->stretchContrastKeepColors, this->stretchContrastPerceptual);
+            }
+
+            if (this->isUpdateContrastCurve)
+            {
+                UpdateContrastCurve(formattedSource, this->contrastCurves, this->contrastCurveSamplingPoints);
+            }
+
+            // 원래 format으로 되돌린다.
+            source = formattedSource.convertToFormat(QImage::Format_RGB888);
 
             // gegl을 적용한 후에 result에 넣는다. 그래야 video나 capture에서 gegl이 적용된 이미지가 사용될 수 있음.
             this->resultImage = source;
@@ -820,21 +830,28 @@ void MainWindow::SetupModel(const QString& capturePath)
 
 void MainWindow::UpdateBrightnessContrast(QImage& source, const double brightness, const double contrast)
 {
+    // Create GEGL buffers
     GeglBuffer* input_buffer = gegl_buffer_new(GEGL_RECTANGLE(0, 0, source.width(), source.height()), babl_format("R'G'B'A u8"));
     GeglBuffer* output_buffer = gegl_buffer_new(GEGL_RECTANGLE(0, 0, source.width(), source.height()), babl_format("R'G'B'A u8"));
 
+    // Set input buffer data
     gegl_buffer_set(input_buffer, nullptr, 0, babl_format("R'G'B'A u8"), source.bits(), GEGL_AUTO_ROWSTRIDE);
 
+    // Create GEGL graph
     GeglNode* graph = gegl_node_new();
     GeglNode* input = gegl_node_new_child(graph, "operation", "gegl:buffer-source", "buffer", input_buffer, nullptr);
     GeglNode* action = gegl_node_new_child(graph, "operation", "gegl:brightness-contrast", nullptr);
     GeglNode* output = gegl_node_new_child(graph, "operation", "gegl:write-buffer", "buffer", output_buffer, nullptr);
 
+    // Set brightness and contrast
     gegl_node_set(action, "brightness", brightness, "contrast", contrast, nullptr);
     gegl_node_link_many(input, action, output, nullptr);
     gegl_node_process(output);
+
+    // Get output buffer data
     gegl_buffer_get(output_buffer, nullptr, 1.0, babl_format("R'G'B'A u8"), source.bits(), GEGL_AUTO_ROWSTRIDE, GEGL_ABYSS_NONE);
 
+    // Unreference GEGL buffers and graph
     g_object_unref(input_buffer);
     g_object_unref(output_buffer);
     g_object_unref(graph);
