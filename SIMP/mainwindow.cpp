@@ -142,10 +142,11 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 
     if (currentWidget == ui->tabPreview)
     {
-        if (this->pmiPreview)
-        {
-            //ui->gvFrameCapture->fitInView(this->pmiPreview, Qt::KeepAspectRatio);
-        }
+        //if (this->pmiPreview)
+        //{
+        //    ui->gvPreview->fitInView(this->pmiPreview, Qt::KeepAspectRatio);
+        //    ui->gvPreview->scale(zoomFactor, zoomFactor);
+        //}
     }
     else if (currentWidget == ui->tabVideo)
     {
@@ -335,6 +336,8 @@ void MainWindow::btnZoomIn_Click()
     {
         zoomFactor = ZOOM_MAX;
     }
+
+    ui->gvPreview->scale(zoomFactor, zoomFactor);
 }
 
 void MainWindow::btnZoomOut_Click()
@@ -345,6 +348,8 @@ void MainWindow::btnZoomOut_Click()
     {
         zoomFactor = ZOOM_MIN;
     }
+
+    ui->gvPreview->scale(zoomFactor, zoomFactor);
 }
 
 void MainWindow::btnLoadVideo_Click()
@@ -504,7 +509,11 @@ void MainWindow::UpdateGraphicsView()
     {
         const QSignalBlocker blocker(ui->gvPreview);
         this->pmiPreview = this->scenePreview->addPixmap(QPixmap::fromImage(this->resultImage));
-        ui->gvPreview->fitInView(this->pmiPreview, Qt::KeepAspectRatio);
+
+        if (std::abs(zoomFactor - 1.0f) <= std::numeric_limits<float>::epsilon())
+        {
+            ui->gvPreview->fitInView(this->pmiPreview, Qt::KeepAspectRatio);
+        }
     }
 }
 
