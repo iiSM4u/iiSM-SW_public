@@ -34,21 +34,6 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    // this->customGvPreview = qobject_cast<CustomGraphicsView*>(ui->gvPreview);
-
-    // if (!this->customGvPreview) {
-    //     qDebug() << "Casting to CustomGraphicsView failed!";
-    //     this->customGvPreview  = new CustomGraphicsView(this);
-    //     ui->verticalLayout->replaceWidget(ui->gvPreview, this->customGvPreview );
-    //     delete ui->gvPreview;
-    //     ui->gvPreview = this->customGvPreview;
-    // }
-
-    // this->customGvPreview->setScene(scenePreview);
-
-    //ui->gvPreview->setScene(scenePreview);
-    ui->gvFrameCapture->setScene(sceneFrame);
-
     qApp->setStyleSheet(
         "QPushButton:disabled { background-color: lightgray; color: darkgray; }"
         "QComboBox:disabled { background-color: lightgray; color: darkgray; }"
@@ -57,6 +42,8 @@ MainWindow::MainWindow(QWidget *parent)
         "QSlider:disabled { background-color: lightgray; color: darkgray; }"
         "QRadioButton:disabled { background-color: lightgray; color: darkgray; }"
     );
+
+    ui->gvFrameCapture->setScene(sceneFrame);
 
     MainWindow::ConnectUI();
     MainWindow::InitUI();
@@ -846,6 +833,7 @@ void MainWindow::lvFrames_Click(const QModelIndex &index)
     ui->gvFrameCapture->fitInView(this->pmiFrame, Qt::KeepAspectRatio);
 }
 
+
 ////////////////////////////////////////
 // non-ui
 ////////////////////////////////////////
@@ -905,24 +893,22 @@ void MainWindow::UpdatePreview()
 
 void MainWindow::UpdateGraphicsView()
 {
+    const QSignalBlocker blocker(ui->gvPreview);
+    ui->gvPreview->setImage(this->resultImage);
+
+    if (std::abs(zoomFactor - 1.0f) <= std::numeric_limits<float>::epsilon())
     {
-        const QSignalBlocker blocker(ui->gvPreview);
-        ui->gvPreview->setImage(this->resultImage);
+        ui->gvPreview->fitInView();
+    }
 
-        if (std::abs(zoomFactor - 1.0f) <= std::numeric_limits<float>::epsilon())
-        {
-            ui->gvPreview->fitInView();
-        }
+    if (this->isRecordOn)
+    {
+        QTime currentTime = QTime::currentTime();
+        int elapsedSeconds = this->recordStartTime.secsTo(currentTime);
+        QTime elapsedTime(0, 0);
+        elapsedTime = elapsedTime.addSecs(elapsedSeconds);
 
-        if (this->isRecordOn)
-        {
-            QTime currentTime = QTime::currentTime();
-            int elapsedSeconds = this->recordStartTime.secsTo(currentTime);
-            QTime elapsedTime(0, 0);
-            elapsedTime = elapsedTime.addSecs(elapsedSeconds);
-
-            ui->lbRunTime->setText("Recoding Time: " + elapsedTime.toString("hh:mm:ss"));
-        }
+        ui->lbRunTime->setText("Recoding Time: " + elapsedTime.toString("hh:mm:ss"));
     }
 }
 
