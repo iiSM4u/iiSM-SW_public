@@ -26,7 +26,9 @@ MainWindow::MainWindow(QWidget *parent)
     , sceneFrame(new QGraphicsScene(this))
     , modelFrames(new QFileSystemModel(this))
     , mpVideoFile(new QMediaPlayer(this))
-    , timer(new QTimer(this))
+    , timerFPS(new QTimer(this))
+    , timerVideoRecord(new QTimer(this))
+    , btnGroupCooling(new QButtonGroup(this))
     , captureDir(QCoreApplication::applicationDirPath() + PATH_CAPTURE_FRAME)
 {
     ui->setupUi(this);
@@ -36,109 +38,15 @@ MainWindow::MainWindow(QWidget *parent)
     qApp->setStyleSheet(
         "QPushButton:disabled { background-color: lightgray; color: darkgray; }"
         "QComboBox:disabled { background-color: lightgray; color: darkgray; }"
-        "QCheckbox:disabled { background-color: lightgray; color: darkgray; }"
+        "QCheckBox:disabled { background-color: lightgray; color: darkgray; }"
         "QPlainTextEdit:disabled { background-color: lightgray; color: darkgray; }"
         "QSlider:disabled { background-color: lightgray; color: darkgray; }"
         "QRadioButton:disabled { background-color: lightgray; color: darkgray; }"
-        );
+    );
 
-
-    // tab preview
-    connect(this, &MainWindow::evtCallback, this, &MainWindow::onMiiCameraCallback);
-
-    connect(ui->cbResolution, &QComboBox::currentIndexChanged, this, &MainWindow::cbResoution_SelectedIndexChanged);
-    connect(ui->cbFormat, &QComboBox::currentIndexChanged, this, &MainWindow::cbFormat_SelectedIndexChanged);
-
-    connect(ui->btnPlayCamera, &QPushButton::clicked, this, &MainWindow::btnPlayCamera_Click);
-    connect(ui->btnStopCamera, &QPushButton::clicked, this, &MainWindow::btnStopCamera_Click);
-    connect(ui->btnCaptureCamera, &QPushButton::clicked, this, &MainWindow::btnCaptureCamera_Click);
-    connect(ui->chkRecord, &QCheckBox::checkStateChanged, this, &MainWindow::chkRecord_CheckedChanged);
-
-    connect(ui->sliderExposureTime, &QSlider::sliderMoved, this, &MainWindow::sliderExposureTime_sliderMoved);
-    connect(ui->sliderGain, &QSlider::sliderMoved, this, &MainWindow::sliderGain_sliderMoved);
-    connect(ui->sliderContrast, &QSlider::sliderMoved, this, &MainWindow::sliderContrast_sliderMoved);
-    connect(ui->sliderGamma, &QSlider::sliderMoved, this, &MainWindow::sliderGamma_sliderMoved);
-    connect(ui->sliderTemperature, &QSlider::sliderMoved, this, &MainWindow::sliderTemperature_sliderMoved);
-
-
-    connect(ui->btnZoomIn, &QPushButton::clicked, this, &MainWindow::btnZoomIn_Click);
-    connect(ui->btnZoomOut, &QPushButton::clicked, this, &MainWindow::btnZoomOut_Click);
-
-    connect(timer, &QTimer::timeout, this, &MainWindow::onTimerCallback);
-
-    ui->cbResolution->setEnabled(false);
-
-    // update combobox - 나중에 옮길 것.
-    ui->cbFormat->clear();
-    for (const auto& format : {PixelFormatType::RGB24, PixelFormatType::RGB32, PixelFormatType::Raw})
-    {
-        ui->cbFormat->addItem(toString(format));
-    }
-    ui->cbFormat->setCurrentIndex(0);
-    ui->cbFormat->setEnabled(false);
-
-    // init gain, contrast, gamma
-    int MIICAM_EXPOGAIN_MAX = 5000;
-    ui->sliderGain->setMinimum(MIICAM_EXPOGAIN_MIN);
-    ui->sliderGain->setMaximum(MIICAM_EXPOGAIN_MAX);
-    ui->sliderGain->setValue(MIICAM_EXPOGAIN_DEF);
-    ui->editGain->setPlainText(QString::number(round(MIICAM_EXPOGAIN_DEF)));
-    ui->sliderGain->setEnabled(false);
-    ui->editGain->setEnabled(false);
-
-    ui->sliderContrast->setMinimum(MIICAM_CONTRAST_MIN);
-    ui->sliderContrast->setMaximum(MIICAM_CONTRAST_MAX);
-    ui->sliderContrast->setValue(MIICAM_CONTRAST_DEF);
-    ui->editContrast->setPlainText(QString::number(round(MIICAM_CONTRAST_DEF)));
-    ui->sliderContrast->setEnabled(false);
-    ui->editContrast->setEnabled(false);
-
-    ui->sliderGamma->setMinimum(MIICAM_GAMMA_MIN);
-    ui->sliderGamma->setMaximum(MIICAM_GAMMA_MAX);
-    ui->sliderGamma->setValue(MIICAM_GAMMA_DEF);
-    ui->editGamma->setPlainText(QString::number(round(MIICAM_GAMMA_DEF)));
-    ui->sliderGamma->setEnabled(false);
-    ui->editGamma->setEnabled(false);
-
-
-    ui->btnPlayCamera->setEnabled(false);
-    ui->btnStopCamera->setEnabled(false);
-    ui->btnCaptureCamera->setEnabled(false);
-
-    ui->btnZoomIn->setEnabled(false);
-    ui->btnZoomOut->setEnabled(false);
-
-    // tab video
-    mpVideoFile->setVideoOutput(ui->videoFile);
-
-    connect(mpVideoFile, &QMediaPlayer::mediaStatusChanged, this, &MainWindow::onVideoStatusChanged);
-
-    connect(ui->btnLoadVideo, &QPushButton::clicked, this, &MainWindow::btnLoadVideo_Click);
-    connect(ui->btnPlayVideo, &QPushButton::clicked, this, &MainWindow::btnPlayVideo_Click);
-    connect(ui->btnStopVideo, &QPushButton::clicked, this, &MainWindow::btnStopVideo_Click);
-
-    ui->btnPlayVideo->setEnabled(false);
-    ui->btnStopVideo->setEnabled(false);
-
-
-
-    // tab frame
-    SetupModel(captureDir);
-
-    ui->lvFrames->setModel(modelFrames);
-    ui->lvFrames->setRootIndex(modelFrames->index(captureDir)); // Set the root index
-    ui->lbDirFrames->setText(captureDir);
-
-    connect(ui->lvFrames, &QListView::clicked, this, &MainWindow::onSelecteImage);
-
-    connect(ui->btnLoadFrame, &QPushButton::clicked, this, &MainWindow::btnLoadFrame_Click);
-
-
-
-    // gegl
-    connect(ui->btnBrightnessContrast, &QPushButton::clicked, this, &MainWindow::btnBrightnessContrast_Click);
-    connect(ui->btnStress, &QPushButton::clicked, this, &MainWindow::btnStress_Click);
-    connect(ui->btnStretchContrast, &QPushButton::clicked, this, &MainWindow::btnStretchContrast_Click);
+    MainWindow::ConnectUI();
+    MainWindow::InitUI();
+    MainWindow::EnablePreviewUI(false);
 
     // thread 시작
     this->isOn = true;
@@ -171,34 +79,197 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 {
     QMainWindow::resizeEvent(event);
 
-    QWidget *currentWidget = ui->tabWidget->currentWidget();
-
-    if (currentWidget == ui->tabPreview)
-    {
-        //if (this->pmiPreview)
-        //{
-        //    ui->gvPreview->fitInView(this->pmiPreview, Qt::KeepAspectRatio);
-        //    ui->gvPreview->scale(zoomFactor, zoomFactor);
-        //}
-    }
-    else if (currentWidget == ui->tabVideo)
-    {
-
-    }
-    else if (currentWidget == ui->tabCapture)
+    if (ui->tabWidget->currentWidget() == ui->tabCapture)
     {
         if (this->pmiFrame)
         {
             ui->gvFrameCapture->fitInView(this->pmiFrame, Qt::KeepAspectRatio);
         }
     }
+
+    // preview에서 fitInView하면 영상이 튀어서 주석처리
+    // QWidget *currentWidget = ui->tabWidget->currentWidget();
+
+    // if (currentWidget == ui->tabPreview)
+    // {
+    //     //if (this->pmiPreview)
+    //     //{
+    //     //    ui->gvPreview->fitInView(this->pmiPreview, Qt::KeepAspectRatio);
+    //     //    ui->gvPreview->scale(zoomFactor, zoomFactor);
+    //     //}
+    // }
+    // else if (currentWidget == ui->tabVideo)
+    // {
+
+    // }
+    // else if (currentWidget == ui->tabCapture)
+    // {
+    //     if (this->pmiFrame)
+    //     {
+    //         ui->gvFrameCapture->fitInView(this->pmiFrame, Qt::KeepAspectRatio);
+    //     }
+    // }
 }
 
 
 ////////////////////////////////////////
 // UI
 ////////////////////////////////////////
+void MainWindow::ConnectUI()
+{
+    connect(this, &MainWindow::evtCallback, this, &MainWindow::onMiiCameraCallback);
+    connect(timerFPS, &QTimer::timeout, this, &MainWindow::onTimerFpsCallback);
 
+    // preview
+    connect(ui->cbResolution, &QComboBox::currentIndexChanged, this, &MainWindow::cbResoution_SelectedIndexChanged);
+    connect(ui->cbFormat, &QComboBox::currentIndexChanged, this, &MainWindow::cbFormat_SelectedIndexChanged);
+
+    connect(ui->btnPlayCamera, &QPushButton::clicked, this, &MainWindow::btnPlayCamera_Click);
+    connect(ui->btnStopCamera, &QPushButton::clicked, this, &MainWindow::btnStopCamera_Click);
+    connect(ui->btnCaptureCamera, &QPushButton::clicked, this, &MainWindow::btnCaptureCamera_Click);
+
+    connect(ui->chkRecord, &QCheckBox::checkStateChanged, this, &MainWindow::chkRecord_CheckedChanged);
+    connect(ui->btnRecordOption, &QPushButton::clicked, this, &MainWindow::btnRecordOption_Click);
+
+    connect(ui->sliderExposureTime, &QSlider::sliderMoved, this, &MainWindow::sliderExposureTime_sliderMoved);
+    //connect(ui->editExposureTime, &QSlider::sliderMoved, this, &MainWindow::sliderExposureTime_sliderMoved);
+
+    connect(ui->sliderGain, &QSlider::sliderMoved, this, &MainWindow::sliderGain_sliderMoved);
+    //connect(ui->editGain, &QSlider::sliderMoved, this, &MainWindow::sliderGain_sliderMoved);
+
+    connect(ui->sliderContrast, &QSlider::sliderMoved, this, &MainWindow::sliderContrast_sliderMoved);
+    //connect(ui->editContrast, &QSlider::sliderMoved, this, &MainWindow::sliderContrast_sliderMoved);
+
+    connect(ui->sliderGamma, &QSlider::sliderMoved, this, &MainWindow::sliderGamma_sliderMoved);
+    //connect(ui->editGamma, &QSlider::sliderMoved, this, &MainWindow::sliderGamma_sliderMoved);
+
+    connect(ui->btnCurveSetting, &QPushButton::clicked, this, &MainWindow::btnCurveSetting_Click);
+    connect(ui->cbCurvePreset, &QComboBox::currentIndexChanged, this, &MainWindow::cbCurvePreset_SelectedIndexChanged);
+
+    connect(ui->chkDarkfield, &QCheckBox::checkStateChanged, this, &MainWindow::chkDarkfield_CheckedChanged);
+    //connect(ui->editDarkfieldQuantity, &QSlider::sliderMoved, this, &MainWindow::sliderTemperature_sliderMoved);
+    connect(ui->btnDarkfieldCapture, &QPushButton::clicked, this, &MainWindow::btnDarkfieldCapture_Click);
+
+    this->btnGroupCooling->addButton(ui->rbCoolingOn, 1);
+    this->btnGroupCooling->addButton(ui->rbCoolingOff, 2);
+    connect(this->btnGroupCooling, &QButtonGroup::idClicked, this, &MainWindow::btnGroupCooling_Click);
+
+    connect(ui->sliderTemperature, &QSlider::sliderMoved, this, &MainWindow::sliderTemperature_sliderMoved);
+    //connect(ui->editTemperature, &QSlider::sliderMoved, this, &MainWindow::sliderTemperature_sliderMoved);
+
+    connect(ui->btnZoomIn, &QPushButton::clicked, this, &MainWindow::btnZoomIn_Click);
+    connect(ui->btnZoomOut, &QPushButton::clicked, this, &MainWindow::btnZoomOut_Click);
+
+    connect(ui->btnBrightnessContrast, &QPushButton::clicked, this, &MainWindow::btnBrightnessContrast_Click);
+    connect(ui->btnStress, &QPushButton::clicked, this, &MainWindow::btnStress_Click);
+    connect(ui->btnStretchContrast, &QPushButton::clicked, this, &MainWindow::btnStretchContrast_Click);
+
+    // video
+    connect(ui->btnLoadVideo, &QPushButton::clicked, this, &MainWindow::btnLoadVideo_Click);
+    connect(ui->btnPlayVideo, &QPushButton::clicked, this, &MainWindow::btnPlayVideo_Click);
+    connect(ui->btnStopVideo, &QPushButton::clicked, this, &MainWindow::btnStopVideo_Click);
+
+    connect(mpVideoFile, &QMediaPlayer::mediaStatusChanged, this, &MainWindow::onVideoStatusChanged);
+
+    // capture
+    connect(ui->btnLoadFrame, &QPushButton::clicked, this, &MainWindow::btnLoadFrame_Click);
+    connect(ui->lvFrames, &QListView::clicked, this, &MainWindow::lvFrames_Click);
+}
+
+void MainWindow::InitUI()
+{
+    // update combobox - 나중에 옮길 것.
+    ui->cbFormat->clear();
+    for (const auto& format : {PixelFormatType::RGB24, PixelFormatType::RGB32, PixelFormatType::Raw})
+    {
+        ui->cbFormat->addItem(toString(format));
+    }
+    ui->cbFormat->setCurrentIndex(0);
+
+    // init gain, contrast, gamma
+    int MIICAM_EXPOGAIN_MAX = 5000;
+    ui->sliderGain->setMinimum(MIICAM_EXPOGAIN_MIN);
+    ui->sliderGain->setMaximum(MIICAM_EXPOGAIN_MAX);
+    ui->sliderGain->setValue(MIICAM_EXPOGAIN_DEF);
+    ui->editGain->setPlainText(QString::number(round(MIICAM_EXPOGAIN_DEF)));
+
+    ui->sliderContrast->setMinimum(MIICAM_CONTRAST_MIN);
+    ui->sliderContrast->setMaximum(MIICAM_CONTRAST_MAX);
+    ui->sliderContrast->setValue(MIICAM_CONTRAST_DEF);
+    ui->editContrast->setPlainText(QString::number(round(MIICAM_CONTRAST_DEF)));
+
+    ui->sliderGamma->setMinimum(MIICAM_GAMMA_MIN);
+    ui->sliderGamma->setMaximum(MIICAM_GAMMA_MAX);
+    ui->sliderGamma->setValue(MIICAM_GAMMA_DEF);
+    ui->editGamma->setPlainText(QString::number(round(MIICAM_GAMMA_DEF)));
+
+    mpVideoFile->setVideoOutput(ui->videoFile);
+
+    // tab frame
+    // Check if the captures directory exists, and create it if it doesn't
+    QDir dir(captureDir);
+    if (!dir.exists()) {
+        dir.mkpath(captureDir);
+    }
+
+    // Set model properties
+    this->modelFrames->setRootPath(captureDir);
+    this->modelFrames->setNameFilters(QStringList() << "*.png" << "*.jpg" << "*.jpeg" << "*.bmp" << "*.gif");
+    this->modelFrames->setNameFilterDisables(false);
+
+    ui->lvFrames->setModel(modelFrames);
+    ui->lvFrames->setRootIndex(modelFrames->index(captureDir)); // Set the root index
+    ui->lbDirFrames->setText(captureDir);
+
+    ui->btnPlayVideo->setEnabled(false);
+    ui->btnStopVideo->setEnabled(false);
+}
+
+void MainWindow::EnablePreviewUI(bool isPlay)
+{
+    ui->cbResolution->setEnabled(!isPlay);
+    ui->cbFormat->setEnabled(!isPlay);
+
+    ui->btnPlayCamera->setEnabled(isPlay);
+    ui->btnStopCamera->setEnabled(isPlay);
+    ui->btnCaptureCamera->setEnabled(isPlay);
+
+    ui->chkRecord->setEnabled(isPlay);
+    ui->btnRecordOption->setEnabled(isPlay);
+
+    ui->sliderExposureTime->setEnabled(isPlay);
+    ui->editExposureTime->setEnabled(isPlay);
+
+    ui->sliderGain->setEnabled(isPlay);
+    ui->editGain->setEnabled(isPlay);
+
+    ui->sliderContrast->setEnabled(isPlay);
+    ui->editContrast->setEnabled(isPlay);
+
+    ui->sliderGamma->setEnabled(isPlay);
+    ui->editGamma->setEnabled(isPlay);
+
+    ui->btnCurveSetting->setEnabled(isPlay);
+    ui->cbCurvePreset->setEnabled(isPlay);
+
+    ui->chkDarkfield->setEnabled(isPlay);
+    ui->editDarkfieldQuantity->setEnabled(isPlay);
+    ui->btnDarkfieldCapture->setEnabled(isPlay);
+
+    ui->rbCoolingOn->setEnabled(isPlay);
+    ui->rbCoolingOff->setEnabled(isPlay);
+
+    ui->sliderTemperature->setEnabled(isPlay);
+    ui->editTemperature->setEnabled(isPlay);
+
+    ui->btnZoomIn->setEnabled(isPlay);
+    ui->btnZoomOut->setEnabled(isPlay);
+    ui->btnBrightnessContrast->setEnabled(isPlay);
+    ui->btnStress->setEnabled(isPlay);
+    ui->btnStretchContrast->setEnabled(isPlay);
+}
+
+/////////////////////// preview
 void MainWindow::cbResoution_SelectedIndexChanged(int index)
 {
     this->resolutionIndex = index;
@@ -254,14 +325,8 @@ void MainWindow::btnPlayCamera_Click()
         this->isCameraPlay = true;
 
         ui->btnPlayCamera->setText(MENU_PAUSE);
-        ui->btnStopCamera->setEnabled(true);
-        ui->btnCaptureCamera->setEnabled(true);
-        ui->btnZoomIn->setEnabled(true);
-        ui->btnZoomOut->setEnabled(true);
 
-        // play가 시작되면 resolution과 format은 변경 불가
-        ui->cbResolution->setEnabled(false);
-        ui->cbFormat->setEnabled(false);
+        MainWindow::EnablePreviewUI(true);
     }
     else
     {
@@ -282,23 +347,14 @@ void MainWindow::btnPlayCamera_Click()
     }
 }
 
-
 void MainWindow::btnStopCamera_Click()
 {
     Miicam_Stop(this->miiHcam);
     this->isCameraRun = false;
 
-    ui->cbResolution->setEnabled(true);
-    ui->cbFormat->setEnabled(true);
-
     ui->btnPlayCamera->setText(MENU_PLAY);
-    ui->btnPlayCamera->setEnabled(true);
-    ui->btnStopCamera->setEnabled(false);
-    ui->btnCaptureCamera->setEnabled(false);
-    ui->btnZoomIn->setEnabled(false);
-    ui->btnZoomOut->setEnabled(false);
+    MainWindow::EnablePreviewUI(false);
 }
-
 
 void MainWindow::btnCaptureCamera_Click()
 {
@@ -326,6 +382,9 @@ void MainWindow::chkRecord_CheckedChanged(Qt::CheckState checkState)
     {
         this->isRecordOn = true;
         this->videoFrames.clear();
+
+        this->recordStartTime = QTime::currentTime();
+        this->timerVideoRecord->start(1000); // Update every second
     }
     else if (checkState == Qt::CheckState::Unchecked)
     {
@@ -414,6 +473,30 @@ void MainWindow::sliderGamma_sliderMoved(int position)
     }
 }
 
+void MainWindow::btnCurveSetting_Click()
+{
+
+}
+
+void MainWindow::cbCurvePreset_SelectedIndexChanged(int index)
+{
+
+}
+
+void MainWindow::chkDarkfield_CheckedChanged(Qt::CheckState checkState)
+{
+
+}
+
+void MainWindow::btnDarkfieldCapture_Click()
+{
+
+}
+
+void MainWindow::btnGroupCooling_Click(int id)
+{
+}
+
 void MainWindow::sliderTemperature_sliderMoved(int position)
 {
     // trackbar가 정수이므로 0.1을 곱한다.
@@ -452,6 +535,22 @@ void MainWindow::btnZoomOut_Click()
     ui->gvPreview->scale(zoomFactor, zoomFactor);
 }
 
+void MainWindow::btnBrightnessContrast_Click()
+{
+    //this->isUpdateBrightnessContrast = !this->isUpdateBrightnessContrast;
+}
+
+void MainWindow::btnStress_Click()
+{
+    //this->isUpdateStress = !this->isUpdateStress;
+}
+
+void MainWindow::btnStretchContrast_Click()
+{
+    //this->isUpdateStretchContrast = !this->isUpdateStretchContrast;
+}
+
+/////////////////////// video
 void MainWindow::btnLoadVideo_Click()
 {
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open Video"), "", tr("Video Files (*.mp4 *.avi *.mkv)"));
@@ -491,6 +590,16 @@ void MainWindow::btnStopVideo_Click()
     MainWindow::SetPlayVideo(false);
 }
 
+void MainWindow::onVideoStatusChanged(QMediaPlayer::MediaStatus status)
+{
+    if (status == QMediaPlayer::EndOfMedia)
+    {
+        MainWindow::SetPlayVideo(false);
+    }
+}
+
+
+/////////////////////// frame
 void MainWindow::btnLoadFrame_Click()
 {
     QString dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"), "", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
@@ -502,7 +611,7 @@ void MainWindow::btnLoadFrame_Click()
     }
 }
 
-void MainWindow::onSelecteImage(const QModelIndex &index)
+void MainWindow::lvFrames_Click(const QModelIndex &index)
 {
     if (this->pmiFrame)
     {
@@ -515,29 +624,6 @@ void MainWindow::onSelecteImage(const QModelIndex &index)
 
     this->pmiFrame = this->sceneFrame->addPixmap(pixmap);
     ui->gvFrameCapture->fitInView(this->pmiFrame, Qt::KeepAspectRatio);
-}
-
-void MainWindow::btnBrightnessContrast_Click()
-{
-    this->isUpdateBrightnessContrast = !this->isUpdateBrightnessContrast;
-}
-
-void MainWindow::btnStress_Click()
-{
-    //this->isUpdateStress = !this->isUpdateStress;
-}
-
-void MainWindow::btnStretchContrast_Click()
-{
-    this->isUpdateStretchContrast = !this->isUpdateStretchContrast;
-}
-
-void MainWindow::onVideoStatusChanged(QMediaPlayer::MediaStatus status)
-{
-    if (status == QMediaPlayer::EndOfMedia)
-    {
-        MainWindow::SetPlayVideo(false);
-    }
 }
 
 ////////////////////////////////////////
@@ -612,6 +698,16 @@ void MainWindow::UpdateGraphicsView()
         if (std::abs(zoomFactor - 1.0f) <= std::numeric_limits<float>::epsilon())
         {
             ui->gvPreview->fitInView(this->pmiPreview, Qt::KeepAspectRatio);
+        }
+
+        if (this->isRecordOn)
+        {
+            QTime currentTime = QTime::currentTime();
+            int elapsedSeconds = this->recordStartTime.secsTo(currentTime);
+            QTime elapsedTime(0, 0);
+            elapsedTime = elapsedTime.addSecs(elapsedSeconds);
+
+            ui->lbRunTime->setText("Recoding Time: " + elapsedTime.toString("hh:mm:ss"));
         }
     }
 }
@@ -820,7 +916,7 @@ void MainWindow::StartCamera()
         //m_cbox_auto->setChecked(1 == bAuto);
 
         // fps update
-        timer->start(1000);
+        timerFPS->start(1000);
     }
     else
     {
@@ -829,7 +925,7 @@ void MainWindow::StartCamera()
     }
 }
 
-void MainWindow::onTimerCallback()
+void MainWindow::onTimerFpsCallback()
 {
     unsigned nFrame = 0, nTime = 0, nTotalFrame = 0;
 
@@ -965,20 +1061,6 @@ void MainWindow::SetPlayVideo(bool value)
         ui->btnPlayVideo->setText(MENU_PAUSE);
         isVideoPlay = true;
     }
-}
-
-void MainWindow::SetupModel(const QString& capturePath)
-{
-    // Check if the captures directory exists, and create it if it doesn't
-    QDir dir(capturePath);
-    if (!dir.exists()) {
-        dir.mkpath(capturePath);
-    }
-
-    // Set model properties
-    this->modelFrames->setRootPath(capturePath);
-    this->modelFrames->setNameFilters(QStringList() << "*.png" << "*.jpg" << "*.jpeg" << "*.bmp" << "*.gif");
-    this->modelFrames->setNameFilterDisables(false);
 }
 
 void MainWindow::UpdateBrightnessContrast(QImage& source, const double brightness, const double contrast)

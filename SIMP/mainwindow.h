@@ -7,6 +7,7 @@
 #include <QGraphicsScene>
 #include <QThread>
 #include <QMutex>
+#include <QButtonGroup>
 
 #include <opencv2/opencv.hpp>
 #include <miicam.h>
@@ -47,22 +48,39 @@ signals:
 private slots:
     // ui events
 
-    // preview
+    /////////////////////// preview
+    // thread
+    void UpdateGraphicsView();
+
     void cbResoution_SelectedIndexChanged(int index);
     void cbFormat_SelectedIndexChanged(int index);
-
-    void chkRecord_CheckedChanged(Qt::CheckState checkState);
-
-    void sliderExposureTime_sliderMoved(int position);
-    void sliderGain_sliderMoved(int position);
-    void sliderContrast_sliderMoved(int position);
-    void sliderGamma_sliderMoved(int position);
-    void sliderTemperature_sliderMoved(int position);
 
     void btnPlayCamera_Click();
     void btnStopCamera_Click();
     void btnCaptureCamera_Click();
+
+    void chkRecord_CheckedChanged(Qt::CheckState checkState);
     void btnRecordOption_Click();
+
+    void sliderExposureTime_sliderMoved(int position);
+
+    void sliderGain_sliderMoved(int position);
+
+    void sliderContrast_sliderMoved(int position);
+
+    void sliderGamma_sliderMoved(int position);
+
+
+    void btnCurveSetting_Click();
+    void cbCurvePreset_SelectedIndexChanged(int index);
+
+    void chkDarkfield_CheckedChanged(Qt::CheckState checkState);
+    void btnDarkfieldCapture_Click();
+
+    void btnGroupCooling_Click(int id);
+
+    void sliderTemperature_sliderMoved(int position);
+
 
     void btnZoomIn_Click();
     void btnZoomOut_Click();
@@ -71,19 +89,18 @@ private slots:
     void btnStress_Click();
     void btnStretchContrast_Click();
 
-    // video
+
+    /////////////////////// video
     void btnLoadVideo_Click();
     void btnPlayVideo_Click();
     void btnStopVideo_Click();
 
     void onVideoStatusChanged(QMediaPlayer::MediaStatus status);
 
-    // frame
+    /////////////////////// frame
     void btnLoadFrame_Click();
+    void lvFrames_Click(const QModelIndex &index);
 
-    void onSelecteImage(const QModelIndex &index);
-
-    void UpdateGraphicsView();
 
 private:
     Ui::MainWindow *ui;
@@ -92,7 +109,10 @@ private:
 
     QMediaPlayer *mpVideoFile;
     QFileSystemModel *modelFrames;
-    QTimer* timer;
+    QTimer *timerFPS, *timerVideoRecord;
+    QTime recordStartTime;
+
+    QButtonGroup *btnGroupCooling;
 
     MiicamDeviceV2 miiDevice;
     HMiicam miiHcam = nullptr;
@@ -105,6 +125,7 @@ private:
     unsigned imageHeight = 0;
     unsigned rawCameraWidth = 0;
     unsigned rawCameraHeight = 0;
+
     int resolutionIndex = 0;
     int recordFormat = cv::VideoWriter::fourcc('M', 'J', 'P', 'G');
     QString recordFormatExtension = ".avi";
@@ -134,8 +155,11 @@ private:
 
     QMutex imageMutex;
 
+    void onTimerFpsCallback();
 
-    void onTimerCallback();
+    void ConnectUI();
+    void InitUI();
+    void EnablePreviewUI(bool isPlay);
 
     // mii camera
     void FindCamera();
@@ -150,7 +174,6 @@ private:
     void handleStillImageEvent();
     static void __stdcall eventCallBack(unsigned nEvent, void* pCallbackCtx);
 
-
     // gegl
     void InitGegl();
     void CloseGegl();
@@ -161,7 +184,6 @@ private:
 
 
     // custom
-    void SetupModel(const QString& capturePath);
     void SetPlayVideo(bool value);
     void UpdatePreview();
 
