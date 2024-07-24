@@ -13,6 +13,8 @@
 #include <miicam.h>
 
 #include "constants.h"
+#include "customgraphicsview.h"
+#include "customplaintextedit.h"
 
 // C 라이브러리를 참조할 떄는 extern C로 묶는 것이 링킹 문제를 방지하는데 도움이 됨
 extern "C" {
@@ -52,6 +54,9 @@ private slots:
     // thread
     void UpdateGraphicsView();
 
+    // custom
+    void UpdateMousePosition(int x, int y, const QColor &color);
+
     void cbResoution_SelectedIndexChanged(int index);
     void cbFormat_SelectedIndexChanged(int index);
 
@@ -63,6 +68,7 @@ private slots:
     void btnRecordOption_Click();
 
     void sliderExposureTime_sliderMoved(int position);
+    void editExposureTime_editingFinished();
 
     void sliderGain_sliderMoved(int position);
 
@@ -114,6 +120,15 @@ private:
 
     QButtonGroup *btnGroupCooling;
 
+    //CustomGraphicsView *customGvPreview;
+    CustomPlainTextEdit *customEditExposureTime = nullptr;
+    CustomPlainTextEdit *customEditGain = nullptr;
+    CustomPlainTextEdit *customEditContrast = nullptr;
+    CustomPlainTextEdit *customEditGamma = nullptr;
+    CustomPlainTextEdit *customEditDarkFieldQuantity = nullptr;
+    CustomPlainTextEdit *customEditTemperature = nullptr;
+
+
     MiicamDeviceV2 miiDevice;
     HMiicam miiHcam = nullptr;
 
@@ -160,6 +175,7 @@ private:
     void ConnectUI();
     void InitUI();
     void EnablePreviewUI(bool isPlay);
+    //CustomPlainTextEdit* ChangeQPlainTextEditToCustom(QPlainTextEdit* source);
 
     // mii camera
     void FindCamera();

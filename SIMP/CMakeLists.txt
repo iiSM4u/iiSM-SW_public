@@ -16,14 +16,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Gui Multimedia MultimediaWidgets Widgets)
 
+file(GLOB_RECURSE HEADER_FILES "include/*.h")
+file(GLOB_RECURSE SOURCE_FILES "source/*.cpp")
+file(GLOB_RECURSE UI_FILES "ui/*.ui")
+
 # Project source files
 set(PROJECT_SOURCES
-    main.cpp
-    mainwindow.cpp
-    mainwindow.h
-    mainwindow.ui
-    PixelFormatType.h
-    constants.h
+    ${SOURCE_FILES}
+    ${HEADER_FILES}
+    ${UI_FILES}
+    mainwindow.cpp  # 이유는 모르겠는데 mainwindow.cpp가 source 폴더 아래에 있으면 빌드가 안된다.
 )
 
 # Set OpenCV_DIR to the directory containing OpenCVConfig.cmake
@@ -42,7 +44,7 @@ include_directories(
     ${BABL_INCLUDE_DIRS}
     ${GLIB_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}
-    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/external
 )
 
 # Link directories

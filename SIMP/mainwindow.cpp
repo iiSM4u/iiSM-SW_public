@@ -1,6 +1,6 @@
-#include "mainwindow.h"
-#include "./ui_mainwindow.h"
-#include "PixelFormatType.h"
+#include "include/mainwindow.h"
+#include "ui/ui_mainwindow.h"
+#include "include/pixelformattype.h"
 
 #include <QGraphicsPixmapItem>
 #include <QFileDialog>
@@ -32,6 +32,19 @@ MainWindow::MainWindow(QWidget *parent)
     , captureDir(QCoreApplication::applicationDirPath() + PATH_CAPTURE_FRAME)
 {
     ui->setupUi(this);
+
+    // this->customGvPreview = qobject_cast<CustomGraphicsView*>(ui->gvPreview);
+
+    // if (!this->customGvPreview) {
+    //     qDebug() << "Casting to CustomGraphicsView failed!";
+    //     this->customGvPreview  = new CustomGraphicsView(this);
+    //     ui->verticalLayout->replaceWidget(ui->gvPreview, this->customGvPreview );
+    //     delete ui->gvPreview;
+    //     ui->gvPreview = this->customGvPreview;
+    // }
+
+    // this->customGvPreview->setScene(scenePreview);
+
     ui->gvPreview->setScene(scenePreview);
     ui->gvFrameCapture->setScene(sceneFrame);
 
@@ -121,6 +134,8 @@ void MainWindow::ConnectUI()
     connect(timerFPS, &QTimer::timeout, this, &MainWindow::onTimerFpsCallback);
 
     // preview
+    //connect(this->customGvPreview, &CustomGraphicsView::mousePositionChanged, this, &MainWindow::UpdateMousePosition);
+
     connect(ui->cbResolution, &QComboBox::currentIndexChanged, this, &MainWindow::cbResoution_SelectedIndexChanged);
     connect(ui->cbFormat, &QComboBox::currentIndexChanged, this, &MainWindow::cbFormat_SelectedIndexChanged);
 
@@ -132,7 +147,7 @@ void MainWindow::ConnectUI()
     connect(ui->btnRecordOption, &QPushButton::clicked, this, &MainWindow::btnRecordOption_Click);
 
     connect(ui->sliderExposureTime, &QSlider::sliderMoved, this, &MainWindow::sliderExposureTime_sliderMoved);
-    //connect(ui->editExposureTime, &QSlider::sliderMoved, this, &MainWindow::sliderExposureTime_sliderMoved);
+    //connect(ui->editExposureTime, &CustomPlainTextEdit::editingFinished, this, &MainWindow::editExposureTime_editingFinished);
 
     connect(ui->sliderGain, &QSlider::sliderMoved, this, &MainWindow::sliderGain_sliderMoved);
     //connect(ui->editGain, &QSlider::sliderMoved, this, &MainWindow::sliderGain_sliderMoved);
@@ -163,6 +178,9 @@ void MainWindow::ConnectUI()
     connect(ui->btnBrightnessContrast, &QPushButton::clicked, this, &MainWindow::btnBrightnessContrast_Click);
     connect(ui->btnStress, &QPushButton::clicked, this, &MainWindow::btnStress_Click);
     connect(ui->btnStretchContrast, &QPushButton::clicked, this, &MainWindow::btnStretchContrast_Click);
+
+    // custom 필요
+    //connect(ui->gvPreview, )
 
     // video
     connect(ui->btnLoadVideo, &QPushButton::clicked, this, &MainWindow::btnLoadVideo_Click);
@@ -269,7 +287,43 @@ void MainWindow::EnablePreviewUI(bool isPlay)
     ui->btnStretchContrast->setEnabled(isPlay);
 }
 
+// CustomPlainTextEdit* MainWindow::ChangeQPlainTextEditToCustom(QPlainTextEdit* source)
+// {
+//     QWidget* parent = source->parentWidget();
+//     QLayout* layout = parent->layout();
+//     int index = layout->indexOf(source);
+
+//     QString objectName = source->objectName();
+//     QRect geometry = source->geometry();
+
+//     layout->removeWidget(source);
+//     delete source;
+
+//     CustomPlainTextEdit* result = new CustomPlainTextEdit(parent);
+//     result->setObjectName(objectName);
+//     result->setGeometry(geometry);
+
+//     if (index != -1) {
+//         layout->insertWidget(index, result);
+//     } else {
+//         layout->addWidget(result);
+//     }
+
+//     return result;
+// }
+
 /////////////////////// preview
+void MainWindow::UpdateMousePosition(int x, int y, const QColor &color)
+{
+    QString text = QString("(x: %1, y: %2), (r: %3, g: %4, b: %5")
+                       .arg(x)
+                       .arg(y)
+                       .arg(color.red())
+                       .arg(color.green())
+                       .arg(color.blue());
+    ui->lbColor->setText(text);  // Assume you have a QLabel named label in your .ui file
+}
+
 void MainWindow::cbResoution_SelectedIndexChanged(int index)
 {
     this->resolutionIndex = index;
@@ -437,6 +491,11 @@ void MainWindow::sliderExposureTime_sliderMoved(int position)
     }
 }
 
+void MainWindow::editExposureTime_editingFinished()
+{
+    QString str = this->customEditExposureTime->toPlainText();
+}
+
 void MainWindow::sliderGain_sliderMoved(int position)
 {
     int value = ui->sliderGain->value();
@@ -521,6 +580,7 @@ void MainWindow::btnZoomIn_Click()
     }
 
     ui->gvPreview->scale(zoomFactor, zoomFactor);
+    //this->customGvPreview->scale(zoomFactor, zoomFactor);
 }
 
 void MainWindow::btnZoomOut_Click()
@@ -533,6 +593,7 @@ void MainWindow::btnZoomOut_Click()
     }
 
     ui->gvPreview->scale(zoomFactor, zoomFactor);
+    //this->customGvPreview->scale(zoomFactor, zoomFactor);
 }
 
 void MainWindow::btnBrightnessContrast_Click()
@@ -693,11 +754,13 @@ void MainWindow::UpdateGraphicsView()
 
     {
         const QSignalBlocker blocker(ui->gvPreview);
+        //const QSignalBlocker blocker(this->customGvPreview);
         this->pmiPreview = this->scenePreview->addPixmap(QPixmap::fromImage(this->resultImage));
 
         if (std::abs(zoomFactor - 1.0f) <= std::numeric_limits<float>::epsilon())
         {
             ui->gvPreview->fitInView(this->pmiPreview, Qt::KeepAspectRatio);
+            //this->customGvPreview->fitInView(this->pmiPreview, Qt::KeepAspectRatio);
         }
 
         if (this->isRecordOn)
