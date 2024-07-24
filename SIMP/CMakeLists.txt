@@ -16,6 +16,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Gui Multimedia MultimediaWidgets Widgets)
 
+# 실행을 위한 파일들
 file(GLOB_RECURSE HEADER_FILES "include/*.h")
 file(GLOB_RECURSE SOURCE_FILES "source/*.cpp")
 file(GLOB_RECURSE UI_FILES "ui/*.ui")
@@ -45,6 +46,7 @@ include_directories(
     ${GLIB_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}
     ${CMAKE_SOURCE_DIR}/external
+    ${CMAKE_SOURCE_DIR}/include  # custom ui의 header를 참조할 수 있도록 추가
 )
 
 # Link directories

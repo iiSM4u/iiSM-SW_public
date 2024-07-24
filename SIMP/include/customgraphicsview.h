@@ -1,5 +1,4 @@
-#ifndef CUSTOMGRAPHICSVIEW_H
-#define CUSTOMGRAPHICSVIEW_H
+#pragma once
 
 #include <QGraphicsView>
 #include <QGraphicsPixmapItem>
@@ -10,6 +9,7 @@ class CustomGraphicsView : public QGraphicsView {
 public:
     explicit CustomGraphicsView(QWidget *parent = nullptr);
     void setImage(const QImage &image);
+    void fitInView();
 
 protected:
     void mouseMoveEvent(QMouseEvent *event) override;
@@ -21,5 +21,3 @@ private:
     QImage image;
     QGraphicsPixmapItem *pixmapItem;
 };
-
-#endif // CUSTOMGRAPHICSVIEW_H

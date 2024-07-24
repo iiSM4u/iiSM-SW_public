@@ -1,5 +1,4 @@
-#ifndef CUSTOMPLAINTEXTEDIT_H
-#define CUSTOMPLAINTEXTEDIT_H
+#pragma once
 
 #include <QPlainTextEdit>
 
@@ -17,5 +16,3 @@ protected:
     void focusOutEvent(QFocusEvent *event) override;
 };
 
-
-#endif // CUSTOMPLAINTEXTEDIT_H

@@ -25,8 +25,12 @@ const int DEFAULT_CONTRAST_CURVE_SAMPLING_PLINTS = 0;
 const QString PATH_CAPTURE_FRAME = "/captures";
 const QString PATH_RECORD_VIDEO = "/videos";
 
-const QString MENU_PLAY = "Play";
-const QString MENU_PAUSE = "Pause";
-
 const QString EXTENSION_CAPTURE_IMAGE = ".png";
 const QString FORMAT_DATE_TIME = "yyyy_MM_dd_hh_mm_ss";
+
+const QString BTN_PLAY = "Play";
+const QString MENU_PAUSE = "Pause";
+
+const QString TITLE_ERROR = "Error";
+const QString MSG_INVALID_VALUE = "Invalid Value";
+const QString MSG_INVALID_RANGE = "Invalid Range";

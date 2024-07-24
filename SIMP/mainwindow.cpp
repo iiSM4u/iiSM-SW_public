@@ -1,6 +1,7 @@
 #include "include/mainwindow.h"
 #include "ui/ui_mainwindow.h"
 #include "include/pixelformattype.h"
+#include "include/utils.h"
 
 #include <QGraphicsPixmapItem>
 #include <QFileDialog>
@@ -22,7 +23,7 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , scenePreview(new QGraphicsScene(this))
+    //, scenePreview(new QGraphicsScene(this))
     , sceneFrame(new QGraphicsScene(this))
     , modelFrames(new QFileSystemModel(this))
     , mpVideoFile(new QMediaPlayer(this))
@@ -45,7 +46,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // this->customGvPreview->setScene(scenePreview);
 
-    ui->gvPreview->setScene(scenePreview);
+    //ui->gvPreview->setScene(scenePreview);
     ui->gvFrameCapture->setScene(sceneFrame);
 
     qApp->setStyleSheet(
@@ -134,7 +135,7 @@ void MainWindow::ConnectUI()
     connect(timerFPS, &QTimer::timeout, this, &MainWindow::onTimerFpsCallback);
 
     // preview
-    //connect(this->customGvPreview, &CustomGraphicsView::mousePositionChanged, this, &MainWindow::UpdateMousePosition);
+    connect(ui->gvPreview, &CustomGraphicsView::mousePositionChanged, this, &MainWindow::UpdateMousePosition);
 
     connect(ui->cbResolution, &QComboBox::currentIndexChanged, this, &MainWindow::cbResoution_SelectedIndexChanged);
     connect(ui->cbFormat, &QComboBox::currentIndexChanged, this, &MainWindow::cbFormat_SelectedIndexChanged);
@@ -147,22 +148,22 @@ void MainWindow::ConnectUI()
     connect(ui->btnRecordOption, &QPushButton::clicked, this, &MainWindow::btnRecordOption_Click);
 
     connect(ui->sliderExposureTime, &QSlider::sliderMoved, this, &MainWindow::sliderExposureTime_sliderMoved);
-    //connect(ui->editExposureTime, &CustomPlainTextEdit::editingFinished, this, &MainWindow::editExposureTime_editingFinished);
+    connect(ui->editExposureTime, &CustomPlainTextEdit::editingFinished, this, &MainWindow::editExposureTime_editingFinished);
 
     connect(ui->sliderGain, &QSlider::sliderMoved, this, &MainWindow::sliderGain_sliderMoved);
-    //connect(ui->editGain, &QSlider::sliderMoved, this, &MainWindow::sliderGain_sliderMoved);
+    connect(ui->editGain, &CustomPlainTextEdit::editingFinished, this, &MainWindow::editGain_editingFinished);
 
     connect(ui->sliderContrast, &QSlider::sliderMoved, this, &MainWindow::sliderContrast_sliderMoved);
-    //connect(ui->editContrast, &QSlider::sliderMoved, this, &MainWindow::sliderContrast_sliderMoved);
+    connect(ui->editContrast, &CustomPlainTextEdit::editingFinished, this, &MainWindow::editContrast_editingFinished);
 
     connect(ui->sliderGamma, &QSlider::sliderMoved, this, &MainWindow::sliderGamma_sliderMoved);
-    //connect(ui->editGamma, &QSlider::sliderMoved, this, &MainWindow::sliderGamma_sliderMoved);
+    connect(ui->editGamma, &CustomPlainTextEdit::editingFinished, this, &MainWindow::editGamma_editingFinished);
 
     connect(ui->btnCurveSetting, &QPushButton::clicked, this, &MainWindow::btnCurveSetting_Click);
     connect(ui->cbCurvePreset, &QComboBox::currentIndexChanged, this, &MainWindow::cbCurvePreset_SelectedIndexChanged);
 
     connect(ui->chkDarkfield, &QCheckBox::checkStateChanged, this, &MainWindow::chkDarkfield_CheckedChanged);
-    //connect(ui->editDarkfieldQuantity, &QSlider::sliderMoved, this, &MainWindow::sliderTemperature_sliderMoved);
+    connect(ui->editDarkfieldQuantity, &CustomPlainTextEdit::editingFinished, this, &MainWindow::editDarkfieldQuantity_editingFinished);
     connect(ui->btnDarkfieldCapture, &QPushButton::clicked, this, &MainWindow::btnDarkfieldCapture_Click);
 
     this->btnGroupCooling->addButton(ui->rbCoolingOn, 1);
@@ -170,7 +171,7 @@ void MainWindow::ConnectUI()
     connect(this->btnGroupCooling, &QButtonGroup::idClicked, this, &MainWindow::btnGroupCooling_Click);
 
     connect(ui->sliderTemperature, &QSlider::sliderMoved, this, &MainWindow::sliderTemperature_sliderMoved);
-    //connect(ui->editTemperature, &QSlider::sliderMoved, this, &MainWindow::sliderTemperature_sliderMoved);
+    connect(ui->editTemperature, &CustomPlainTextEdit::editingFinished, this, &MainWindow::editTemperature_editingFinished);
 
     connect(ui->btnZoomIn, &QPushButton::clicked, this, &MainWindow::btnZoomIn_Click);
     connect(ui->btnZoomOut, &QPushButton::clicked, this, &MainWindow::btnZoomOut_Click);
@@ -179,8 +180,6 @@ void MainWindow::ConnectUI()
     connect(ui->btnStress, &QPushButton::clicked, this, &MainWindow::btnStress_Click);
     connect(ui->btnStretchContrast, &QPushButton::clicked, this, &MainWindow::btnStretchContrast_Click);
 
-    // custom 필요
-    //connect(ui->gvPreview, )
 
     // video
     connect(ui->btnLoadVideo, &QPushButton::clicked, this, &MainWindow::btnLoadVideo_Click);
@@ -248,7 +247,8 @@ void MainWindow::EnablePreviewUI(bool isPlay)
     ui->cbResolution->setEnabled(!isPlay);
     ui->cbFormat->setEnabled(!isPlay);
 
-    ui->btnPlayCamera->setEnabled(isPlay);
+    // play 버튼은 다른 곳에서 처리한다.
+    //ui->btnPlayCamera->setEnabled(isPlay);
     ui->btnStopCamera->setEnabled(isPlay);
     ui->btnCaptureCamera->setEnabled(isPlay);
 
@@ -287,35 +287,10 @@ void MainWindow::EnablePreviewUI(bool isPlay)
     ui->btnStretchContrast->setEnabled(isPlay);
 }
 
-// CustomPlainTextEdit* MainWindow::ChangeQPlainTextEditToCustom(QPlainTextEdit* source)
-// {
-//     QWidget* parent = source->parentWidget();
-//     QLayout* layout = parent->layout();
-//     int index = layout->indexOf(source);
-
-//     QString objectName = source->objectName();
-//     QRect geometry = source->geometry();
-
-//     layout->removeWidget(source);
-//     delete source;
-
-//     CustomPlainTextEdit* result = new CustomPlainTextEdit(parent);
-//     result->setObjectName(objectName);
-//     result->setGeometry(geometry);
-
-//     if (index != -1) {
-//         layout->insertWidget(index, result);
-//     } else {
-//         layout->addWidget(result);
-//     }
-
-//     return result;
-// }
-
 /////////////////////// preview
 void MainWindow::UpdateMousePosition(int x, int y, const QColor &color)
 {
-    QString text = QString("(x: %1, y: %2), (r: %3, g: %4, b: %5")
+    QString text = QString("(x: %1, y: %2), (r: %3, g: %4, b: %5)")
                        .arg(x)
                        .arg(y)
                        .arg(color.red())
@@ -375,7 +350,7 @@ void MainWindow::btnPlayCamera_Click()
     // camera가 run이 아니었으면 시작
     if (!this->isCameraRun)
     {
-        StartCamera();
+        MainWindow::StartCamera();
         this->isCameraPlay = true;
 
         ui->btnPlayCamera->setText(MENU_PAUSE);
@@ -396,7 +371,7 @@ void MainWindow::btnPlayCamera_Click()
         {
             // pause camera
             Miicam_Pause(this->miiHcam, 1);  /* 1 => pause, 0 => continue */
-            ui->btnPlayCamera->setText(MENU_PLAY);
+            ui->btnPlayCamera->setText(BTN_PLAY);
         }
     }
 }
@@ -406,7 +381,7 @@ void MainWindow::btnStopCamera_Click()
     Miicam_Stop(this->miiHcam);
     this->isCameraRun = false;
 
-    ui->btnPlayCamera->setText(MENU_PLAY);
+    ui->btnPlayCamera->setText(BTN_PLAY);
     MainWindow::EnablePreviewUI(false);
 }
 
@@ -487,13 +462,42 @@ void MainWindow::sliderExposureTime_sliderMoved(int position)
 
     {
         const QSignalBlocker blocker(ui->editExposureTime);
-        ui->editExposureTime->setPlainText(QString::number(round(value)));
+        ui->editExposureTime->setPlainText(QString::number(value, 'f', 1));
     }
 }
 
 void MainWindow::editExposureTime_editingFinished()
 {
-    QString str = this->customEditExposureTime->toPlainText();
+    bool ok;
+    double value = ui->editExposureTime->toPlainText().toDouble(&ok);
+
+    if (ok)
+    {
+        // trackbar에는 정수로 들어가야 하므로 10을 곱한다.
+        int valueInt = (int)(value * 10.0);
+
+        if (valueInt >= ui->sliderExposureTime->minimum() && valueInt <= ui->sliderExposureTime->maximum())
+        {
+            // slider에도 값 업데이트
+            ui->sliderExposureTime->setValue(valueInt);
+        }
+        else
+        {
+            QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_RANGE);
+
+            // 기존 값으로 되돌린다.
+            value = roundToDecimalPlaces(ui->sliderExposureTime->value() * 0.1, 1);
+            ui->editExposureTime->setPlainText(QString::number(value, 'f', 1));
+        }
+    }
+    else
+    {
+        QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_VALUE);
+
+        // 기존 값으로 되돌린다.
+        value = roundToDecimalPlaces(ui->sliderExposureTime->value() * 0.1, 1);
+        ui->editExposureTime->setPlainText(QString::number(value, 'f', 1));
+    }
 }
 
 void MainWindow::sliderGain_sliderMoved(int position)
@@ -505,6 +509,35 @@ void MainWindow::sliderGain_sliderMoved(int position)
     {
         const QSignalBlocker blocker(ui->editGain);
         ui->editGain->setPlainText(QString::number(round(value)));
+    }
+}
+
+void MainWindow::editGain_editingFinished()
+{
+    bool ok;
+    int value = ui->editGain->toPlainText().toInt(&ok);
+
+    if (ok)
+    {
+        if (value >= ui->sliderGain->minimum() && value <= ui->sliderGain->maximum())
+        {
+            // slider에도 값 업데이트
+            ui->sliderGain->setValue(value);
+        }
+        else
+        {
+            QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_RANGE);
+
+            // 기존 값으로 되돌린다.
+            ui->editGain->setPlainText(QString::number(ui->sliderGain->value()));
+        }
+    }
+    else
+    {
+        QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_VALUE);
+
+        // 기존 값으로 되돌린다.
+        ui->editGain->setPlainText(QString::number(ui->sliderGain->value()));
     }
 }
 
@@ -520,6 +553,35 @@ void MainWindow::sliderContrast_sliderMoved(int position)
     }
 }
 
+void MainWindow::editContrast_editingFinished()
+{
+    bool ok;
+    int value = ui->editContrast->toPlainText().toInt(&ok);
+
+    if (ok)
+    {
+        if (value >= ui->sliderContrast->minimum() && value <= ui->sliderContrast->maximum())
+        {
+            // slider에도 값 업데이트
+            ui->sliderContrast->setValue(value);
+        }
+        else
+        {
+            QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_RANGE);
+
+            // 기존 값으로 되돌린다.
+            ui->editContrast->setPlainText(QString::number(ui->sliderContrast->value()));
+        }
+    }
+    else
+    {
+        QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_VALUE);
+
+        // 기존 값으로 되돌린다.
+        ui->editContrast->setPlainText(QString::number(ui->sliderContrast->value()));
+    }
+}
+
 void MainWindow::sliderGamma_sliderMoved(int position)
 {
     int value = ui->sliderGamma->value();
@@ -529,6 +591,35 @@ void MainWindow::sliderGamma_sliderMoved(int position)
     {
         const QSignalBlocker blocker(ui->editGamma);
         ui->editGamma->setPlainText(QString::number(round(value)));
+    }
+}
+
+void MainWindow::editGamma_editingFinished()
+{
+    bool ok;
+    int value = ui->editGamma->toPlainText().toInt(&ok);
+
+    if (ok)
+    {
+        if (value >= ui->sliderGamma->minimum() && value <= ui->sliderGamma->maximum())
+        {
+            // slider에도 값 업데이트
+            ui->sliderGamma->setValue(value);
+        }
+        else
+        {
+            QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_RANGE);
+
+            // 기존 값으로 되돌린다.
+            ui->editGamma->setPlainText(QString::number(ui->sliderGamma->value()));
+        }
+    }
+    else
+    {
+        QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_VALUE);
+
+        // 기존 값으로 되돌린다.
+        ui->editGamma->setPlainText(QString::number(ui->sliderGamma->value()));
     }
 }
 
@@ -552,6 +643,40 @@ void MainWindow::btnDarkfieldCapture_Click()
 
 }
 
+void MainWindow::editDarkfieldQuantity_editingFinished()
+{
+    // bool ok;
+    // double value = ui->editExposureTime->toPlainText().toDouble(&ok);
+
+    // if (ok)
+    // {
+    //     // trackbar에는 정수로 들어가야 하므로 10을 곱한다.
+    //     int valueInt = (int)(value * 10.0);
+
+    //     if (valueInt >= ui->sliderExposureTime->minimum() && valueInt <= ui->sliderExposureTime->maximum())
+    //     {
+    //         // slider에도 값 업데이트
+    //         ui->sliderExposureTime->setValue(valueInt);
+    //     }
+    //     else
+    //     {
+    //         QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_RANGE);
+
+    //         // 기존 값으로 되돌린다.
+    //         value = roundToDecimalPlaces(ui->sliderExposureTime->value() * 0.1, 1);
+    //         ui->editExposureTime->setPlainText(QString::number(value, 'f', 1));
+    //     }
+    // }
+    // else
+    // {
+    //     QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_VALUE);
+
+    //     // 기존 값으로 되돌린다.
+    //     value = roundToDecimalPlaces(ui->sliderExposureTime->value() * 0.1, 1);
+    //     ui->editExposureTime->setPlainText(QString::number(value, 'f', 1));
+    // }
+}
+
 void MainWindow::btnGroupCooling_Click(int id)
 {
 }
@@ -567,6 +692,40 @@ void MainWindow::sliderTemperature_sliderMoved(int position)
     {
         const QSignalBlocker blocker(ui->editTemperature);
         ui->editTemperature->setPlainText(QString::number(round(value)));
+    }
+}
+
+void MainWindow::editTemperature_editingFinished()
+{
+    bool ok;
+    double value = ui->editTemperature->toPlainText().toDouble(&ok);
+
+    if (ok)
+    {
+        // trackbar에는 정수로 들어가야 하므로 10을 곱한다.
+        int valueInt = (int)(value * 10.0);
+
+        if (valueInt >= ui->sliderTemperature->minimum() && valueInt <= ui->sliderTemperature->maximum())
+        {
+            // slider에도 값 업데이트
+            ui->sliderTemperature->setValue(valueInt);
+        }
+        else
+        {
+            QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_RANGE);
+
+            // 기존 값으로 되돌린다.
+            value = roundToDecimalPlaces(ui->sliderTemperature->value() * 0.1, 1);
+            ui->editTemperature->setPlainText(QString::number(value, 'f', 1));
+        }
+    }
+    else
+    {
+        QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_VALUE);
+
+        // 기존 값으로 되돌린다.
+        value = roundToDecimalPlaces(ui->sliderTemperature->value() * 0.1, 1);
+        ui->editTemperature->setPlainText(QString::number(value, 'f', 1));
     }
 }
 
@@ -746,21 +905,13 @@ void MainWindow::UpdatePreview()
 
 void MainWindow::UpdateGraphicsView()
 {
-    if (this->pmiPreview)
-    {
-        this->scenePreview->removeItem(this->pmiPreview);
-        delete this->pmiPreview;
-    }
-
     {
         const QSignalBlocker blocker(ui->gvPreview);
-        //const QSignalBlocker blocker(this->customGvPreview);
-        this->pmiPreview = this->scenePreview->addPixmap(QPixmap::fromImage(this->resultImage));
+        ui->gvPreview->setImage(this->resultImage);
 
         if (std::abs(zoomFactor - 1.0f) <= std::numeric_limits<float>::epsilon())
         {
-            ui->gvPreview->fitInView(this->pmiPreview, Qt::KeepAspectRatio);
-            //this->customGvPreview->fitInView(this->pmiPreview, Qt::KeepAspectRatio);
+            ui->gvPreview->fitInView();
         }
 
         if (this->isRecordOn)
@@ -816,7 +967,7 @@ void MainWindow::FindCamera()
                 ui->lbDeviceName->setText(QString::fromWCharArray(this->miiDevice.displayname));
             }
 
-            OpenCamera();
+            MainWindow::OpenCamera();
         }
         else
         {
@@ -835,64 +986,17 @@ void MainWindow::OpenCamera()
         this->imageWidth = this->miiDevice.model->res[this->resolutionIndex].width;
         this->imageHeight = this->miiDevice.model->res[this->resolutionIndex].height;
 
-        unsigned int nMin, nMax, nDef, nTime;
-        Miicam_get_ExpTimeRange(this->miiHcam, &nMin, &nMax, &nDef);
-        Miicam_get_ExpoTime(this->miiHcam, &nTime);
-
-        // time이 microsecond이고 range가 0.1-5000ms이기 때문에 0.01을 곱한다.
-        double min = nMin * 0.01;
-        double max = nMax * 0.01;
-        double def = nDef * 0.01;
-        double value = nTime * 0.01;
-
-        double exposureTimeMin = 0.1;
-        double exposureTimeMax = 5000.0;
-
-        double temperatureMin = -50.0;
-        double temperatureMax = 40.0;
-
-        if (min < exposureTimeMin)
-        {
-            min = exposureTimeMin;
-        }
-
-        if (max > exposureTimeMax)
-        {
-            max = exposureTimeMax;
-        }
-
-        short temperature;
-        Miicam_get_Temperature(this->miiHcam, &temperature);
-
-        // temperature는 3.2도를 32로 받기 때문에 0.1을 곱한다.
-        double tempValue = temperature * 0.1;
-
         // open에 성공하면 resolution 업데이트
         {
             const QSignalBlocker blocker(ui->cbResolution);
-            ui->cbResolution->clear();
-            for (unsigned i = 0; i < this->miiDevice.model->preview; ++i)
-            {
-                ui->cbResolution->addItem(QString::asprintf("%u x %u", this->miiDevice.model->res[i].width, this->miiDevice.model->res[i].height));
-            }
-            ui->cbResolution->setCurrentIndex(this->resolutionIndex);
+            MainWindow::InitCameraResolution();
 
-            ui->sliderExposureTime->setMinimum((int)(min * 10.0));
-            ui->sliderExposureTime->setMaximum((int)(max * 10.0));
-            ui->sliderExposureTime->setValue((int)(value * 10.0));
-            ui->editExposureTime->setPlainText(QString::number(round(value)));
-
-            double MIICAM_TEMPERATURE_MIN = -50.0;
-            double MIICAM_TEMPERATURE_MAX = 40.0;
-            ui->sliderTemperature->setMinimum((int)(MIICAM_TEMPERATURE_MIN * 10.0));
-            ui->sliderTemperature->setMaximum((int)(MIICAM_TEMPERATURE_MAX * 10.0));
-            ui->sliderTemperature->setValue((int)(tempValue * 10.0));
-            ui->editTemperature->setPlainText(QString::number(round(tempValue)));
-
+            // open에 성공하면 true
             ui->cbResolution->setEnabled(true);
             ui->cbFormat->setEnabled(true);
-
             ui->btnPlayCamera->setEnabled(true);
+
+            ui->btnPlayCamera->setText(BTN_PLAY);
         }
 
         Miicam_put_Option(this->miiHcam, MIICAM_OPTION_BYTEORDER, 0); //Qimage use RGB byte order
@@ -902,6 +1006,9 @@ void MainWindow::OpenCamera()
 
 void MainWindow::CloseCamera()
 {
+    ui->btnPlayCamera->setEnabled(false);
+    ui->btnPlayCamera->setText(BTN_PLAY);
+
     if (this->miiHcam)
     {
         Miicam_Close(this->miiHcam);
@@ -913,30 +1020,11 @@ void MainWindow::CloseCamera()
         delete[] this->rawCameraData;
     }
 
-    if (this->pmiPreview)
-    {
-        delete this->pmiPreview;
-        this->pmiPreview = nullptr;
-    }
-
     if (this->pmiFrame)
     {
         delete this->pmiFrame;
         this->pmiFrame = nullptr;
     }
-
-    // m_btn_open->setText("Open");
-    // m_timer->stop();
-    // m_lbl_frame->clear();
-    // m_cbox_auto->setEnabled(false);
-    // m_slider_expoGain->setEnabled(false);
-    // m_slider_expoTime->setEnabled(false);
-    // m_btn_autoWB->setEnabled(false);
-    // m_slider_temp->setEnabled(false);
-    // m_slider_tint->setEnabled(false);
-    // m_btn_snap->setEnabled(false);
-    // m_cmb_res->setEnabled(false);
-    // m_cmb_res->clear();
 }
 
 void MainWindow::StartCamera()
@@ -949,34 +1037,19 @@ void MainWindow::StartCamera()
 
     this->rawCameraData = new uchar[TDIBWIDTHBYTES(imageWidth * 24) * this->imageHeight];
 
-    unsigned uimax = 0, uimin = 0, uidef = 0;
-    unsigned short usmax = 0, usmin = 0, usdef = 0;
-    Miicam_get_ExpTimeRange(this->miiHcam, &uimin, &uimax, &uidef);
+    MainWindow::UpdateExposureTime();
+    MainWindow::UpdateSensorTemperature();
 
-    //m_slider_expoTime->setRange(uimin, uimax);
-    Miicam_get_ExpoAGainRange(this->miiHcam, &usmin, &usmax, &usdef);
-    //m_slider_expoGain->setRange(usmin, usmax);
     if ((this->miiDevice.model->flag & MIICAM_FLAG_MONO) == 0)
     {
         handleTempTintEvent();
     }
+
     handleExpoEvent();
 
     if (SUCCEEDED(Miicam_StartPullModeWithCallback(this->miiHcam, eventCallBack, this)))
     {
         this->isCameraRun = true;
-
-        //m_cmb_res->setEnabled(true);
-        //m_cbox_auto->setEnabled(true);
-        //m_btn_autoWB->setEnabled(0 == (m_cur.model->flag & MIICAM_FLAG_MONO));
-        //m_slider_temp->setEnabled(0 == (m_cur.model->flag & MIICAM_FLAG_MONO));
-        //m_slider_tint->setEnabled(0 == (m_cur.model->flag & MIICAM_FLAG_MONO));
-        //m_btn_open->setText("Close");
-        //m_btn_snap->setEnabled(true);
-
-        int bAuto = 0;
-        Miicam_get_AutoExpoEnable(this->miiHcam, &bAuto);
-        //m_cbox_auto->setChecked(1 == bAuto);
 
         // fps update
         timerFPS->start(1000);
@@ -986,6 +1059,63 @@ void MainWindow::StartCamera()
         CloseCamera();
         QMessageBox::warning(this, "Warning", "Failed to start camera.");
     }
+}
+
+void MainWindow::InitCameraResolution()
+{
+    ui->cbResolution->clear();
+    for (unsigned i = 0; i < this->miiDevice.model->preview; ++i)
+    {
+        ui->cbResolution->addItem(QString::asprintf("%u x %u", this->miiDevice.model->res[i].width, this->miiDevice.model->res[i].height));
+    }
+    ui->cbResolution->setCurrentIndex(this->resolutionIndex);
+}
+
+void MainWindow::UpdateExposureTime()
+{
+    double MIICAM_EXPOSURE_TIME_MIN = 0.1;
+    double MIICAM_EXPOSURE_TIME_MAX = 5000.0;
+
+    unsigned int nMin, nMax, nDef, nTime;
+    Miicam_get_ExpTimeRange(this->miiHcam, &nMin, &nMax, &nDef);
+    Miicam_get_ExpoTime(this->miiHcam, &nTime);
+
+    double min = nMin * 0.01;
+    double max = nMax * 0.01;
+    double def = nDef * 0.01;
+    double value = nTime * 0.01;
+
+    if (min < MIICAM_EXPOSURE_TIME_MIN)
+    {
+        min = MIICAM_EXPOSURE_TIME_MIN;
+    }
+
+    if (max > MIICAM_EXPOSURE_TIME_MAX)
+    {
+        max = MIICAM_EXPOSURE_TIME_MAX;
+    }
+
+    ui->sliderExposureTime->setMinimum((int)(min * 10.0));
+    ui->sliderExposureTime->setMaximum((int)(max * 10.0));
+    ui->sliderExposureTime->setValue((int)(value * 10.0));
+    ui->editExposureTime->setPlainText(QString::number(round(value)));
+}
+
+void MainWindow::UpdateSensorTemperature()
+{
+    double MIICAM_TEMPERATURE_MIN = -50.0;
+    double MIICAM_TEMPERATURE_MAX = 40.0;
+
+    short temperature;
+    Miicam_get_Temperature(this->miiHcam, &temperature);
+
+    // temperature는 3.2도를 32로 받기 때문에 0.1을 곱한다.
+    double value = temperature * 0.1;
+
+    ui->sliderTemperature->setMinimum((int)(MIICAM_TEMPERATURE_MIN * 10.0));
+    ui->sliderTemperature->setMaximum((int)(MIICAM_TEMPERATURE_MAX * 10.0));
+    ui->sliderTemperature->setValue((int)(value * 10.0));
+    ui->editTemperature->setPlainText(QString::number(round(value)));
 }
 
 void MainWindow::onTimerFpsCallback()
@@ -1116,7 +1246,7 @@ void MainWindow::SetPlayVideo(bool value)
 {
     if (!value)
     {
-        ui->btnPlayVideo->setText(MENU_PLAY);
+        ui->btnPlayVideo->setText(BTN_PLAY);
         isVideoPlay = false;
     }
     else

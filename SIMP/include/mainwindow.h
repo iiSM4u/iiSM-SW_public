@@ -71,21 +71,25 @@ private slots:
     void editExposureTime_editingFinished();
 
     void sliderGain_sliderMoved(int position);
+    void editGain_editingFinished();
 
     void sliderContrast_sliderMoved(int position);
+    void editContrast_editingFinished();
 
     void sliderGamma_sliderMoved(int position);
-
+    void editGamma_editingFinished();
 
     void btnCurveSetting_Click();
     void cbCurvePreset_SelectedIndexChanged(int index);
 
     void chkDarkfield_CheckedChanged(Qt::CheckState checkState);
     void btnDarkfieldCapture_Click();
+    void editDarkfieldQuantity_editingFinished();
 
     void btnGroupCooling_Click(int id);
 
     void sliderTemperature_sliderMoved(int position);
+    void editTemperature_editingFinished();
 
 
     void btnZoomIn_Click();
@@ -110,24 +114,17 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    QGraphicsScene *scenePreview, *sceneFrame;
-    QGraphicsPixmapItem *pmiPreview = nullptr, *pmiFrame = nullptr;
+
+    //QGraphicsScene *scenePreview, *sceneFrame;
+    //QGraphicsPixmapItem *pmiPreview = nullptr, *pmiFrame = nullptr;
+    QGraphicsScene *sceneFrame;
+    QGraphicsPixmapItem *pmiFrame = nullptr;
+    QButtonGroup *btnGroupCooling;
 
     QMediaPlayer *mpVideoFile;
     QFileSystemModel *modelFrames;
     QTimer *timerFPS, *timerVideoRecord;
     QTime recordStartTime;
-
-    QButtonGroup *btnGroupCooling;
-
-    //CustomGraphicsView *customGvPreview;
-    CustomPlainTextEdit *customEditExposureTime = nullptr;
-    CustomPlainTextEdit *customEditGain = nullptr;
-    CustomPlainTextEdit *customEditContrast = nullptr;
-    CustomPlainTextEdit *customEditGamma = nullptr;
-    CustomPlainTextEdit *customEditDarkFieldQuantity = nullptr;
-    CustomPlainTextEdit *customEditTemperature = nullptr;
-
 
     MiicamDeviceV2 miiDevice;
     HMiicam miiHcam = nullptr;
@@ -182,6 +179,10 @@ private:
     void OpenCamera();
     void CloseCamera();
     void StartCamera();
+
+    void InitCameraResolution();
+    void UpdateExposureTime();
+    void UpdateSensorTemperature();
 
     void onMiiCameraCallback(unsigned nEvent);
     void handleImageEvent();

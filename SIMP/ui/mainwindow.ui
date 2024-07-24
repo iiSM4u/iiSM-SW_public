@@ -48,7 +48,7 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>0</y>
+         <y>-455</y>
          <width>241</width>
          <height>1192</height>
         </rect>
@@ -274,7 +274,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QPlainTextEdit" name="editExposureTime">
+            <widget class="CustomPlainTextEdit" name="editExposureTime">
              <property name="minimumSize">
               <size>
                <width>0</width>
@@ -320,7 +320,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QPlainTextEdit" name="editGain">
+            <widget class="CustomPlainTextEdit" name="editGain">
              <property name="minimumSize">
               <size>
                <width>0</width>
@@ -375,7 +375,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QPlainTextEdit" name="editContrast">
+            <widget class="CustomPlainTextEdit" name="editContrast">
              <property name="minimumSize">
               <size>
                <width>0</width>
@@ -416,7 +416,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QPlainTextEdit" name="editGamma">
+            <widget class="CustomPlainTextEdit" name="editGamma">
              <property name="minimumSize">
               <size>
                <width>0</width>
@@ -553,7 +553,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QPlainTextEdit" name="editDarkfieldQuantity">
+               <widget class="CustomPlainTextEdit" name="editDarkfieldQuantity">
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
@@ -651,7 +651,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QPlainTextEdit" name="editTemperature">
+            <widget class="CustomPlainTextEdit" name="editTemperature">
              <property name="minimumSize">
               <size>
                <width>0</width>
@@ -780,7 +780,7 @@
           </attribute>
           <layout class="QHBoxLayout" name="horizontalLayout_4">
            <item>
-            <widget class="QGraphicsView" name="gvPreview"/>
+            <widget class="CustomGraphicsView" name="gvPreview"/>
            </item>
           </layout>
          </widget>
@@ -1084,6 +1084,16 @@
    <extends>QWidget</extends>
    <header>qvideowidget.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>CustomPlainTextEdit</class>
+   <extends>QPlainTextEdit</extends>
+   <header>customplaintextedit.h</header>
+  </customwidget>
+  <customwidget>
+   <class>CustomGraphicsView</class>
+   <extends>QGraphicsView</extends>
+   <header>customgraphicsview.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

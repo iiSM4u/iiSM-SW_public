@@ -1,35 +1,34 @@
-#include "../include/customgraphicsview.h"
-
+#include "customgraphicsview.h"
 #include <QMouseEvent>
 
 CustomGraphicsView::CustomGraphicsView(QWidget *parent)
-    : QGraphicsView(parent), pixmapItem(nullptr)
-{
-    setMouseTracking(true);  // Enable mouse tracking
+    : QGraphicsView(parent), pixmapItem(new QGraphicsPixmapItem()) {
+    // Ensure the view has a scene
+    QGraphicsScene *scene = new QGraphicsScene(this);
+    this->setScene(scene);
+    scene->addItem(pixmapItem);
+    // Enable mouse tracking
+    setMouseTracking(true);
 }
 
-void CustomGraphicsView::setImage(const QImage &image)
-{
+void CustomGraphicsView::setImage(const QImage &image) {
     this->image = image;
-    QPixmap pixmap = QPixmap::fromImage(image);
-    if (pixmapItem)
-    {
-        scene()->removeItem(pixmapItem);
-        delete pixmapItem;
-    }
-    pixmapItem = scene()->addPixmap(pixmap);
+    pixmapItem->setPixmap(QPixmap::fromImage(image));
+    fitInView();
 }
 
-void CustomGraphicsView::mouseMoveEvent(QMouseEvent *event)
-{
-    QPointF scenePos = mapToScene(event->pos());
-    int x = static_cast<int>(scenePos.x());
-    int y = static_cast<int>(scenePos.y());
+void CustomGraphicsView::fitInView() {
+    QGraphicsView::fitInView(pixmapItem, Qt::KeepAspectRatio);
+}
 
-    if (x >= 0 && x < image.width() && y >= 0 && y < image.height())
-    {
-        QColor color = image.pixelColor(x, y);
+void CustomGraphicsView::mouseMoveEvent(QMouseEvent *event) {
+    QPointF point = mapToScene(event->pos());
+    int x = static_cast<int>(point.x());
+    int y = static_cast<int>(point.y());
+    if (image.rect().contains(x, y)) {
+        QColor color = QColor::fromRgb(image.pixel(x, y));
         emit mousePositionChanged(x, y, color);
     }
+    qDebug() << "Mouse move event at: (" << x << ", " << y << ")";
     QGraphicsView::mouseMoveEvent(event);
 }
