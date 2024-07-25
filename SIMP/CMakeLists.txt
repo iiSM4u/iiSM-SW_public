@@ -47,13 +47,17 @@ set(PROJECT_SOURCES
     ${UI_FILES}
     # 이유는 모르겠는데 아래 ui 관련 파일들이 root에 있어야 빌드가 된다.
     mainwindow.cpp
-    dialog_brightness_contrast.cpp
-    dialog_stretch_contrast.cpp
-    dialog_stress.cpp
     mainwindow.ui
+    dialog_brightness_contrast.cpp
     dialog_brightness_contrast.ui
+    dialog_stretch_contrast.cpp
     dialog_stretch_contrast.ui
+    dialog_stress.cpp
     dialog_stress.ui
+    dialog_record_option.cpp
+    dialog_record_option.ui
+    dialog_image_curve.cpp
+    dialog_image_curve.ui
 )
 
 # Link directories

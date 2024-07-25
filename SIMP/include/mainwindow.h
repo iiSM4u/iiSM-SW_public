@@ -50,6 +50,7 @@ private slots:
     void ConnectUI();
     void InitUI();
     void EnablePreviewUI(bool isPlay);
+    void EnableDarkfieldUI(bool value);
     void EnableCoolingUI(bool value);
 
     /////////////////////// preview

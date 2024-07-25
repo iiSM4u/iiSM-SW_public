@@ -71,7 +71,7 @@ dialog_stress::~dialog_stress()
 
 bool dialog_stress::getEnable() const
 {
-    return ui->chkStress->checkState() == Qt::CheckState::Checked;
+    return ui->chkStress->isChecked();
 }
 
 int dialog_stress::getRadius() const
@@ -91,7 +91,7 @@ int dialog_stress::getIterations() const
 
 bool dialog_stress::getEnhanceShadows() const
 {
-    return ui->chkEnhanceShadows->checkState() == Qt::CheckState::Checked;
+    return ui->chkEnhanceShadows->isChecked();
 }
 
 void dialog_stress::chkStress_CheckedChanged(Qt::CheckState checkState)
@@ -124,7 +124,7 @@ void dialog_stress::btnSavePreset_Click()
     int radius = ui->editRadius->toPlainText().toInt(&ok);
     int samples = ui->editSamples->toPlainText().toInt(&ok);
     int iterations = ui->editIterations->toPlainText().toInt(&ok);
-    bool enhanceShadows = ui->chkEnhanceShadows->checkState() == Qt::CheckState::Checked;
+    bool enhanceShadows = ui->chkEnhanceShadows->isChecked();
     int index = this->presets.size();
 
     this->presets.emplace_back(index, radius, samples, iterations, enhanceShadows);

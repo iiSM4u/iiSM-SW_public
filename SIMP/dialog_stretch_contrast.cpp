@@ -30,17 +30,17 @@ dialog_stretch_contrast::~dialog_stretch_contrast()
 
 bool dialog_stretch_contrast::getEnable() const
 {
-    return ui->chkStretchContrast->checkState() == Qt::CheckState::Checked;
+    return ui->chkStretchContrast->isChecked();
 }
 
 bool dialog_stretch_contrast::getKeepColors() const
 {
-    return ui->chkKeepColors->checkState() == Qt::CheckState::Checked;
+    return ui->chkKeepColors->isChecked();
 }
 
 bool dialog_stretch_contrast::getNonLinearComponents() const
 {
-    return ui->chkNonLinearComponents->checkState() == Qt::CheckState::Checked;
+    return ui->chkNonLinearComponents->isChecked();
 }
 
 void dialog_stretch_contrast::chkStretchContrast_CheckedChanged(Qt::CheckState checkState)

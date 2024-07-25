@@ -46,7 +46,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     MainWindow::ConnectUI();
     MainWindow::InitUI();
+
+    // 일단 false로 시작
     MainWindow::EnablePreviewUI(false);
+    MainWindow::EnableDarkfieldUI(false);
     MainWindow::EnableCoolingUI(false);
 
     // thread 시작
@@ -233,8 +236,6 @@ void MainWindow::EnablePreviewUI(bool isPlay)
     ui->cbCurvePreset->setEnabled(isPlay);
 
     ui->chkDarkfield->setEnabled(isPlay);
-    ui->editDarkfieldQuantity->setEnabled(isPlay);
-    ui->btnDarkfieldCapture->setEnabled(isPlay);
 
     ui->rbCoolingOn->setEnabled(isPlay);
     ui->rbCoolingOff->setEnabled(isPlay);
@@ -244,6 +245,12 @@ void MainWindow::EnablePreviewUI(bool isPlay)
     ui->btnBrightnessContrast->setEnabled(isPlay);
     ui->btnStress->setEnabled(isPlay);
     ui->btnStretchContrast->setEnabled(isPlay);
+}
+
+void MainWindow::EnableDarkfieldUI(bool value)
+{
+    ui->editDarkfieldQuantity->setEnabled(value);
+    ui->btnDarkfieldCapture->setEnabled(value);
 }
 
 void MainWindow::EnableCoolingUI(bool value)
@@ -632,7 +639,7 @@ void MainWindow::cbCurvePreset_SelectedIndexChanged(int index)
 
 void MainWindow::chkDarkfield_CheckedChanged(Qt::CheckState checkState)
 {
-
+    MainWindow::EnableDarkfieldUI(ui->chkDarkfield->isChecked());
 }
 
 void MainWindow::btnDarkfieldCapture_Click()

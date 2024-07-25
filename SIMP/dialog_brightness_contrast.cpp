@@ -62,7 +62,7 @@ dialog_brightness_contrast::~dialog_brightness_contrast()
 
 bool dialog_brightness_contrast::getEnable() const
 {
-    return ui->chkBrightnessContrast->checkState() == Qt::CheckState::Checked;
+    return ui->chkBrightnessContrast->isChecked();
 }
 
 int dialog_brightness_contrast::getBrightness() const
