@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>frm_brightness_contrast</class>
- <widget class="QDialog" name="frm_brightness_contrast">
+ <class>dialog_brightness_contrast</class>
+ <widget class="QDialog" name="dialog_brightness_contrast">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>300</height>
+    <height>310</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -167,7 +167,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>frm_brightness_contrast</receiver>
+   <receiver>dialog_brightness_contrast</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -183,7 +183,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>frm_brightness_contrast</receiver>
+   <receiver>dialog_brightness_contrast</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

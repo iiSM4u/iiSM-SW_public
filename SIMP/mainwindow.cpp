@@ -2,7 +2,7 @@
 #include "ui/ui_mainwindow.h"
 #include "pixel_format_type.h"
 #include "utils.h"
-#include "frm_brightness_contrast.h"
+#include "dialog_brightness_contrast.h"
 
 #include <QGraphicsPixmapItem>
 #include <QFileDialog>
@@ -741,11 +741,13 @@ void MainWindow::btnZoomOut_Click()
 
 void MainWindow::btnBrightnessContrast_Click()
 {
-    frm_brightness_contrast dialog(this);
+    dialog_brightness_contrast dialog(this->isUpdateBrightnessContrast, this->gegl_brightness, this->gegl_contrast, this);
 
     if (dialog.exec() == QDialog::Accepted)
     {
-        // OK 버튼이 눌렸을 때 처리
+        this->isUpdateBrightnessContrast = dialog.getEnable();
+        this->gegl_brightness = dialog.getBrightness();
+        this->gegl_contrast = dialog.getContrast();
     }
 }
 
@@ -853,22 +855,22 @@ void MainWindow::UpdatePreview()
 
             if (this->isUpdateBrightnessContrast)
             {
-                UpdateBrightnessContrast(formattedSource, this->brightness, this->contrast);
+                UpdateBrightnessContrast(formattedSource, this->gegl_brightness, this->gegl_contrast);
             }
 
             if (this->isUpdateStress)
             {
-                UpdateStress(formattedSource, this->stressRadius, this->stressSamples, this->stressIterations, this->stressEnhanceShadows);
+                UpdateStress(formattedSource, this->gegl_stress_radius, this->gegl_stress_samples, this->gegl_stress_iterations, this->gegl_stress_enhance_shadows);
             }
 
             if (this->isUpdateStretchContrast)
             {
-                UpdateStretchContrast(formattedSource, this->stretchContrastKeepColors, this->stretchContrastPerceptual);
+                UpdateStretchContrast(formattedSource, this->gegl_stretch_contrast_keep_colors, this->gegl_stretch_contrast_perceptual);
             }
 
             if (this->isUpdateContrastCurve)
             {
-                UpdateContrastCurve(formattedSource, this->contrastCurves, this->contrastCurveSamplingPoints);
+                UpdateContrastCurve(formattedSource, this->contrastCurves, this->gegl_contrast_curve_sampling_points);
             }
 
             // 원래 format으로 되돌린다.

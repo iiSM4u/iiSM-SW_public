@@ -16,19 +16,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Gui Multimedia MultimediaWidgets Widgets)
 
-# 실행을 위한 파일들
-file(GLOB_RECURSE HEADER_FILES "include/*.h")
-file(GLOB_RECURSE SOURCE_FILES "source/*.cpp")
-file(GLOB_RECURSE UI_FILES "ui/*.ui")
-
-# Project source files
-set(PROJECT_SOURCES
-    ${SOURCE_FILES}
-    ${HEADER_FILES}
-    ${UI_FILES}
-    mainwindow.cpp  # 이유는 모르겠는데 mainwindow.cpp가 source 폴더 아래에 있으면 빌드가 안된다.
-)
-
 # Set OpenCV_DIR to the directory containing OpenCVConfig.cmake
 set(OpenCV_DIR "C:/opencv_mingw/")
 find_package(OpenCV REQUIRED)
@@ -47,6 +34,22 @@ include_directories(
     ${OpenCV_INCLUDE_DIRS}
     ${CMAKE_SOURCE_DIR}/external
     ${CMAKE_SOURCE_DIR}/include  # custom ui의 header를 참조할 수 있도록 추가
+)
+
+# 실행을 위한 파일들
+file(GLOB_RECURSE HEADER_FILES "include/*.h")
+file(GLOB_RECURSE SOURCE_FILES "source/*.cpp")
+file(GLOB_RECURSE UI_FILES "ui/*.ui")
+
+# Project source files
+set(PROJECT_SOURCES
+    ${SOURCE_FILES}
+    ${HEADER_FILES}
+    ${UI_FILES}
+    # 이유는 모르겠는데 아래 파일들이 root에 있어야 빌드가 된다.
+    mainwindow.cpp
+    dialog_brightness_contrast.cpp
+    dialog_brightness_contrast.ui
 )
 
 # Link directories

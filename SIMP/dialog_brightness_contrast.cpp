@@ -1,0 +1,259 @@
+#include "dialog_brightness_contrast.h"
+#include "ui_dialog_brightness_contrast.h"
+#include "constants.h"
+#include "utils.h"
+
+#include <miicam.h>
+#include <QMessageBox>
+#include <QJsonObject>
+
+dialog_brightness_contrast::dialog_brightness_contrast(QWidget *parent)
+    : QDialog(parent)
+    , ui(new Ui::dialog_brightness_contrast)
+{
+    ui->setupUi(this);
+}
+
+dialog_brightness_contrast::dialog_brightness_contrast(bool enable, double brightness, double contrast, QWidget *parent)
+    : QDialog(parent)
+    , ui(new Ui::dialog_brightness_contrast)
+{
+    ui->setupUi(this);
+
+    connect(ui->chkBrightnessContrast, &QCheckBox::checkStateChanged, this, &dialog_brightness_contrast::chkBrightnessContrast_CheckedChanged);
+    connect(ui->cbPreset, &QComboBox::currentIndexChanged, this, &dialog_brightness_contrast::cbPreset_SelectedIndexChanged);
+    connect(ui->btnSavePreset, &QPushButton::clicked, this, &dialog_brightness_contrast::btnSavePreset_Click);
+
+    connect(ui->sliderBrightness, &QSlider::sliderMoved, this, &dialog_brightness_contrast::sliderBrightness_sliderMoved);
+    connect(ui->editBrightness, &CustomPlainTextEdit::editingFinished, this, &dialog_brightness_contrast::editBrightness_editingFinished);
+    connect(ui->sliderContrast, &QSlider::sliderMoved, this, &dialog_brightness_contrast::sliderContrast_sliderMoved);
+    connect(ui->editContrast, &CustomPlainTextEdit::editingFinished, this, &dialog_brightness_contrast::editContrast_editingFinished);
+
+    // set min-max
+    // 10을 곱한다.
+    ui->sliderBrightness->setMinimum((int)(GEGL_BRIGHTNESS_MIN * 10.0));
+    ui->sliderBrightness->setMaximum((int)(GEGL_BRIGHTNESS_MAX * 10.0));
+    ui->sliderBrightness->setValue((int)(brightness * 10.0));
+    ui->editBrightness->setPlainText(QString::number(brightness, 'f', 1));
+
+    ui->sliderContrast->setMinimum((int)(GEGL_CONTRAST_MIN * 10.0));
+    ui->sliderContrast->setMaximum((int)(GEGL_CONTRAST_MAX * 10.0));
+    ui->sliderContrast->setValue((int)(contrast * 10.0));
+    ui->editContrast->setPlainText(QString::number(round(contrast)));
+
+    ui->chkBrightnessContrast->setCheckState(enable ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
+    dialog_brightness_contrast::EnableUI(enable);
+
+    // load preset
+    QString pathPreset = QCoreApplication::applicationDirPath() + PATH_JSON_BRIGHTNESS_CONTRAST;
+    QJsonArray jsonArray;
+
+    if (loadJsonFile(pathPreset, jsonArray))
+    {
+        this->presets = dialog_brightness_contrast::parseJsonArray(jsonArray);
+    }
+
+    dialog_brightness_contrast::UpdatePresetUI(this->presets);
+}
+
+dialog_brightness_contrast::~dialog_brightness_contrast()
+{
+    delete ui;
+}
+
+bool dialog_brightness_contrast::getEnable() const
+{
+    return ui->chkBrightnessContrast->checkState() == Qt::CheckState::Checked;
+}
+
+int dialog_brightness_contrast::getBrightness() const
+{
+    return ui->sliderBrightness->value();
+}
+
+int dialog_brightness_contrast::getContrast() const
+{
+    return ui->sliderContrast->value();
+}
+
+void dialog_brightness_contrast::chkBrightnessContrast_CheckedChanged(Qt::CheckState checkState)
+{
+    dialog_brightness_contrast::EnableUI(checkState == Qt::CheckState::Checked);
+}
+
+void dialog_brightness_contrast::cbPreset_SelectedIndexChanged(int index)
+{
+    if (index > -1)
+    {
+        preset_brightness_contrast preset = this->presets[index];
+
+        // 10을 곱한다.
+        ui->sliderBrightness->setValue((int)(preset.GetBrightness() * 10.0));
+        ui->editBrightness->setPlainText(QString::number(preset.GetBrightness(), 'f', 1));
+
+        ui->sliderContrast->setValue((int)(preset.GetContrast() * 10.0));
+        ui->editContrast->setPlainText(QString::number(preset.GetContrast(), 'f', 1));
+    }
+}
+
+void dialog_brightness_contrast::btnSavePreset_Click()
+{
+    bool ok;
+    double brightness = ui->editBrightness->toPlainText().toDouble(&ok);
+    double contrast = ui->editContrast->toPlainText().toDouble(&ok);
+    int index = this->presets.size();
+
+    this->presets.emplace_back(index, brightness, contrast);
+
+    QJsonArray jsonArray;
+    dialog_brightness_contrast::convertJsonArray(this->presets, jsonArray);
+
+    QString pathPreset = QCoreApplication::applicationDirPath() + PATH_JSON_BRIGHTNESS_CONTRAST;
+    saveJsonFile(pathPreset, jsonArray);
+
+    dialog_brightness_contrast::UpdatePresetUI(this->presets);
+}
+
+void dialog_brightness_contrast::sliderBrightness_sliderMoved(int position)
+{
+    // trackbar가 정수이므로 0.1을 곱한다.
+    double value = ui->sliderBrightness->value() * 0.1;
+
+    {
+        const QSignalBlocker blocker(ui->editBrightness);
+        ui->editBrightness->setPlainText(QString::number(value, 'f', 1));
+    }
+}
+
+void dialog_brightness_contrast::editBrightness_editingFinished()
+{
+    bool ok;
+    double value = ui->editBrightness->toPlainText().toDouble(&ok);
+
+    if (ok)
+    {
+        // trackbar에는 정수로 들어가야 하므로 10을 곱한다.
+        int valueInt = (int)(value * 10.0);
+
+        if (valueInt >= ui->sliderBrightness->minimum() && valueInt <= ui->sliderBrightness->maximum())
+        {
+            // slider에도 값 업데이트
+            ui->sliderBrightness->setValue(valueInt);
+        }
+        else
+        {
+            QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_RANGE);
+
+            // 기존 값으로 되돌린다.
+            value = roundToDecimalPlaces(ui->sliderBrightness->value() * 0.1, 1);
+            ui->editBrightness->setPlainText(QString::number(value, 'f', 1));
+        }
+    }
+    else
+    {
+        QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_VALUE);
+
+        // 기존 값으로 되돌린다.
+        value = roundToDecimalPlaces(ui->sliderBrightness->value() * 0.1, 1);
+        ui->editBrightness->setPlainText(QString::number(value, 'f', 1));
+    }
+}
+
+void dialog_brightness_contrast::sliderContrast_sliderMoved(int position)
+{
+    // trackbar가 정수이므로 0.1을 곱한다.
+    double value = ui->sliderContrast->value() * 0.1;
+
+    {
+        const QSignalBlocker blocker(ui->editContrast);
+        ui->editContrast->setPlainText(QString::number(value, 'f', 1));
+    }
+}
+
+void dialog_brightness_contrast::editContrast_editingFinished()
+{
+    bool ok;
+    double value = ui->editContrast->toPlainText().toDouble(&ok);
+
+    if (ok)
+    {
+        // trackbar에는 정수로 들어가야 하므로 10을 곱한다.
+        int valueInt = (int)(value * 10.0);
+
+        if (valueInt >= ui->sliderContrast->minimum() && valueInt <= ui->sliderContrast->maximum())
+        {
+            // slider에도 값 업데이트
+            ui->sliderContrast->setValue(valueInt);
+        }
+        else
+        {
+            QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_RANGE);
+
+            // 기존 값으로 되돌린다.
+            value = roundToDecimalPlaces(ui->sliderContrast->value() * 0.1, 1);
+            ui->editContrast->setPlainText(QString::number(value, 'f', 1));
+        }
+    }
+    else
+    {
+        QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_VALUE);
+
+        // 기존 값으로 되돌린다.
+        value = roundToDecimalPlaces(ui->sliderContrast->value() * 0.1, 1);
+        ui->editContrast->setPlainText(QString::number(value, 'f', 1));
+    }
+}
+
+void dialog_brightness_contrast::EnableUI(bool enable)
+{
+    ui->cbPreset->setEnabled(enable);
+    ui->btnSavePreset->setEnabled(enable);
+    ui->sliderBrightness->setEnabled(enable);
+    ui->editBrightness->setEnabled(enable);
+    ui->sliderContrast->setEnabled(enable);
+    ui->editContrast->setEnabled(enable);
+}
+
+void dialog_brightness_contrast::UpdatePresetUI(const std::vector<preset_brightness_contrast>& presets)
+{
+    ui->cbPreset->clear();
+
+    if (presets.size() > 0)
+    {
+        for (const preset_brightness_contrast& preset : presets)
+        {
+            QString message = QString("brightness: %1, contrast: %2")
+                                  .arg(preset.GetBrightness(), 0, 'f', 1) // 'f' for floating point, 2 decimal places
+                                  .arg(preset.GetContrast(), 0, 'f', 1);
+            ui->cbPreset->addItem(message);
+        }
+    }
+
+    ui->cbPreset->setCurrentIndex(presets.size()-1);
+}
+
+std::vector<preset_brightness_contrast> dialog_brightness_contrast::parseJsonArray(const QJsonArray& jsonArray)
+{
+    std::vector<preset_brightness_contrast> presets;
+    for (const QJsonValue& value : jsonArray)
+    {
+        QJsonObject obj = value.toObject();
+        int index = obj[KEY_INDEX].toInt();
+        double brightness = obj[KEY_BRIGHTNESS].toDouble();
+        double contrast = obj[KEY_CONTRAST].toDouble();
+        presets.emplace_back(index, brightness, contrast);
+    }
+    return presets;
+}
+
+void dialog_brightness_contrast::convertJsonArray(const std::vector<preset_brightness_contrast>& presets, QJsonArray& jsonArray)
+{
+    for (const preset_brightness_contrast& preset : presets)
+    {
+        QJsonObject jsonObject;
+        jsonObject[KEY_INDEX] = preset.GetIndex();
+        jsonObject[KEY_BRIGHTNESS] = preset.GetBrightness();
+        jsonObject[KEY_CONTRAST] = preset.GetContrast();
+        jsonArray.append(jsonObject);
+    }
+}

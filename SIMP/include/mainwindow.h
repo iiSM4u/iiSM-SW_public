@@ -154,11 +154,11 @@ private:
 
     float zoomFactor = 1.0f;
 
-    double brightness = DEFAULT_BRIGHTNESS, contrast = DEFAULT_CONTRAST;
-    int stressRadius = DEFAULT_STRESS_RADIUS, stressSamples = DEFAULT_STRESS_SAMPLES, stressIterations = DEFAULT_STRESS_INTERATIONS;
-    bool stressEnhanceShadows = DEFAULT_STRESS_ENHANCE_SHADOWS;
-    bool stretchContrastKeepColors = DEFAULT_STRETCH_CONTRAST_KEEP_COLORS, stretchContrastPerceptual = DEFAULT_STRETCH_CONTRAST_PERCEPTUAL;
-    int contrastCurveSamplingPoints = DEFAULT_CONTRAST_CURVE_SAMPLING_PLINTS;
+    double gegl_brightness = GEGL_BRIGHTNESS_DEFAULT, gegl_contrast = GEGL_CONTRAST_DEFAULT;
+    int gegl_stress_radius = GEGL_STRESS_RADIUS_DEFAULT, gegl_stress_samples = GEGL_STRESS_SAMPLES_DEFAULT, gegl_stress_iterations = GEGL_STRESS_INTERATIONS_DEFAULT;
+    bool gegl_stress_enhance_shadows = GEGL_STRESS_ENHANCE_SHADOWS_DEFAULT;
+    bool gegl_stretch_contrast_keep_colors = GEGL_STRETCH_CONTRAST_KEEP_COLORS_DEFAULT, gegl_stretch_contrast_perceptual = GEGL_STRETCH_CONTRAST_PERCEPTUAL_DEFAULT;
+    int gegl_contrast_curve_sampling_points = GEGL_CONTRAST_CURVE_SAMPLING_POINTS_DEFAULT;
     GeglCurve *contrastCurves = nullptr;
 
     QString captureDir = "";
