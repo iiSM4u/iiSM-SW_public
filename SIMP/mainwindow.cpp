@@ -3,6 +3,7 @@
 #include "pixel_format_type.h"
 #include "utils.h"
 #include "dialog_brightness_contrast.h"
+#include "dialog_stretch_contrast.h"
 
 #include <QGraphicsPixmapItem>
 #include <QFileDialog>
@@ -24,7 +25,6 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    //, scenePreview(new QGraphicsScene(this))
     , sceneFrame(new QGraphicsScene(this))
     , modelFrames(new QFileSystemModel(this))
     , mpVideoFile(new QMediaPlayer(this))
@@ -36,12 +36,12 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     qApp->setStyleSheet(
+        "QPlainTextEdit:disabled { background-color: lightgray; color: darkgray; }"
         "QPushButton:disabled { background-color: lightgray; color: darkgray; }"
         "QComboBox:disabled { background-color: lightgray; color: darkgray; }"
-        "QCheckBox:disabled { background-color: lightgray; color: darkgray; }"
-        "QPlainTextEdit:disabled { background-color: lightgray; color: darkgray; }"
-        "QSlider:disabled { background-color: lightgray; color: darkgray; }"
-        "QRadioButton:disabled { background-color: lightgray; color: darkgray; }"
+        "QCheckBox:disabled { color: darkgray; }"
+        "QSlider:disabled { color: darkgray; }"
+        "QRadioButton:disabled { color: darkgray; }"
     );
 
     ui->gvFrameCapture->setScene(sceneFrame);
@@ -758,7 +758,14 @@ void MainWindow::btnStress_Click()
 
 void MainWindow::btnStretchContrast_Click()
 {
-    //this->isUpdateStretchContrast = !this->isUpdateStretchContrast;
+    dialog_stretch_contrast dialog(this->isUpdateStretchContrast, this->gegl_stretch_contrast_keep_colors, this->gegl_stretch_contrast_perceptual);
+
+    if (dialog.exec() == QDialog::Accepted)
+    {
+        this->isUpdateStretchContrast = dialog.getEnable();
+        this->gegl_stretch_contrast_keep_colors = dialog.getKeepColors();
+        this->gegl_stretch_contrast_perceptual = dialog.getNonLinearComponents();
+    }
 }
 
 /////////////////////// video

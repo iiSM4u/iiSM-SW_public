@@ -113,8 +113,6 @@ private slots:
 private:
     Ui::MainWindow *ui;
 
-    //QGraphicsScene *scenePreview, *sceneFrame;
-    //QGraphicsPixmapItem *pmiPreview = nullptr, *pmiFrame = nullptr;
     QGraphicsScene *sceneFrame;
     QGraphicsPixmapItem *pmiFrame = nullptr;
     QButtonGroup *btnGroupCooling;
