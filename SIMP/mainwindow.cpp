@@ -1,7 +1,8 @@
-#include "include/mainwindow.h"
+#include "mainwindow.h"
 #include "ui/ui_mainwindow.h"
-#include "include/pixel_format_type.h"
-#include "include/utils.h"
+#include "pixel_format_type.h"
+#include "utils.h"
+#include "frm_brightness_contrast.h"
 
 #include <QGraphicsPixmapItem>
 #include <QFileDialog>
@@ -30,7 +31,7 @@ MainWindow::MainWindow(QWidget *parent)
     , timerFPS(new QTimer(this))
     , timerVideoRecord(new QTimer(this))
     , btnGroupCooling(new QButtonGroup(this))
-    , captureDir(QCoreApplication::applicationDirPath() + PATH_CAPTURE_FRAME)
+    , captureDir(QCoreApplication::applicationDirPath() + DIR_CAPTURE_FRAME)
 {
     ui->setupUi(this);
 
@@ -374,7 +375,7 @@ void MainWindow::btnCaptureCamera_Click()
 {
     if (!this->resultImage.isNull())
     {
-        QString pathDir = QCoreApplication::applicationDirPath() + PATH_CAPTURE_FRAME;
+        QString pathDir = QCoreApplication::applicationDirPath() + DIR_CAPTURE_FRAME;
 
         QDir dir(pathDir);
         if (!dir.exists())
@@ -405,7 +406,7 @@ void MainWindow::chkRecord_CheckedChanged(Qt::CheckState checkState)
         this->isRecordOn = false;
         if (this->videoFrames.size() > 0)
         {
-            QString pathDir = QCoreApplication::applicationDirPath() + PATH_RECORD_VIDEO;
+            QString pathDir = QCoreApplication::applicationDirPath() + DIR_RECORD_VIDEO;
 
             QDir dir(pathDir);
             if (!dir.exists())
@@ -740,7 +741,12 @@ void MainWindow::btnZoomOut_Click()
 
 void MainWindow::btnBrightnessContrast_Click()
 {
-    //this->isUpdateBrightnessContrast = !this->isUpdateBrightnessContrast;
+    frm_brightness_contrast dialog(this);
+
+    if (dialog.exec() == QDialog::Accepted)
+    {
+        // OK 버튼이 눌렸을 때 처리
+    }
 }
 
 void MainWindow::btnStress_Click()

@@ -21,8 +21,13 @@ const bool DEFAULT_STRETCH_CONTRAST_PERCEPTUAL = false;
 
 const int DEFAULT_CONTRAST_CURVE_SAMPLING_PLINTS = 0;
 
-const QString PATH_CAPTURE_FRAME = "/captures";
-const QString PATH_RECORD_VIDEO = "/videos";
+const QString DIR_CAPTURE_FRAME = "/captures";
+const QString DIR_RECORD_VIDEO = "/videos";
+const QString DIR_PRESET = "/presets";
+
+const QString JSON_BRIGHTNESS_CONTRAST = "/brightness_contrast.json";
+const QString JSON_STRESS = "/stress.json";
+const QString JSON_CONTRAST_CURVE = "/contrast_curve.json";
 
 const QString EXTENSION_CAPTURE_IMAGE = ".png";
 const QString FORMAT_DATE_TIME = "yyyy_MM_dd_hh_mm_ss";
