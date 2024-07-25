@@ -1,5 +1,4 @@
-#ifndef DIALOG_IMAGE_CURVE_H
-#define DIALOG_IMAGE_CURVE_H
+#pragma once
 
 #include <QDialog>
 
@@ -18,5 +17,3 @@ public:
 private:
     Ui::dialog_image_curve *ui;
 };
-
-#endif // DIALOG_IMAGE_CURVE_H

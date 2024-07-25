@@ -8,9 +8,9 @@ enum class PixelFormatType {
     Raw,
 };
 
-inline QString toString(PixelFormatType format)
+inline QString toString(PixelFormatType type)
 {
-    switch (format)
+    switch (type)
     {
     case PixelFormatType::RGB24: return "RGB24";
     case PixelFormatType::RGB32: return "RGB32";
