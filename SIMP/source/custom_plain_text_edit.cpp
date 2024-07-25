@@ -1,4 +1,4 @@
-#include "customplaintextedit.h"
+#include "custom_plain_text_edit.h"
 #include <QKeyEvent>
 
 CustomPlainTextEdit::CustomPlainTextEdit(QWidget *parent)

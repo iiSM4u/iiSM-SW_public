@@ -48,7 +48,7 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>-455</y>
+         <y>0</y>
          <width>241</width>
          <height>1192</height>
         </rect>
@@ -1088,12 +1088,12 @@
   <customwidget>
    <class>CustomPlainTextEdit</class>
    <extends>QPlainTextEdit</extends>
-   <header>customplaintextedit.h</header>
+   <header>custom_plain_text_edit.h</header>
   </customwidget>
   <customwidget>
    <class>CustomGraphicsView</class>
    <extends>QGraphicsView</extends>
-   <header>customgraphicsview.h</header>
+   <header>custom_graphics_view.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

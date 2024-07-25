@@ -1,6 +1,6 @@
 #include "include/mainwindow.h"
 #include "ui/ui_mainwindow.h"
-#include "include/pixelformattype.h"
+#include "include/pixel_format_type.h"
 #include "include/utils.h"
 
 #include <QGraphicsPixmapItem>
@@ -234,8 +234,6 @@ void MainWindow::EnablePreviewUI(bool isPlay)
     ui->cbResolution->setEnabled(!isPlay);
     ui->cbFormat->setEnabled(!isPlay);
 
-    // play 버튼은 다른 곳에서 처리한다.
-    //ui->btnPlayCamera->setEnabled(isPlay);
     ui->btnStopCamera->setEnabled(isPlay);
     ui->btnCaptureCamera->setEnabled(isPlay);
 
@@ -726,7 +724,6 @@ void MainWindow::btnZoomIn_Click()
     }
 
     ui->gvPreview->scale(zoomFactor, zoomFactor);
-    //this->customGvPreview->scale(zoomFactor, zoomFactor);
 }
 
 void MainWindow::btnZoomOut_Click()
@@ -739,7 +736,6 @@ void MainWindow::btnZoomOut_Click()
     }
 
     ui->gvPreview->scale(zoomFactor, zoomFactor);
-    //this->customGvPreview->scale(zoomFactor, zoomFactor);
 }
 
 void MainWindow::btnBrightnessContrast_Click()

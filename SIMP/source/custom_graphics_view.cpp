@@ -1,4 +1,4 @@
-#include "customgraphicsview.h"
+#include "custom_graphics_view.h"
 #include <QMouseEvent>
 
 CustomGraphicsView::CustomGraphicsView(QWidget *parent)
