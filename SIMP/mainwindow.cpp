@@ -1,5 +1,5 @@
 #include "mainwindow.h"
-#include "ui/ui_mainwindow.h"
+#include "ui_mainwindow.h"
 #include "pixel_format_type.h"
 #include "utils.h"
 #include "dialog_brightness_contrast.h"
@@ -26,7 +26,6 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , sceneFrame(new QGraphicsScene(this))
     , modelFrames(new QFileSystemModel(this))
     , mpVideoFile(new QMediaPlayer(this))
     , timerFPS(new QTimer(this))
@@ -44,8 +43,6 @@ MainWindow::MainWindow(QWidget *parent)
         "QSlider:disabled { color: darkgray; }"
         "QRadioButton:disabled { color: darkgray; }"
     );
-
-    ui->gvFrameCapture->setScene(sceneFrame);
 
     MainWindow::ConnectUI();
     MainWindow::InitUI();
@@ -85,34 +82,8 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 
     if (ui->tabWidget->currentWidget() == ui->tabCapture)
     {
-        if (this->pmiFrame)
-        {
-            ui->gvFrameCapture->fitInView(this->pmiFrame, Qt::KeepAspectRatio);
-        }
+        ui->gvFrameCapture->fitInView();
     }
-
-    // preview에서 fitInView하면 영상이 튀어서 주석처리
-    // QWidget *currentWidget = ui->tabWidget->currentWidget();
-
-    // if (currentWidget == ui->tabPreview)
-    // {
-    //     //if (this->pmiPreview)
-    //     //{
-    //     //    ui->gvPreview->fitInView(this->pmiPreview, Qt::KeepAspectRatio);
-    //     //    ui->gvPreview->scale(zoomFactor, zoomFactor);
-    //     //}
-    // }
-    // else if (currentWidget == ui->tabVideo)
-    // {
-
-    // }
-    // else if (currentWidget == ui->tabCapture)
-    // {
-    //     if (this->pmiFrame)
-    //     {
-    //         ui->gvFrameCapture->fitInView(this->pmiFrame, Qt::KeepAspectRatio);
-    //     }
-    // }
 }
 
 
@@ -125,7 +96,8 @@ void MainWindow::ConnectUI()
     connect(timerFPS, &QTimer::timeout, this, &MainWindow::onTimerFpsCallback);
 
     // preview
-    connect(ui->gvPreview, &CustomGraphicsView::mousePositionChanged, this, &MainWindow::UpdateMousePosition);
+    connect(ui->gvPreview, &CustomGraphicsView::mousePositionChanged, this, &MainWindow::UpdatePreviewMousePosition);
+    connect(ui->gvFrameCapture, &CustomGraphicsView::mousePositionChanged, this, &MainWindow::UpdateFrameMousePosition);
 
     connect(ui->cbResolution, &QComboBox::currentIndexChanged, this, &MainWindow::cbResoution_SelectedIndexChanged);
     connect(ui->cbFormat, &QComboBox::currentIndexChanged, this, &MainWindow::cbFormat_SelectedIndexChanged);
@@ -281,15 +253,46 @@ void MainWindow::EnableCoolingUI(bool value)
 }
 
 /////////////////////// preview
-void MainWindow::UpdateMousePosition(int x, int y, const QColor &color)
+void MainWindow::UpdatePreviewMousePosition(int x, int y, const QColor &color)
 {
-    QString text = QString("(x: %1, y: %2), (r: %3, g: %4, b: %5)")
-                       .arg(x)
-                       .arg(y)
-                       .arg(color.red())
-                       .arg(color.green())
-                       .arg(color.blue());
-    ui->lbColor->setText(text);  // Assume you have a QLabel named label in your .ui file
+    if (ui->tabWidget->currentWidget() == ui->tabPreview)
+    {
+        QString text = QString("(x: %1, y: %2), (r: %3, g: %4, b: %5)")
+                           .arg(x)
+                           .arg(y)
+                           .arg(color.red())
+                           .arg(color.green())
+                           .arg(color.blue());
+        ui->lbColor->setText(text);  // Assume you have a QLabel named label in your .ui file
+    }
+}
+
+void MainWindow::UpdateVideoMousePosition(int x, int y, const QColor &color)
+{
+    if (ui->tabWidget->currentWidget() == ui->tabVideo)
+    {
+        QString text = QString("(x: %1, y: %2), (r: %3, g: %4, b: %5)")
+                           .arg(x)
+                           .arg(y)
+                           .arg(color.red())
+                           .arg(color.green())
+                           .arg(color.blue());
+        ui->lbColor->setText(text);  // Assume you have a QLabel named label in your .ui file
+    }
+}
+
+void MainWindow::UpdateFrameMousePosition(int x, int y, const QColor &color)
+{
+    if (ui->tabWidget->currentWidget() == ui->tabCapture)
+    {
+        QString text = QString("(x: %1, y: %2), (r: %3, g: %4, b: %5)")
+                           .arg(x)
+                           .arg(y)
+                           .arg(color.red())
+                           .arg(color.green())
+                           .arg(color.blue());
+        ui->lbColor->setText(text);  // Assume you have a QLabel named label in your .ui file
+    }
 }
 
 void MainWindow::cbResoution_SelectedIndexChanged(int index)
@@ -850,17 +853,10 @@ void MainWindow::btnLoadFrame_Click()
 
 void MainWindow::lvFrames_Click(const QModelIndex &index)
 {
-    if (this->pmiFrame)
-    {
-        this->sceneFrame->removeItem(this->pmiFrame);
-        delete this->pmiFrame;
-    }
-
     QString filePath = this->modelFrames->filePath(index);
-    QPixmap pixmap(filePath);
-
-    this->pmiFrame = this->sceneFrame->addPixmap(pixmap);
-    ui->gvFrameCapture->fitInView(this->pmiFrame, Qt::KeepAspectRatio);
+    QImage image(filePath);
+    ui->gvFrameCapture->setImage(image);
+    ui->gvFrameCapture->fitInView();
 }
 
 
@@ -923,7 +919,6 @@ void MainWindow::UpdatePreview()
 
 void MainWindow::UpdateGraphicsView()
 {
-    const QSignalBlocker blocker(ui->gvPreview);
     ui->gvPreview->setImage(this->resultImage);
 
     if (std::abs(zoomFactor - 1.0f) <= std::numeric_limits<float>::epsilon())
@@ -1034,12 +1029,6 @@ void MainWindow::CloseCamera()
     if (this->rawCameraData)
     {
         delete[] this->rawCameraData;
-    }
-
-    if (this->pmiFrame)
-    {
-        delete this->pmiFrame;
-        this->pmiFrame = nullptr;
     }
 }
 

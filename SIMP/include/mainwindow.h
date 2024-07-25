@@ -57,7 +57,9 @@ private slots:
     void UpdateGraphicsView();
 
     // custom
-    void UpdateMousePosition(int x, int y, const QColor &color);
+    void UpdatePreviewMousePosition(int x, int y, const QColor &color);
+    void UpdateVideoMousePosition(int x, int y, const QColor &color);
+    void UpdateFrameMousePosition(int x, int y, const QColor &color);
 
     void cbResoution_SelectedIndexChanged(int index);
     void cbFormat_SelectedIndexChanged(int index);
@@ -117,8 +119,8 @@ private slots:
 private:
     Ui::MainWindow *ui;
 
-    QGraphicsScene *sceneFrame;
-    QGraphicsPixmapItem *pmiFrame = nullptr;
+    //QGraphicsScene *sceneFrame;
+    //QGraphicsPixmapItem *pmiFrame = nullptr;
     QButtonGroup *btnGroupCooling;
 
     QMediaPlayer *mpVideoFile;
