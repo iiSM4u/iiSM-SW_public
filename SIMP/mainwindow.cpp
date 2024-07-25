@@ -4,6 +4,7 @@
 #include "utils.h"
 #include "dialog_brightness_contrast.h"
 #include "dialog_stretch_contrast.h"
+#include "dialog_stress.h"
 
 #include <QGraphicsPixmapItem>
 #include <QFileDialog>
@@ -49,6 +50,7 @@ MainWindow::MainWindow(QWidget *parent)
     MainWindow::ConnectUI();
     MainWindow::InitUI();
     MainWindow::EnablePreviewUI(false);
+    MainWindow::EnableCoolingUI(false);
 
     // thread 시작
     this->isOn = true;
@@ -154,6 +156,8 @@ void MainWindow::ConnectUI()
     connect(ui->editDarkfieldQuantity, &CustomPlainTextEdit::editingFinished, this, &MainWindow::editDarkfieldQuantity_editingFinished);
     connect(ui->btnDarkfieldCapture, &QPushButton::clicked, this, &MainWindow::btnDarkfieldCapture_Click);
 
+    // off가 클릭된 상태로 시작
+    ui->rbCoolingOff->setChecked(true);
     this->btnGroupCooling->addButton(ui->rbCoolingOn, 1);
     this->btnGroupCooling->addButton(ui->rbCoolingOff, 2);
     connect(this->btnGroupCooling, &QButtonGroup::idClicked, this, &MainWindow::btnGroupCooling_Click);
@@ -263,14 +267,17 @@ void MainWindow::EnablePreviewUI(bool isPlay)
     ui->rbCoolingOn->setEnabled(isPlay);
     ui->rbCoolingOff->setEnabled(isPlay);
 
-    ui->sliderTemperature->setEnabled(isPlay);
-    ui->editTemperature->setEnabled(isPlay);
-
     ui->btnZoomIn->setEnabled(isPlay);
     ui->btnZoomOut->setEnabled(isPlay);
     ui->btnBrightnessContrast->setEnabled(isPlay);
     ui->btnStress->setEnabled(isPlay);
     ui->btnStretchContrast->setEnabled(isPlay);
+}
+
+void MainWindow::EnableCoolingUI(bool value)
+{
+    ui->sliderTemperature->setEnabled(value);
+    ui->editTemperature->setEnabled(value);
 }
 
 /////////////////////// preview
@@ -446,10 +453,8 @@ void MainWindow::sliderExposureTime_sliderMoved(int position)
     // time이 microsecond이고 range가 0.1-50000이기 때문에 0.01을 곱한다.
     Miicam_put_ExpoTime(this->miiHcam, (unsigned int)(value * 100.0));
 
-    {
-        const QSignalBlocker blocker(ui->editExposureTime);
-        ui->editExposureTime->setPlainText(QString::number(value, 'f', 1));
-    }
+    // label도 업데이트
+    ui->editExposureTime->setPlainText(QString::number(value, 'f', 1));
 }
 
 void MainWindow::editExposureTime_editingFinished()
@@ -464,6 +469,9 @@ void MainWindow::editExposureTime_editingFinished()
 
         if (valueInt >= ui->sliderExposureTime->minimum() && valueInt <= ui->sliderExposureTime->maximum())
         {
+            // time이 microsecond이고 range가 0.1-50000이기 때문에 0.01을 곱한다.
+            Miicam_put_ExpoTime(this->miiHcam, (unsigned int)(value * 100.0));
+
             // slider에도 값 업데이트
             ui->sliderExposureTime->setValue(valueInt);
         }
@@ -492,10 +500,8 @@ void MainWindow::sliderGain_sliderMoved(int position)
 
     Miicam_put_ExpoAGain(this->miiHcam, (unsigned short)(value));
 
-    {
-        const QSignalBlocker blocker(ui->editGain);
-        ui->editGain->setPlainText(QString::number(round(value)));
-    }
+    // label도 업데이트
+    ui->editGain->setPlainText(QString::number(value));
 }
 
 void MainWindow::editGain_editingFinished()
@@ -507,6 +513,8 @@ void MainWindow::editGain_editingFinished()
     {
         if (value >= ui->sliderGain->minimum() && value <= ui->sliderGain->maximum())
         {
+            Miicam_put_ExpoAGain(this->miiHcam, (unsigned short)(value));
+
             // slider에도 값 업데이트
             ui->sliderGain->setValue(value);
         }
@@ -533,10 +541,8 @@ void MainWindow::sliderContrast_sliderMoved(int position)
 
     Miicam_put_Contrast(this->miiHcam, value);
 
-    {
-        const QSignalBlocker blocker(ui->editContrast);
-        ui->editContrast->setPlainText(QString::number(round(value)));
-    }
+    // label도 업데이트
+    ui->editContrast->setPlainText(QString::number(value));
 }
 
 void MainWindow::editContrast_editingFinished()
@@ -548,6 +554,8 @@ void MainWindow::editContrast_editingFinished()
     {
         if (value >= ui->sliderContrast->minimum() && value <= ui->sliderContrast->maximum())
         {
+            Miicam_put_Contrast(this->miiHcam, value);
+
             // slider에도 값 업데이트
             ui->sliderContrast->setValue(value);
         }
@@ -574,10 +582,8 @@ void MainWindow::sliderGamma_sliderMoved(int position)
 
     Miicam_put_Gamma(this->miiHcam, value);
 
-    {
-        const QSignalBlocker blocker(ui->editGamma);
-        ui->editGamma->setPlainText(QString::number(round(value)));
-    }
+    // label도 업데이트
+    ui->editGamma->setPlainText(QString::number(value));
 }
 
 void MainWindow::editGamma_editingFinished()
@@ -589,6 +595,8 @@ void MainWindow::editGamma_editingFinished()
     {
         if (value >= ui->sliderGamma->minimum() && value <= ui->sliderGamma->maximum())
         {
+            Miicam_put_Gamma(this->miiHcam, value);
+
             // slider에도 값 업데이트
             ui->sliderGamma->setValue(value);
         }
@@ -665,20 +673,19 @@ void MainWindow::editDarkfieldQuantity_editingFinished()
 
 void MainWindow::btnGroupCooling_Click(int id)
 {
+    MainWindow::EnableCoolingUI(id == 1);
 }
 
 void MainWindow::sliderTemperature_sliderMoved(int position)
 {
     // trackbar가 정수이므로 0.1을 곱한다.
-    int value = ui->sliderTemperature->value() * 0.1;
+    double value = ui->sliderTemperature->value() * 0.1;
 
     // temperature는 3.2도를 32로 받기 때문에 10을 곱한다.
     Miicam_put_Temperature(this->miiHcam, (short)(value * 10.0));
 
-    {
-        const QSignalBlocker blocker(ui->editTemperature);
-        ui->editTemperature->setPlainText(QString::number(round(value)));
-    }
+    // label도 업데이트
+    ui->editTemperature->setPlainText(QString::number(value, 'f', 1));
 }
 
 void MainWindow::editTemperature_editingFinished()
@@ -693,6 +700,9 @@ void MainWindow::editTemperature_editingFinished()
 
         if (valueInt >= ui->sliderTemperature->minimum() && valueInt <= ui->sliderTemperature->maximum())
         {
+            // temperature는 3.2도를 32로 받기 때문에 10을 곱한다.
+            Miicam_put_Temperature(this->miiHcam, (short)(value * 10.0));
+
             // slider에도 값 업데이트
             ui->sliderTemperature->setValue(valueInt);
         }
@@ -753,7 +763,16 @@ void MainWindow::btnBrightnessContrast_Click()
 
 void MainWindow::btnStress_Click()
 {
-    //this->isUpdateStress = !this->isUpdateStress;
+    dialog_stress dialog(this->isUpdateStress, this->gegl_stress_radius, this->gegl_stress_samples, this->gegl_stress_iterations, this->gegl_stress_enhance_shadows, this);
+
+    if (dialog.exec() == QDialog::Accepted)
+    {
+        this->isUpdateStress = dialog.getEnable();
+        this->gegl_stress_radius = dialog.getRadius();
+        this->gegl_stress_samples = dialog.getSamples();
+        this->gegl_stress_iterations = dialog.getIterations();
+        this->gegl_stress_enhance_shadows = dialog.getEnhanceShadows();
+    }
 }
 
 void MainWindow::btnStretchContrast_Click()

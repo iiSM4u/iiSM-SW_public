@@ -47,6 +47,10 @@ signals:
 
 private slots:
     // ui events
+    void ConnectUI();
+    void InitUI();
+    void EnablePreviewUI(bool isPlay);
+    void EnableCoolingUI(bool value);
 
     /////////////////////// preview
     // thread
@@ -153,7 +157,7 @@ private:
     float zoomFactor = 1.0f;
 
     double gegl_brightness = GEGL_BRIGHTNESS_DEFAULT, gegl_contrast = GEGL_CONTRAST_DEFAULT;
-    int gegl_stress_radius = GEGL_STRESS_RADIUS_DEFAULT, gegl_stress_samples = GEGL_STRESS_SAMPLES_DEFAULT, gegl_stress_iterations = GEGL_STRESS_INTERATIONS_DEFAULT;
+    int gegl_stress_radius = GEGL_STRESS_RADIUS_DEFAULT, gegl_stress_samples = GEGL_STRESS_SAMPLES_DEFAULT, gegl_stress_iterations = GEGL_STRESS_ITERATIONS_DEFAULT;
     bool gegl_stress_enhance_shadows = GEGL_STRESS_ENHANCE_SHADOWS_DEFAULT;
     bool gegl_stretch_contrast_keep_colors = GEGL_STRETCH_CONTRAST_KEEP_COLORS_DEFAULT, gegl_stretch_contrast_perceptual = GEGL_STRETCH_CONTRAST_PERCEPTUAL_DEFAULT;
     int gegl_contrast_curve_sampling_points = GEGL_CONTRAST_CURVE_SAMPLING_POINTS_DEFAULT;
@@ -165,9 +169,6 @@ private:
 
     void onTimerFpsCallback();
 
-    void ConnectUI();
-    void InitUI();
-    void EnablePreviewUI(bool isPlay);
     //CustomPlainTextEdit* ChangeQPlainTextEditToCustom(QPlainTextEdit* source);
 
     // mii camera

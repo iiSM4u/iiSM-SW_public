@@ -1,28 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>dialog_brightness_contrast</class>
- <widget class="QDialog" name="dialog_brightness_contrast">
+ <class>dialog_stress</class>
+ <widget class="QDialog" name="dialog_stress">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>310</height>
+    <height>434</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_2">
+  <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QCheckBox" name="chkBrightnessContrast">
+    <widget class="QCheckBox" name="chkStress">
      <property name="font">
       <font>
        <bold>true</bold>
       </font>
      </property>
      <property name="text">
-      <string>Enable Brightness/Contrast</string>
+      <string>Enable Stress</string>
      </property>
     </widget>
    </item>
@@ -84,27 +84,21 @@
       </font>
      </property>
      <property name="title">
-      <string>Brightness</string>
+      <string>Radius</string>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout">
+     <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
-       <widget class="CustomPlainTextEdit" name="editBrightness">
+       <widget class="CustomPlainTextEdit" name="editRadius">
         <property name="minimumSize">
          <size>
           <width>0</width>
           <height>27</height>
          </size>
         </property>
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>16777215</height>
-         </size>
-        </property>
        </widget>
       </item>
       <item>
-       <widget class="QSlider" name="sliderBrightness">
+       <widget class="QSlider" name="sliderRadius">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
@@ -121,33 +115,65 @@
       </font>
      </property>
      <property name="title">
-      <string>Contrast</string>
+      <string>Samples</string>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_3">
       <item>
-       <widget class="CustomPlainTextEdit" name="editContrast">
+       <widget class="CustomPlainTextEdit" name="editSamples">
         <property name="minimumSize">
          <size>
           <width>0</width>
           <height>27</height>
          </size>
         </property>
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>16777215</height>
-         </size>
-        </property>
        </widget>
       </item>
       <item>
-       <widget class="QSlider" name="sliderContrast">
+       <widget class="QSlider" name="sliderSamples">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
        </widget>
       </item>
      </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupBox_3">
+     <property name="font">
+      <font>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="title">
+      <string>Iterations</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_4">
+      <item>
+       <widget class="CustomPlainTextEdit" name="editIterations">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>27</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QSlider" name="sliderIterations">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="chkEnhanceShadows">
+     <property name="text">
+      <string>Enhance Shadows</string>
+     </property>
     </widget>
    </item>
    <item>
@@ -174,7 +200,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>dialog_brightness_contrast</receiver>
+   <receiver>dialog_stress</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -190,7 +216,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>dialog_brightness_contrast</receiver>
+   <receiver>dialog_stress</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

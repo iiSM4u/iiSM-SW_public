@@ -1,5 +1,5 @@
-#ifndef DIALOG_STRETCH_CONTRAST_H
-#define DIALOG_STRETCH_CONTRAST_H
+#pragma once
+
 
 #include <QDialog>
 
@@ -28,5 +28,3 @@ private slots:
 private:
     Ui::dialog_stretch_contrast *ui;
 };
-
-#endif // DIALOG_STRETCH_CONTRAST_H

@@ -49,9 +49,11 @@ set(PROJECT_SOURCES
     mainwindow.cpp
     dialog_brightness_contrast.cpp
     dialog_stretch_contrast.cpp
+    dialog_stress.cpp
     mainwindow.ui
     dialog_brightness_contrast.ui
     dialog_stretch_contrast.ui
+    dialog_stress.ui
 )
 
 # Link directories

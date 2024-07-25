@@ -27,9 +27,9 @@ const int GEGL_STRESS_SAMPLES_DEFAULT = 5;
 const int GEGL_STRESS_SAMPLES_MIN = 2;
 const int GEGL_STRESS_SAMPLES_MAX = 500;
 
-const int GEGL_STRESS_INTERATIONS_DEFAULT = 5;
-const int GEGL_STRESS_INTERATIONS_MIN = 1;
-const int GEGL_STRESS_INTERATIONS_MAX = 1000;
+const int GEGL_STRESS_ITERATIONS_DEFAULT = 5;
+const int GEGL_STRESS_ITERATIONS_MIN = 1;
+const int GEGL_STRESS_ITERATIONS_MAX = 1000;
 
 const bool GEGL_STRESS_ENHANCE_SHADOWS_DEFAULT = false;
 
@@ -52,6 +52,10 @@ const QString FORMAT_DATE_TIME = "yyyy_MM_dd_hh_mm_ss";
 const QString KEY_INDEX = "index";
 const QString KEY_BRIGHTNESS = "brightness";
 const QString KEY_CONTRAST = "contrast";
+const QString KEY_RADIUS = "radius";
+const QString KEY_SAMPLES = "samples";
+const QString KEY_ITERATIONS = "iterations";
+const QString KEY_ENHANCE_SHADOWS = "enhance_shadows";
 
 
 const QString BTN_PLAY = "Play";
