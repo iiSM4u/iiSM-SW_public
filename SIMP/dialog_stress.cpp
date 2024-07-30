@@ -30,6 +30,18 @@ dialog_stress::dialog_stress(bool enable, int radius, int samples, int iteration
     connect(ui->sliderIterations, &QSlider::sliderMoved, this, &dialog_stress::sliderIterations_sliderMoved);
     connect(ui->editIterations, &CustomPlainTextEdit::editingFinished, this, &dialog_stress::editIterations_editingFinished);
 
+    // combobox를 업데이트하면서 slider가 업데이트 되기 때문에 slider 보다 먼저 combobox를 업데이트한다.
+    // load preset
+    QString pathPreset = QCoreApplication::applicationDirPath() + PATH_JSON_STRESS;
+    QJsonArray jsonArray;
+
+    if (loadJsonFile(pathPreset, jsonArray))
+    {
+        this->presets = dialog_stress::parseJsonArray(jsonArray);
+    }
+
+    dialog_stress::UpdatePresetUI(this->presets);
+
     // set min-max
     ui->sliderRadius->setMinimum(GEGL_STRESS_RADIUS_MIN);
     ui->sliderRadius->setMaximum(GEGL_STRESS_RADIUS_MAX);
@@ -50,17 +62,6 @@ dialog_stress::dialog_stress(bool enable, int radius, int samples, int iteration
 
     ui->chkStress->setCheckState(enable ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
     dialog_stress::EnableUI(enable);
-
-    // load preset
-    QString pathPreset = QCoreApplication::applicationDirPath() + PATH_JSON_STRESS;
-    QJsonArray jsonArray;
-
-    if (loadJsonFile(pathPreset, jsonArray))
-    {
-        this->presets = dialog_stress::parseJsonArray(jsonArray);
-    }
-
-    dialog_stress::UpdatePresetUI(this->presets);
 }
 
 dialog_stress::~dialog_stress()
@@ -135,7 +136,8 @@ void dialog_stress::btnSavePreset_Click()
     QString pathPreset = QCoreApplication::applicationDirPath() + PATH_JSON_STRESS;
     saveJsonFile(pathPreset, jsonArray);
 
-    dialog_stress::UpdatePresetUI(this->presets);
+    // 추가한 것으로 선택
+    dialog_stress::UpdatePresetUI(this->presets, this->presets.size());
 }
 
 void dialog_stress::sliderRadius_sliderMoved(int position)

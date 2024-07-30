@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include "pixel_format_type.h"
 #include "utils.h"
+#include "dialog_record_option.h"
 #include "dialog_brightness_contrast.h"
 #include "dialog_stretch_contrast.h"
 #include "dialog_stress.h"
@@ -422,7 +423,7 @@ void MainWindow::chkRecord_CheckedChanged(Qt::CheckState checkState)
         this->isRecordOn = false;
         if (this->videoFrames.size() > 0)
         {
-            MainWindow::RecordVideo(this->videoFrames, this->recordFormat, this->recordFrameRate);
+            MainWindow::RecordVideo(this->videoFrames, this->recordDir, this->recordFormat, this->recordFrameRate, this->recordQuality);
             this->videoFrames.clear();
         }
     }
@@ -430,7 +431,16 @@ void MainWindow::chkRecord_CheckedChanged(Qt::CheckState checkState)
 
 void MainWindow::btnRecordOption_Click()
 {
+    dialog_record_option dialog(this->recordDir, this->recordFormat, this->recordFrameRate, this->recordQuality, this->recordTimeLimit, this);
 
+    if (dialog.exec() == QDialog::Accepted)
+    {
+        this->recordDir = dialog.getVideoDirectory();
+        this->recordFormat = dialog.getVideoFormat();
+        this->recordFrameRate = dialog.getFrameRate();
+        this->recordQuality = dialog.getQuality();
+        this->recordTimeLimit = dialog.getTimeLimit();
+    }
 }
 
 
@@ -916,6 +926,11 @@ void MainWindow::UpdateGraphicsView()
         elapsedTime = elapsedTime.addSecs(elapsedSeconds);
 
         ui->lbRunTime->setText("Recoding Time: " + elapsedTime.toString("hh:mm:ss"));
+
+        if (this->recordTimeLimit > 0 && elapsedTime.second() >= this->recordTimeLimit)
+        {
+            ui->chkRecord->setChecked(false);
+        }
     }
 }
 
@@ -1243,38 +1258,59 @@ void MainWindow::SetPlayVideo(bool value)
     }
 }
 
-void MainWindow::RecordVideo(std::vector<cv::Mat>& videoFrames, const VideoFormatType format, const double frameRate, const int quality)
+bool MainWindow::RecordVideo(
+    std::vector<cv::Mat>& videoFrames
+    , const QString& recordDir
+    , const VideoFormatType format
+    , const double frameRate
+    , const int quality
+)
 {
-    QString pathDir = QCoreApplication::applicationDirPath() + DIR_RECORD_VIDEO;
-
-    QDir dir(pathDir);
-
-    if (!dir.exists())
+    if (videoFrames.size() > 0)
     {
-        dir.mkpath(pathDir);
+        //QString pathDir = DIR_RECORD_VIDEO;
+        //QString pathDir = QCoreApplication::applicationDirPath() + recordDir;
+
+        QDir dir(recordDir);
+
+        if (!dir.exists())
+        {
+            dir.mkpath(recordDir);
+        }
+
+        QString timestamp = QDateTime::currentDateTime().toString(FORMAT_DATE_TIME);
+        QString filePath = dir.absoluteFilePath(timestamp + getVideoExtension(format));
+        int fourcc = getVideoFourcc(format);
+
+        try
+        {
+            // Create VideoWriter object
+            cv::VideoWriter writer(filePath.toStdString(), fourcc, frameRate, cv::Size(videoFrames[0].cols, videoFrames[0].rows));
+
+            // quality는 특정 format에만 적용된다.
+            if (format == VideoFormatType::MJPEG)
+            {
+                writer.set(cv::VIDEOWRITER_PROP_QUALITY, quality);
+            }
+
+            // Write frames to video file
+            for (const cv::Mat& mat : videoFrames)
+            {
+                writer.write(mat);
+            }
+
+            // Release the VideoWriter
+            writer.release();
+
+            return true;
+        }
+        catch (cv::Exception ex)
+        {
+            QMessageBox::critical(this, TITLE_ERROR, QString::fromStdString(ex.msg));
+        }
     }
 
-    QString timestamp = QDateTime::currentDateTime().toString(FORMAT_DATE_TIME);
-    QString filePath = dir.absoluteFilePath(timestamp + getVideoExtension(format));
-    int fourcc = getVideoFourcc(format);
-
-    // Create VideoWriter object
-    cv::VideoWriter writer(filePath.toStdString(), fourcc, frameRate, cv::Size(videoFrames[0].cols, videoFrames[0].rows));
-
-    // quality는 특정 format에만 적용된다.
-    if (format == VideoFormatType::MJPEG)
-    {
-        writer.set(cv::VIDEOWRITER_PROP_QUALITY, quality);
-    }
-
-    // Write frames to video file
-    for (const cv::Mat& mat : videoFrames)
-    {
-        writer.write(mat);
-    }
-
-    // Release the VideoWriter
-    writer.release();
+    return false;
 }
 
 

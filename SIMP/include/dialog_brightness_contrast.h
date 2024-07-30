@@ -18,8 +18,8 @@ public:
     ~dialog_brightness_contrast();
 
     bool getEnable() const;
-    int getBrightness() const;
-    int getContrast() const;
+    double getBrightness() const;
+    double getContrast() const;
 
 private slots:
     void chkBrightnessContrast_CheckedChanged(Qt::CheckState checkState);
@@ -33,7 +33,7 @@ private slots:
     void editContrast_editingFinished();
 
     void EnableUI(bool enable);
-    void UpdatePresetUI(const std::vector<preset_brightness_contrast>& presets);
+    void UpdatePresetUI(const std::vector<preset_brightness_contrast>& presets, const int index = -1);
 
 private:
     Ui::dialog_brightness_contrast *ui;

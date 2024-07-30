@@ -37,7 +37,7 @@ private slots:
     void editIterations_editingFinished();
 
     void EnableUI(bool enable);
-    void UpdatePresetUI(const std::vector<preset_stress>& presets);
+    void UpdatePresetUI(const std::vector<preset_stress>& presets, const int index = -1);
 
 private:
     Ui::dialog_stress *ui;

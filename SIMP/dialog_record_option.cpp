@@ -9,41 +9,44 @@ dialog_record_option::dialog_record_option(QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::dialog_record_option)
 {
-    ui->setupUi(this);    
-
-    dialog_record_option::ConnectUI();
-    dialog_record_option::InitUI();
+    ui->setupUi(this);
 }
 
-dialog_record_option::~dialog_record_option()
+dialog_record_option::dialog_record_option(QString& dir, VideoFormatType format, int frameRate, int quality, int timeLimit, QWidget *parent)
+    : QDialog(parent)
+    , ui(new Ui::dialog_record_option)
 {
-    delete ui;
-}
+    ui->setupUi(this);
 
-void dialog_record_option::ConnectUI()
-{
     connect(ui->btnDir, &QPushButton::clicked, this, &dialog_record_option::btnDir_Click);
     connect(ui->chkTimeLimit, &QCheckBox::checkStateChanged, this, &dialog_record_option::chkTimeLimit_CheckedChanged);
     connect(ui->sliderFrameRate, &QSlider::sliderMoved, this, &dialog_record_option::sliderFrameRate_sliderMoved);
     connect(ui->editFrameRate, &CustomPlainTextEdit::editingFinished, this, &dialog_record_option::editFrameRate_editingFinished);
-}
 
-void dialog_record_option::InitUI()
-{
-    ui->lbDir->setText(DIR_RECORD_VIDEO);
-    ui->editQuality->setPlainText(QString::number(RECORD_QUALITY_DEFAULT));
+    ui->lbDir->setText(QCoreApplication::applicationDirPath() + DIR_RECORD_VIDEO);
 
     ui->cbVideoFormat->clear();
     for (const auto& format : {VideoFormatType::MJPEG, VideoFormatType::XVID, VideoFormatType::MP4V, VideoFormatType::NONE })
     {
         ui->cbVideoFormat->addItem(toString(format));
     }
-    ui->cbVideoFormat->setCurrentIndex(0);
+    ui->cbVideoFormat->setCurrentIndex(static_cast<int>(format));
+
+    ui->editQuality->setPlainText(QString::number(quality));
+
+    ui->chkTimeLimit->setChecked(timeLimit > 0);
+    ui->editTimeLimit->setPlainText(QString::number(timeLimit));
+    ui->editTimeLimit->setEnabled(timeLimit > 0);
 
     ui->sliderFrameRate->setMinimum(RECORD_FRAME_RATE_MIN);
     ui->sliderFrameRate->setMaximum(RECORD_FRAME_RATE_MAX);
-    ui->sliderFrameRate->setValue(RECORD_FRAME_RATE_DEFAULT);
-    ui->editFrameRate->setPlainText(QString::number(RECORD_FRAME_RATE_DEFAULT));
+    ui->sliderFrameRate->setValue(frameRate);
+    ui->editFrameRate->setPlainText(QString::number(frameRate));
+}
+
+dialog_record_option::~dialog_record_option()
+{
+    delete ui;
 }
 
 VideoFormatType dialog_record_option::getVideoFormat() const
@@ -69,7 +72,7 @@ int dialog_record_option::getTimeLimit() const
         bool ok;
         return ui->editTimeLimit->toPlainText().toInt(&ok);
     }
-    return -1;
+    return 0;
 }
 
 int dialog_record_option::getFrameRate() const
@@ -105,8 +108,8 @@ void dialog_record_option::editFrameRate_editingFinished()
 
     if (ok)
     {
-        if (value >= ui->sliderFrameRate->minimum() && value <= ui->sliderFrameRate->maximum())        {
-
+        if (value >= ui->sliderFrameRate->minimum() && value <= ui->sliderFrameRate->maximum())
+        {
             // slider에도 값 업데이트
             ui->sliderFrameRate->setValue(value);
         }

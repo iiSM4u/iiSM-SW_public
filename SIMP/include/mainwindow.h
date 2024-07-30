@@ -59,9 +59,9 @@ private slots:
     void UpdateGraphicsView();
 
     // custom
-    void UpdatePreviewMousePosition(int x, int y, const QColor &color);
-    void UpdateVideoMousePosition(int x, int y, const QColor &color);
-    void UpdateFrameMousePosition(int x, int y, const QColor &color);
+    void UpdatePreviewMousePosition(int x, int y, const QColor& color);
+    void UpdateVideoMousePosition(int x, int y, const QColor& color);
+    void UpdateFrameMousePosition(int x, int y, const QColor& color);
 
     void cbResoution_SelectedIndexChanged(int index);
     void cbFormat_SelectedIndexChanged(int index);
@@ -115,7 +115,7 @@ private slots:
 
     /////////////////////// frame
     void btnLoadFrame_Click();
-    void lvFrames_Click(const QModelIndex &index);
+    void lvFrames_Click(const QModelIndex& index);
 
 
 private:
@@ -128,7 +128,6 @@ private:
     QMediaPlayer *mpVideoFile;
     QFileSystemModel *modelFrames;
     QTimer *timerFPS, *timerVideoRecord;
-    QTime recordStartTime;
 
     MiicamDeviceV2 miiDevice;
     HMiicam miiHcam = nullptr;
@@ -143,8 +142,15 @@ private:
     unsigned rawCameraHeight = 0;
 
     int resolutionIndex = 0;
+
+    QTime recordStartTime;
     VideoFormatType recordFormat = VideoFormatType::MJPEG;
-    double recordFrameRate = 30.0;
+    double recordFrameRate = RECORD_FRAME_RATE_DEFAULT;
+    int recordQuality = RECORD_QUALITY_DEFAULT;
+    int recordTimeLimit = 0;
+    QString recordDir = DIR_RECORD_VIDEO;
+
+    QString captureDir = DIR_CAPTURE_FRAME;
 
     //void resizeEvent(QResizeEvent* event) override;
     bool isOn = false;
@@ -166,8 +172,6 @@ private:
     bool gegl_stretch_contrast_keep_colors = GEGL_STRETCH_CONTRAST_KEEP_COLORS_DEFAULT, gegl_stretch_contrast_perceptual = GEGL_STRETCH_CONTRAST_PERCEPTUAL_DEFAULT;
     int gegl_contrast_curve_sampling_points = GEGL_CONTRAST_CURVE_SAMPLING_POINTS_DEFAULT;
     GeglCurve *contrastCurves = nullptr;
-
-    QString captureDir = "";
 
     QMutex imageMutex;
 
@@ -216,7 +220,13 @@ private:
     // custom
     void SetPlayVideo(bool value);
     void UpdatePreview();    
-    void RecordVideo(std::vector<cv::Mat>& videoFrames, const VideoFormatType format, const double frameRate, const int quality);
+    bool RecordVideo(
+        std::vector<cv::Mat>& videoFrames
+        , const QString& recordDir
+        , const VideoFormatType format
+        , const double frameRate
+        , const int quality
+    );
 
 
     std::thread updateThread;
