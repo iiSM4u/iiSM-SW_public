@@ -259,7 +259,7 @@ void dialog_stress::EnableUI(bool enable)
     ui->chkEnhanceShadows->setEnabled(enable);
 }
 
-void dialog_stress::UpdatePresetUI(const std::vector<preset_stress>& presets)
+void dialog_stress::UpdatePresetUI(const std::vector<preset_stress>& presets, const int index)
 {
     ui->cbPresets->clear();
 
@@ -276,7 +276,7 @@ void dialog_stress::UpdatePresetUI(const std::vector<preset_stress>& presets)
         }
     }
 
-    ui->cbPresets->setCurrentIndex(presets.size()-1);
+    ui->cbPresets->setCurrentIndex(index);
 }
 
 std::vector<preset_stress> dialog_stress::parseJsonArray(const QJsonArray& jsonArray)

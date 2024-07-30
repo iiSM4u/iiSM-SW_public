@@ -27,11 +27,13 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
+    , modelVideos(new QFileSystemModel(this))
     , modelFrames(new QFileSystemModel(this))
-    , mpVideoFile(new QMediaPlayer(this))
+    //, mpVideoFile(new QMediaPlayer(this))
     , timerFPS(new QTimer(this))
     , timerVideoRecord(new QTimer(this))
     , btnGroupCooling(new QButtonGroup(this))
+    , recordDir(QCoreApplication::applicationDirPath() + DIR_RECORD_VIDEO)
     , captureDir(QCoreApplication::applicationDirPath() + DIR_CAPTURE_FRAME)
 {
     ui->setupUi(this);
@@ -44,6 +46,13 @@ MainWindow::MainWindow(QWidget *parent)
         "QSlider:disabled { color: darkgray; }"
         "QRadioButton:disabled { color: darkgray; }"
     );
+
+
+    mpVideoFile = new QMediaPlayer(this);
+    // Connect error signal for debugging
+    connect(mpVideoFile, &QMediaPlayer::errorOccurred, this, [](QMediaPlayer::Error error){
+        qDebug() << "Media player error:" << error;
+    });
 
     MainWindow::ConnectUI();
     MainWindow::InitUI();
@@ -86,7 +95,7 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 
     if (ui->tabWidget->currentWidget() == ui->tabCapture)
     {
-        ui->gvFrameCapture->fitInView();
+        ui->gvFrame->fitInView();
     }
 }
 
@@ -101,7 +110,7 @@ void MainWindow::ConnectUI()
 
     // preview
     connect(ui->gvPreview, &CustomGraphicsView::mousePositionChanged, this, &MainWindow::UpdatePreviewMousePosition);
-    connect(ui->gvFrameCapture, &CustomGraphicsView::mousePositionChanged, this, &MainWindow::UpdateFrameMousePosition);
+    connect(ui->gvFrame, &CustomGraphicsView::mousePositionChanged, this, &MainWindow::UpdateFrameMousePosition);
 
     connect(ui->cbResolution, &QComboBox::currentIndexChanged, this, &MainWindow::cbResoution_SelectedIndexChanged);
     connect(ui->cbFormat, &QComboBox::currentIndexChanged, this, &MainWindow::cbFormat_SelectedIndexChanged);
@@ -153,16 +162,18 @@ void MainWindow::ConnectUI()
     connect(ui->btnLoadVideo, &QPushButton::clicked, this, &MainWindow::btnLoadVideo_Click);
     connect(ui->btnPlayVideo, &QPushButton::clicked, this, &MainWindow::btnPlayVideo_Click);
     connect(ui->btnStopVideo, &QPushButton::clicked, this, &MainWindow::btnStopVideo_Click);
+    connect(ui->lvVideo, &QListView::clicked, this, &MainWindow::lvVideo_Click);
 
     connect(mpVideoFile, &QMediaPlayer::mediaStatusChanged, this, &MainWindow::onVideoStatusChanged);
 
     // capture
     connect(ui->btnLoadFrame, &QPushButton::clicked, this, &MainWindow::btnLoadFrame_Click);
-    connect(ui->lvFrames, &QListView::clicked, this, &MainWindow::lvFrames_Click);
+    connect(ui->lvFrame, &QListView::clicked, this, &MainWindow::lvFrame_Click);
 }
 
 void MainWindow::InitUI()
 {
+    ////////////////////////// tab preview
     ui->cbFormat->clear();
     for (const auto& format : {PixelFormatType::RGB24, PixelFormatType::RGB32, PixelFormatType::Raw})
     {
@@ -187,26 +198,44 @@ void MainWindow::InitUI()
     ui->sliderGamma->setValue(MIICAM_GAMMA_DEF);
     ui->editGamma->setPlainText(QString::number(MIICAM_GAMMA_DEF));
 
-    mpVideoFile->setVideoOutput(ui->videoFile);
 
-    // tab frame
+    ////////////////////////// tab video
+
+    this->mpVideoFile->setVideoOutput(ui->videoFile);
+
     // Check if the captures directory exists, and create it if it doesn't
-    QDir dir(captureDir);
-    if (!dir.exists()) {
-        dir.mkpath(captureDir);
+    QDir dirVideo(this->recordDir);
+    if (!dirVideo.exists()) {
+        dirVideo.mkpath(this->recordDir);
     }
 
     // Set model properties
-    this->modelFrames->setRootPath(captureDir);
-    this->modelFrames->setNameFilters(QStringList() << "*.png" << "*.jpg" << "*.jpeg" << "*.bmp" << "*.gif");
-    this->modelFrames->setNameFilterDisables(false);
+    this->modelVideos->setRootPath(this->recordDir);
+    this->modelVideos->setNameFilters(QStringList() << "*.avi" << "*.mp4" << "*.wmv");
+    this->modelVideos->setNameFilterDisables(false);
 
-    ui->lvFrames->setModel(modelFrames);
-    ui->lvFrames->setRootIndex(modelFrames->index(captureDir)); // Set the root index
-    ui->lbDirFrames->setText(captureDir);
+    ui->lvVideo->setModel(this->modelVideos);
+    ui->lvVideo->setRootIndex(this->modelVideos->index(this->recordDir)); // Set the root index
+    ui->lbDirVideo->setText(this->recordDir);
 
     ui->btnPlayVideo->setEnabled(false);
     ui->btnStopVideo->setEnabled(false);
+
+
+    ////////////////////////// tab frame
+    QDir dirFrame(this->captureDir);
+    if (!dirFrame.exists()) {
+        dirFrame.mkpath(this->captureDir);
+    }
+
+    // Set model properties
+    this->modelFrames->setRootPath(this->captureDir);
+    this->modelFrames->setNameFilters(QStringList() << "*.png" << "*.jpg" << "*.jpeg" << "*.bmp" << "*.gif");
+    this->modelFrames->setNameFilterDisables(false);
+
+    ui->lvFrame->setModel(this->modelFrames);
+    ui->lvFrame->setRootIndex(this->modelFrames->index(this->captureDir)); // Set the root index
+    ui->lbDirFrames->setText(this->captureDir);
 }
 
 void MainWindow::EnablePreviewUI(bool isPlay)
@@ -789,48 +818,96 @@ void MainWindow::btnStretchContrast_Click()
 /////////////////////// video
 void MainWindow::btnLoadVideo_Click()
 {
+    // QString fileName = QFileDialog::getOpenFileName(this, tr("Open Video"), "", tr("Video Files (*.mp4 *.avi *.mkv)"));
+
+    // if (!fileName.isEmpty())
+    // {
+    //     this->mpVideoFile->setSource(QUrl::fromLocalFile(fileName));
+    //     this->mpVideoFile->play();
+
+    //     ui->lbDirVideo->setText(fileName);
+    //     ui->btnPlayVideo->setEnabled(true);
+    //     ui->btnStopVideo->setEnabled(true);
+
+    //     MainWindow::SetVideoPlay(true);
+    // }
+
+
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open Video"), "", tr("Video Files (*.mp4 *.avi *.mkv)"));
 
     if (!fileName.isEmpty())
     {
-        mpVideoFile->setSource(QUrl::fromLocalFile(fileName));
-        ui->lbPathVideo->setText(fileName);
+        // Ensure mpVideoFile is properly initialized
+        if (!mpVideoFile)
+        {
+            mpVideoFile = new QMediaPlayer(this);
+        }
+        else
+        {
+            mpVideoFile->stop();
+        }
 
+        // Set the source and start playback
+        mpVideoFile->setSource(QUrl::fromLocalFile(fileName));
+        mpVideoFile->play();
+
+        ui->lbDirVideo->setText(fileName);
         ui->btnPlayVideo->setEnabled(true);
         ui->btnStopVideo->setEnabled(true);
 
-        // 일단 자동으로 시작하게 한다.
-        mpVideoFile->play();
-        MainWindow::SetPlayVideo(true);
+        MainWindow::SetVideoPlay(true);
     }
+}
+// void MainWindow::btnLoadVideo_Click()
+// {
+//     QString dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"), "", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+
+//     if (!dir.isEmpty())
+//     {
+//         ui->lvVideos->setRootIndex(this->modelVideos->setRootPath(dir));
+//         ui->lbDirVideo->setText(dir);
+//     }
+// }
+
+void MainWindow::lvVideo_Click(const QModelIndex &index)
+{
+    QString filePath = this->modelVideos->filePath(index);
+
+    this->mpVideoFile->stop();
+    this->mpVideoFile->setSource(QUrl::fromLocalFile(filePath));
+    //this->mpVideoFile->play(); // 자동으로 시작하게 한다.
+
+    ui->btnPlayVideo->setEnabled(true);
+    ui->btnStopVideo->setEnabled(true);
+
+    MainWindow::SetVideoPlay(false);
 }
 
 void MainWindow::btnPlayVideo_Click()
 {
-    if (isVideoPlay)
+    if (this->isVideoPlay)
     {
-        mpVideoFile->pause();
-        MainWindow::SetPlayVideo(false);
+        this->mpVideoFile->pause();
+        MainWindow::SetVideoPlay(false);
     }
     else
     {
-        mpVideoFile->play();
-        MainWindow::SetPlayVideo(true);
+        this->mpVideoFile->play();
+        MainWindow::SetVideoPlay(true);
     }
 }
 
-
 void MainWindow::btnStopVideo_Click()
 {
-    mpVideoFile->stop();
-    MainWindow::SetPlayVideo(false);
+    this->mpVideoFile->stop();
+    MainWindow::SetVideoPlay(false);
 }
 
 void MainWindow::onVideoStatusChanged(QMediaPlayer::MediaStatus status)
 {
     if (status == QMediaPlayer::EndOfMedia)
     {
-        MainWindow::SetPlayVideo(false);
+        MainWindow::SetVideoPlay(false);
     }
 }
 
@@ -842,17 +919,17 @@ void MainWindow::btnLoadFrame_Click()
 
     if (!dir.isEmpty())
     {
-        ui->lvFrames->setRootIndex(this->modelFrames->setRootPath(dir));
+        ui->lvFrame->setRootIndex(this->modelFrames->setRootPath(dir));
         ui->lbDirFrames->setText(dir);
     }
 }
 
-void MainWindow::lvFrames_Click(const QModelIndex &index)
+void MainWindow::lvFrame_Click(const QModelIndex &index)
 {
     QString filePath = this->modelFrames->filePath(index);
     QImage image(filePath);
-    ui->gvFrameCapture->setImage(image);
-    ui->gvFrameCapture->fitInView();
+    ui->gvFrame->setImage(image);
+    ui->gvFrame->fitInView();
 }
 
 
@@ -1244,18 +1321,12 @@ void MainWindow::handleTempTintEvent()
 // }
 
 
-void MainWindow::SetPlayVideo(bool value)
+void MainWindow::SetVideoPlay(bool value)
 {
-    if (!value)
-    {
-        ui->btnPlayVideo->setText(BTN_PLAY);
-        isVideoPlay = false;
-    }
-    else
-    {
-        ui->btnPlayVideo->setText(MENU_PAUSE);
-        isVideoPlay = true;
-    }
+    this->isVideoPlay = true;
+
+    const QSignalBlocker blocker(ui->btnPlayVideo);
+    ui->btnPlayVideo->setText(!value ? BTN_PLAY : MENU_PAUSE);
 }
 
 bool MainWindow::RecordVideo(

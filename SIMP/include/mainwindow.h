@@ -110,23 +110,22 @@ private slots:
     void btnLoadVideo_Click();
     void btnPlayVideo_Click();
     void btnStopVideo_Click();
+    void lvVideo_Click(const QModelIndex& index);
 
     void onVideoStatusChanged(QMediaPlayer::MediaStatus status);
 
     /////////////////////// frame
     void btnLoadFrame_Click();
-    void lvFrames_Click(const QModelIndex& index);
+    void lvFrame_Click(const QModelIndex& index);
 
 
 private:
     Ui::MainWindow *ui;
 
-    //QGraphicsScene *sceneFrame;
-    //QGraphicsPixmapItem *pmiFrame = nullptr;
     QButtonGroup *btnGroupCooling;
 
-    QMediaPlayer *mpVideoFile;
-    QFileSystemModel *modelFrames;
+    QMediaPlayer *mpVideoFile = nullptr;
+    QFileSystemModel *modelVideos, *modelFrames;
     QTimer *timerFPS, *timerVideoRecord;
 
     MiicamDeviceV2 miiDevice;
@@ -136,10 +135,12 @@ private:
     QImage resultImage;
     std::vector<cv::Mat> videoFrames;
 
-    unsigned imageWidth = 0;
-    unsigned imageHeight = 0;
-    unsigned rawCameraWidth = 0;
-    unsigned rawCameraHeight = 0;
+    unsigned int imageWidth = 0;
+    unsigned int imageHeight = 0;
+    unsigned int rawCameraWidth = 0;
+    unsigned int rawCameraHeight = 0;
+
+    float zoomFactor = 1.0f;
 
     int resolutionIndex = 0;
 
@@ -148,9 +149,7 @@ private:
     double recordFrameRate = RECORD_FRAME_RATE_DEFAULT;
     int recordQuality = RECORD_QUALITY_DEFAULT;
     int recordTimeLimit = 0;
-    QString recordDir = DIR_RECORD_VIDEO;
-
-    QString captureDir = DIR_CAPTURE_FRAME;
+    QString recordDir, captureDir; // 생성자에서 초기화 함
 
     //void resizeEvent(QResizeEvent* event) override;
     bool isOn = false;
@@ -163,8 +162,6 @@ private:
     bool isUpdateStress = false;
     bool isUpdateStretchContrast = false;
     bool isUpdateContrastCurve = false;
-
-    float zoomFactor = 1.0f;
 
     double gegl_brightness = GEGL_BRIGHTNESS_DEFAULT, gegl_contrast = GEGL_CONTRAST_DEFAULT;
     int gegl_stress_radius = GEGL_STRESS_RADIUS_DEFAULT, gegl_stress_samples = GEGL_STRESS_SAMPLES_DEFAULT, gegl_stress_iterations = GEGL_STRESS_ITERATIONS_DEFAULT;
@@ -218,7 +215,6 @@ private:
     );
 
     // custom
-    void SetPlayVideo(bool value);
     void UpdatePreview();    
     bool RecordVideo(
         std::vector<cv::Mat>& videoFrames
@@ -227,6 +223,7 @@ private:
         , const double frameRate
         , const int quality
     );
+    void SetVideoPlay(bool value);
 
 
     std::thread updateThread;

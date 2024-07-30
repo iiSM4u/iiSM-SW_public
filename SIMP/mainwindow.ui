@@ -775,7 +775,7 @@
        <item>
         <widget class="QTabWidget" name="tabWidget">
          <property name="currentIndex">
-          <number>2</number>
+          <number>1</number>
          </property>
          <widget class="QWidget" name="tabPreview">
           <attribute name="title">
@@ -805,9 +805,9 @@
              </property>
              <layout class="QHBoxLayout" name="horizontalLayout_8">
               <item>
-               <widget class="QLabel" name="lbPathVideo">
+               <widget class="QLabel" name="lbDirVideo">
                 <property name="text">
-                 <string>File Path</string>
+                 <string>Folder Path:</string>
                 </property>
                </widget>
               </item>
@@ -833,7 +833,7 @@
                  </size>
                 </property>
                 <property name="text">
-                 <string>File Open</string>
+                 <string>Open</string>
                 </property>
                </widget>
               </item>
@@ -841,7 +841,23 @@
             </widget>
            </item>
            <item>
-            <widget class="QVideoWidget" name="videoFile" native="true"/>
+            <widget class="QWidget" name="widget_10" native="true">
+             <layout class="QHBoxLayout" name="horizontalLayout_11">
+              <item>
+               <widget class="QVideoWidget" name="videoFile" native="true"/>
+              </item>
+              <item>
+               <widget class="QListView" name="lvVideo">
+                <property name="maximumSize">
+                 <size>
+                  <width>150</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
            </item>
            <item>
             <widget class="QWidget" name="widget_7" native="true">
@@ -935,7 +951,7 @@
                  </size>
                 </property>
                 <property name="text">
-                 <string>Image Directory</string>
+                 <string>Folder Path:</string>
                 </property>
                </widget>
               </item>
@@ -967,7 +983,7 @@
                  </size>
                 </property>
                 <property name="text">
-                 <string>Folder Open</string>
+                 <string>Open</string>
                 </property>
                </widget>
               </item>
@@ -978,10 +994,10 @@
             <widget class="QWidget" name="widget_4" native="true">
              <layout class="QHBoxLayout" name="horizontalLayout_6">
               <item>
-               <widget class="CustomGraphicsView" name="gvFrameCapture"/>
+               <widget class="CustomGraphicsView" name="gvFrame"/>
               </item>
               <item>
-               <widget class="QListView" name="lvFrames">
+               <widget class="QListView" name="lvFrame">
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
