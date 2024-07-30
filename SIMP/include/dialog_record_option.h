@@ -2,7 +2,6 @@
 
 #include <QDialog>
 #include "video_format_type.h"
-#include "video_encoder_type.h"
 
 namespace Ui {
 class dialog_record_option;
@@ -16,9 +15,8 @@ public:
     explicit dialog_record_option(QWidget *parent = nullptr);
     ~dialog_record_option();
 
-    VideoFormatType getVideoFormat() const;
     QString getVideoDirectory() const;
-    VideoEncoderType getVideoEncoder() const;
+    VideoFormatType getVideoFormat() const;
     int getQuality() const;
     int getTimeLimit() const;
     int getFrameRate() const;
@@ -38,4 +36,7 @@ private slots:
 
 private:
     Ui::dialog_record_option *ui;
+
+    void ConnectUI();
+    void InitUI();
 };

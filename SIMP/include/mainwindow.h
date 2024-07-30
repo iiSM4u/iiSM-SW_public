@@ -13,6 +13,7 @@
 #include <miicam.h>
 
 #include "constants.h"
+#include "video_format_type.h"
 
 // C 라이브러리를 참조할 떄는 extern C로 묶는 것이 링킹 문제를 방지하는데 도움이 됨
 extern "C" {
@@ -142,8 +143,8 @@ private:
     unsigned rawCameraHeight = 0;
 
     int resolutionIndex = 0;
-    int recordFormat = cv::VideoWriter::fourcc('M', 'J', 'P', 'G');
-    QString recordFormatExtension = ".avi";
+    VideoFormatType recordFormat = VideoFormatType::MJPEG;
+    double recordFrameRate = 30.0;
 
     //void resizeEvent(QResizeEvent* event) override;
     bool isOn = false;
@@ -214,7 +215,8 @@ private:
 
     // custom
     void SetPlayVideo(bool value);
-    void UpdatePreview();
+    void UpdatePreview();    
+    void RecordVideo(std::vector<cv::Mat>& videoFrames, const VideoFormatType format, const double frameRate, const int quality);
 
 
     std::thread updateThread;

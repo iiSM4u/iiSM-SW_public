@@ -162,7 +162,6 @@ void MainWindow::ConnectUI()
 
 void MainWindow::InitUI()
 {
-    // update combobox - 나중에 옮길 것.
     ui->cbFormat->clear();
     for (const auto& format : {PixelFormatType::RGB24, PixelFormatType::RGB32, PixelFormatType::Raw})
     {
@@ -175,17 +174,17 @@ void MainWindow::InitUI()
     ui->sliderGain->setMinimum(MIICAM_EXPOGAIN_MIN);
     ui->sliderGain->setMaximum(MIICAM_EXPOGAIN_MAX);
     ui->sliderGain->setValue(MIICAM_EXPOGAIN_DEF);
-    ui->editGain->setPlainText(QString::number(round(MIICAM_EXPOGAIN_DEF)));
+    ui->editGain->setPlainText(QString::number(MIICAM_EXPOGAIN_DEF));
 
     ui->sliderContrast->setMinimum(MIICAM_CONTRAST_MIN);
     ui->sliderContrast->setMaximum(MIICAM_CONTRAST_MAX);
     ui->sliderContrast->setValue(MIICAM_CONTRAST_DEF);
-    ui->editContrast->setPlainText(QString::number(round(MIICAM_CONTRAST_DEF)));
+    ui->editContrast->setPlainText(QString::number(MIICAM_CONTRAST_DEF));
 
     ui->sliderGamma->setMinimum(MIICAM_GAMMA_MIN);
     ui->sliderGamma->setMaximum(MIICAM_GAMMA_MAX);
     ui->sliderGamma->setValue(MIICAM_GAMMA_DEF);
-    ui->editGamma->setPlainText(QString::number(round(MIICAM_GAMMA_DEF)));
+    ui->editGamma->setPlainText(QString::number(MIICAM_GAMMA_DEF));
 
     mpVideoFile->setVideoOutput(ui->videoFile);
 
@@ -423,27 +422,7 @@ void MainWindow::chkRecord_CheckedChanged(Qt::CheckState checkState)
         this->isRecordOn = false;
         if (this->videoFrames.size() > 0)
         {
-            QString pathDir = QCoreApplication::applicationDirPath() + DIR_RECORD_VIDEO;
-
-            QDir dir(pathDir);
-            if (!dir.exists())
-            {
-                dir.mkpath(pathDir);
-            }
-
-            QDateTime currentDateTime = QDateTime::currentDateTime();
-            QString timestamp = currentDateTime.toString(FORMAT_DATE_TIME);
-            QString filePath = dir.absoluteFilePath(timestamp + this->recordFormatExtension);
-
-            cv::VideoWriter writer(filePath.toStdString(), this->recordFormat, FRAME_PER_SECOND, cv::Size(this->videoFrames[0].cols, this->videoFrames[0].rows));
-
-            for (const cv::Mat& mat : this->videoFrames)
-            {
-                writer.write(mat);
-            }
-
-            writer.release();
-
+            MainWindow::RecordVideo(this->videoFrames, this->recordFormat, this->recordFrameRate);
             this->videoFrames.clear();
         }
     }
@@ -1263,6 +1242,41 @@ void MainWindow::SetPlayVideo(bool value)
         isVideoPlay = true;
     }
 }
+
+void MainWindow::RecordVideo(std::vector<cv::Mat>& videoFrames, const VideoFormatType format, const double frameRate, const int quality)
+{
+    QString pathDir = QCoreApplication::applicationDirPath() + DIR_RECORD_VIDEO;
+
+    QDir dir(pathDir);
+
+    if (!dir.exists())
+    {
+        dir.mkpath(pathDir);
+    }
+
+    QString timestamp = QDateTime::currentDateTime().toString(FORMAT_DATE_TIME);
+    QString filePath = dir.absoluteFilePath(timestamp + getVideoExtension(format));
+    int fourcc = getVideoFourcc(format);
+
+    // Create VideoWriter object
+    cv::VideoWriter writer(filePath.toStdString(), fourcc, frameRate, cv::Size(videoFrames[0].cols, videoFrames[0].rows));
+
+    // quality는 특정 format에만 적용된다.
+    if (format == VideoFormatType::MJPEG)
+    {
+        writer.set(cv::VIDEOWRITER_PROP_QUALITY, quality);
+    }
+
+    // Write frames to video file
+    for (const cv::Mat& mat : videoFrames)
+    {
+        writer.write(mat);
+    }
+
+    // Release the VideoWriter
+    writer.release();
+}
+
 
 void MainWindow::UpdateGeglContrast(
     QImage& source,

@@ -2,6 +2,7 @@
 
 #include <QJsonDocument>
 #include <QDir>
+#include <opencv2/opencv.hpp>
 
 double roundToDecimalPlaces(double value, int decimalPlaces) {
     double factor = std::pow(10.0, decimalPlaces);
@@ -52,4 +53,29 @@ bool saveJsonFile(const QString& filePath, const QJsonArray& jsonArray)
     file.close();
 
     return true;
+}
+
+QString getVideoExtension(VideoFormatType type)
+{
+    switch (type)
+    {
+    case VideoFormatType::MJPEG: return ".avi";
+    case VideoFormatType::XVID: return ".avi";
+    case VideoFormatType::MP4V: return ".mp4";
+    //case VideoFormatType::NONE : return ".wmv";
+    default: return ".wmv";
+    }
+}
+
+
+int getVideoFourcc(VideoFormatType type)
+{
+    switch (type)
+    {
+    case VideoFormatType::MJPEG: return cv::VideoWriter::fourcc('M', 'J', 'P', 'G');
+    case VideoFormatType::XVID: return cv::VideoWriter::fourcc('X', 'V', 'I', 'G');
+    case VideoFormatType::MP4V: return cv::VideoWriter::fourcc('M', 'P', '4', 'V');
+    //case VideoFormatType::NONE : return 0;
+    default: return 0;
+    }
 }
