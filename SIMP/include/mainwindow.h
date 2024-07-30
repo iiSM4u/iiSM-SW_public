@@ -112,7 +112,11 @@ private slots:
     void btnStopVideo_Click();
     void lvVideo_Click(const QModelIndex& index);
 
-    void onVideoStatusChanged(QMediaPlayer::MediaStatus status);
+    void mediaVideo_durationChanged(qint64 duration);
+    void mediaVideo_positionChanged(qint64 position);
+    void sliderVideo_sliderMoved(int position);
+
+    void mediaVideo_mediaStatusChanged(QMediaPlayer::MediaStatus status);
 
     /////////////////////// frame
     void btnLoadFrame_Click();
@@ -124,8 +128,8 @@ private:
 
     QButtonGroup *btnGroupCooling;
 
-    QMediaPlayer *mpVideoFile = nullptr;
-    QFileSystemModel *modelVideos, *modelFrames;
+    QMediaPlayer *mediaVideo;
+    QFileSystemModel *modelVideo, *modelFrame;
     QTimer *timerFPS, *timerVideoRecord;
 
     MiicamDeviceV2 miiDevice;

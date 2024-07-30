@@ -844,7 +844,7 @@
             <widget class="QWidget" name="widget_10" native="true">
              <layout class="QHBoxLayout" name="horizontalLayout_11">
               <item>
-               <widget class="QVideoWidget" name="videoFile" native="true"/>
+               <widget class="QVideoWidget" name="widgetVideo" native="true"/>
               </item>
               <item>
                <widget class="QListView" name="lvVideo">
@@ -857,6 +857,13 @@
                </widget>
               </item>
              </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QSlider" name="sliderVideo">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
             </widget>
            </item>
            <item>
