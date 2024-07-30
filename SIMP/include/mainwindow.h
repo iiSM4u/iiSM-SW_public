@@ -194,11 +194,23 @@ private:
     // gegl
     void InitGegl();
     void CloseGegl();
-    void UpdateBrightnessContrast(QImage& source, const double brightness, const double contrast);
-    void UpdateStress(QImage& source, const int radius, const int samples, const int iterations, const bool enhanceShadows);
-    void UpdateStretchContrast(QImage& source, const bool keepColors, const bool perceptual);
-    void UpdateContrastCurve(QImage& source, const GeglCurve* curve, const int samplingPoints);
-
+    void UpdateGeglContrast(
+        QImage& source
+        , const double brightness
+        , const double contrast
+        , const int radius
+        , const int samples
+        , const int iterations
+        , const bool enhanceShadows
+        , const bool keepColors
+        , const bool perceptual
+        , const GeglCurve* curve
+        , const int samplingPoints
+        , const bool isUpdateBrightnessContrast
+        , const bool isUpdateStress
+        , const bool isUpdateStretchContrast
+        , const bool isUpdateContrastCurve
+    );
 
     // custom
     void SetPlayVideo(bool value);
