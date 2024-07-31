@@ -114,7 +114,7 @@ void MainWindow::ConnectUI()
     connect(this, &MainWindow::evtCallback, this, &MainWindow::onMiiCameraCallback);
     connect(timerFPS, &QTimer::timeout, this, &MainWindow::onTimerFpsCallback);
 
-    // preview
+    ///////////////////////////////// preview
     connect(ui->gvPreview, &CustomGraphicsView::mousePositionChanged, this, &MainWindow::UpdatePreviewMousePosition);
     connect(ui->gvVideo, &CustomGraphicsView::mousePositionChanged, this, &MainWindow::UpdateVideoMousePosition);
     connect(ui->gvFrame, &CustomGraphicsView::mousePositionChanged, this, &MainWindow::UpdateFrameMousePosition);
@@ -165,14 +165,15 @@ void MainWindow::ConnectUI()
     connect(ui->btnStretchContrast, &QPushButton::clicked, this, &MainWindow::btnStretchContrast_Click);
 
 
-    // video
+    ///////////////////////////////// video
     connect(ui->btnLoadVideo, &QPushButton::clicked, this, &MainWindow::btnLoadVideo_Click);
     connect(ui->btnPlayVideo, &QPushButton::clicked, this, &MainWindow::btnPlayVideo_Click);
     connect(ui->btnStopVideo, &QPushButton::clicked, this, &MainWindow::btnStopVideo_Click);
     connect(ui->lvVideo, &QListView::clicked, this, &MainWindow::lvVideo_Click);
     connect(ui->sliderVideo, &QSlider::sliderMoved, this, &MainWindow::sliderVideo_sliderMoved);
 
-    // capture
+
+    ///////////////////////////////// frame
     connect(ui->btnLoadFrame, &QPushButton::clicked, this, &MainWindow::btnLoadFrame_Click);
     connect(ui->lvFrame, &QListView::clicked, this, &MainWindow::lvFrame_Click);
 }
@@ -188,7 +189,6 @@ void MainWindow::InitUI()
     ui->cbFormat->setCurrentIndex(0);
 
     // init gain, contrast, gamma
-    int MIICAM_EXPOGAIN_MAX = 5000;
     ui->sliderGain->setMinimum(MIICAM_EXPOGAIN_MIN);
     ui->sliderGain->setMaximum(MIICAM_EXPOGAIN_MAX);
     ui->sliderGain->setValue(MIICAM_EXPOGAIN_DEF);
@@ -204,11 +204,10 @@ void MainWindow::InitUI()
     ui->sliderGamma->setValue(MIICAM_GAMMA_DEF);
     ui->editGamma->setPlainText(QString::number(MIICAM_GAMMA_DEF));
 
+    ui->editDarkfieldQuantity->setPlainText(QString::number(MIICAM_DARK_FIELD_QUANTITY_DEFAULT));
+
 
     ////////////////////////// tab video
-
-    //this->mediaVideo->setVideoOutput(ui->widgetVideo);
-
     // Check if the captures directory exists, and create it if it doesn't
     QDir dirVideo(this->recordDir);
     if (!dirVideo.exists()) {
@@ -283,9 +282,7 @@ void MainWindow::EnablePreviewUI(bool isPlay)
 
     ui->rbCoolingOn->setEnabled(isPlay);
     ui->rbCoolingOff->setEnabled(isPlay);
-
-    ui->btnZoomIn->setEnabled(isPlay);
-    ui->btnZoomOut->setEnabled(isPlay);
+;
     ui->btnBrightnessContrast->setEnabled(isPlay);
     ui->btnStress->setEnabled(isPlay);
     ui->btnStretchContrast->setEnabled(isPlay);
@@ -682,36 +679,22 @@ void MainWindow::btnDarkfieldCapture_Click()
 
 void MainWindow::editDarkfieldQuantity_editingFinished()
 {
-    // bool ok;
-    // double value = ui->editExposureTime->toPlainText().toDouble(&ok);
+    bool ok;
+    int value = ui->editDarkfieldQuantity->toPlainText().toInt(&ok);
 
-    // if (ok)
-    // {
-    //     // trackbar에는 정수로 들어가야 하므로 10을 곱한다.
-    //     int valueInt = (int)(value * 10.0);
-
-    //     if (valueInt >= ui->sliderExposureTime->minimum() && valueInt <= ui->sliderExposureTime->maximum())
-    //     {
-    //         // slider에도 값 업데이트
-    //         ui->sliderExposureTime->setValue(valueInt);
-    //     }
-    //     else
-    //     {
-    //         QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_RANGE);
-
-    //         // 기존 값으로 되돌린다.
-    //         value = roundToDecimalPlaces(ui->sliderExposureTime->value() * 0.1, 1);
-    //         ui->editExposureTime->setPlainText(QString::number(value, 'f', 1));
-    //     }
-    // }
-    // else
-    // {
-    //     QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_VALUE);
-
-    //     // 기존 값으로 되돌린다.
-    //     value = roundToDecimalPlaces(ui->sliderExposureTime->value() * 0.1, 1);
-    //     ui->editExposureTime->setPlainText(QString::number(value, 'f', 1));
-    // }
+    if (ok)
+    {
+        if (value < MIICAM_DARK_FIELD_QUANTITY_MIN || value > MIICAM_DARK_FIELD_QUANTITY_MAX)
+        {
+            QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_RANGE);
+            ui->editGamma->setPlainText(QString::number(MIICAM_DARK_FIELD_QUANTITY_DEFAULT));
+        }
+    }
+    else
+    {
+        QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_VALUE);
+        ui->editGamma->setPlainText(QString::number(MIICAM_DARK_FIELD_QUANTITY_DEFAULT));
+    }
 }
 
 void MainWindow::btnGroupCooling_Click(int id)
@@ -777,7 +760,14 @@ void MainWindow::btnZoomIn_Click()
         this->zoomFactor = ZOOM_MAX;
     }
 
+    ui->gvPreview->fitInView();
     ui->gvPreview->scale(this->zoomFactor, this->zoomFactor);
+
+    ui->gvVideo->fitInView();
+    ui->gvVideo->scale(this->zoomFactor, this->zoomFactor);
+
+    ui->lbZoom->setText(QString("Zoom x%1").arg(this->zoomFactor, 0, 'f', 2));
+
 }
 
 void MainWindow::btnZoomOut_Click()
@@ -789,7 +779,13 @@ void MainWindow::btnZoomOut_Click()
         this->zoomFactor = ZOOM_MIN;
     }
 
+    ui->gvPreview->fitInView();
     ui->gvPreview->scale(this->zoomFactor, this->zoomFactor);
+
+    ui->gvVideo->fitInView();
+    ui->gvVideo->scale(this->zoomFactor, this->zoomFactor);
+
+    ui->lbZoom->setText(QString("Zoom x%1").arg(this->zoomFactor, 0, 'f', 2));
 }
 
 void MainWindow::btnBrightnessContrast_Click()
@@ -896,56 +892,6 @@ void MainWindow::onVideoLoadingFinished(bool success, const std::vector<QImage>&
         QMessageBox::warning(this, "Error", "Could not open the video file.");
     }
 }
-
-// void MainWindow::lvVideo_Click(const QModelIndex &index)
-// {
-//     // 일단 update를 중지시킨다.
-//     this->isVideoPlay = false;
-
-//     QString filePath = this->filesystemVideo->filePath(index);
-
-//     cv::VideoCapture video(filePath.toStdString());
-
-//     if (video.isOpened())
-//     {
-//         this->videoFrameRates = video.get(cv::CAP_PROP_FPS);
-//         this->videoTotalFrame = video.get(cv::CAP_PROP_FRAME_COUNT);
-//         this->currentFrame = 0;
-
-//         this->videoFrames.clear();
-
-//         for (int i = 0; i < this->videoTotalFrame; i++)
-//         {
-//             cv::Mat frame;
-
-//             if (video.read(frame))
-//             {
-//                 QImage img(frame.data, frame.cols, frame.rows, frame.step, QImage::Format_RGB888);
-//                 this->videoFrames.emplace_back(img.rgbSwapped()); // Convert BGR to RGB
-//             }
-//         }
-
-//         ui->sliderVideo->setRange(0, this->videoTotalFrame);
-//         ui->sliderVideo->setSingleStep(1);
-//         ui->sliderVideo->setPageStep(10);
-//         ui->sliderVideo->setValue(0);
-
-//         ui->lbVideoFrame->setText(QString("%1 / %2").arg(ui->sliderVideo->value()).arg(this->videoTotalFrame));
-
-//         ui->btnPlayVideo->setEnabled(true);
-//         ui->btnStopVideo->setEnabled(true);
-//         ui->sliderVideo->setEnabled(true);
-
-//         ui->btnPlayVideo->setText(BTN_PAUSE);
-
-//         this->isVideoPlay = true;
-//     }
-//     else
-//     {
-//         QMessageBox::warning(this, TITLE_ERROR, MSG_FILE_OPEN_ERROR);
-//     }
-// }
-
 
 void MainWindow::btnPlayVideo_Click()
 {
@@ -1257,9 +1203,6 @@ void MainWindow::InitCameraResolution()
 
 void MainWindow::UpdateExposureTime()
 {
-    double MIICAM_EXPOSURE_TIME_MIN = 0.1;
-    double MIICAM_EXPOSURE_TIME_MAX = 5000.0;
-
     unsigned int nMin, nMax, nDef, nTime;
     Miicam_get_ExpTimeRange(this->miiHcam, &nMin, &nMax, &nDef);
     Miicam_get_ExpoTime(this->miiHcam, &nTime);
@@ -1287,8 +1230,6 @@ void MainWindow::UpdateExposureTime()
 
 void MainWindow::UpdateSensorTemperature()
 {
-    double MIICAM_TEMPERATURE_MIN = -50.0;
-    double MIICAM_TEMPERATURE_MAX = 40.0;
 
     short temperature;
     Miicam_get_Temperature(this->miiHcam, &temperature);
