@@ -6,7 +6,8 @@
 #include "dialog_brightness_contrast.h"
 #include "dialog_stretch_contrast.h"
 #include "dialog_stress.h"
-#include "dialog_image_curve.h"
+#include "dialog_contrast_curve.h"
+#include "videoloader.h"
 
 #include <QGraphicsPixmapItem>
 #include <QFileDialog>
@@ -48,8 +49,12 @@ MainWindow::MainWindow(QWidget *parent)
         "QRadioButton:disabled { color: darkgray; }"
     );
 
+    // ui init 전에 preset load를 해야 combobox를 채울 수 있다.
+    MainWindow::LoadPresets();
+
     MainWindow::ConnectUI();
     MainWindow::InitUI();
+    MainWindow::UpdatePresetContrastCurve(this->presetsContrastCurve);
 
     // 일단 false로 시작
     MainWindow::EnablePreviewUI(false);
@@ -76,6 +81,11 @@ MainWindow::~MainWindow()
 void MainWindow::closeEvent(QCloseEvent*)
 {
     this->isOn = false;
+
+    if (this->contrastCurves)
+    {
+        g_object_unref(this->contrastCurves);
+    }
 
     if (threadPreview.joinable()) {
         threadPreview.join();
@@ -650,16 +660,44 @@ void MainWindow::editGamma_editingFinished()
 
 void MainWindow::btnCurveSetting_Click()
 {
-    dialog_image_curve dialog(this);
+    dialog_contrast_curve dialog(this->isUpdateContrastCurve, this->presetsContrastCurve, this);
 
     if (dialog.exec() == QDialog::Accepted)
     {
+        this->isUpdateContrastCurve = dialog.getEnable();
+        int index = dialog.getSelectedIndex();
+
+        QJsonArray jsonArray;
+        convertPresetsImageCurveToJsonArray(this->presetsContrastCurve, jsonArray);
+
+        QString pathPreset = QCoreApplication::applicationDirPath() + PATH_JSON_CONTRAST_CURVE;
+        saveJsonFile(pathPreset, jsonArray);
+
+        MainWindow::UpdatePresetContrastCurve(this->presetsContrastCurve, index);
     }
 }
 
 void MainWindow::cbCurvePreset_SelectedIndexChanged(int index)
 {
+    if (index > -1)
+    {
+        preset_contrast_curve preset = this->presetsContrastCurve[index];
 
+        QMutexLocker locker(&contrastCurvesMutex);
+
+        if (this->contrastCurves)
+        {
+            g_object_unref(this->contrastCurves);
+            this->contrastCurves = nullptr;
+        }
+
+        this->contrastCurves = gegl_curve_new(0.0, 1.0);
+
+        for (const curve_point& point : preset.GetPoints())
+        {
+            gegl_curve_add_point(this->contrastCurves, point.GetX(), point.GetY());
+        }
+    }
 }
 
 void MainWindow::chkDarkFieldCorrection_CheckedChanged(Qt::CheckState checkState)
@@ -796,19 +834,25 @@ void MainWindow::btnZoomOut_Click()
 
 void MainWindow::btnBrightnessContrast_Click()
 {
-    dialog_brightness_contrast dialog(this->isUpdateBrightnessContrast, this->gegl_brightness, this->gegl_contrast, this);
+    dialog_brightness_contrast dialog(this->isUpdateBrightnessContrast, this->gegl_brightness, this->gegl_contrast, this->presetsBrightnessContrast, this);
 
     if (dialog.exec() == QDialog::Accepted)
     {
         this->isUpdateBrightnessContrast = dialog.getEnable();
         this->gegl_brightness = dialog.getBrightness();
         this->gegl_contrast = dialog.getContrast();
+
+        QJsonArray jsonArray;
+        convertBrightnessContrastPresetsToJsonArray(this->presetsBrightnessContrast, jsonArray);
+
+        QString pathPreset = QCoreApplication::applicationDirPath() + PATH_JSON_BRIGHTNESS_CONTRAST;
+        saveJsonFile(pathPreset, jsonArray);
     }
 }
 
 void MainWindow::btnStress_Click()
 {
-    dialog_stress dialog(this->isUpdateStress, this->gegl_stress_radius, this->gegl_stress_samples, this->gegl_stress_iterations, this->gegl_stress_enhance_shadows, this);
+    dialog_stress dialog(this->isUpdateStress, this->gegl_stress_radius, this->gegl_stress_samples, this->gegl_stress_iterations, this->gegl_stress_enhance_shadows, this->presetsStress, this);
 
     if (dialog.exec() == QDialog::Accepted)
     {
@@ -817,6 +861,12 @@ void MainWindow::btnStress_Click()
         this->gegl_stress_samples = dialog.getSamples();
         this->gegl_stress_iterations = dialog.getIterations();
         this->gegl_stress_enhance_shadows = dialog.getEnhanceShadows();
+
+        QJsonArray jsonArray;
+        convertStressPrestesToJsonArray(this->presetsStress, jsonArray);
+
+        QString pathPreset = QCoreApplication::applicationDirPath() + PATH_JSON_STRESS;
+        saveJsonFile(pathPreset, jsonArray);
     }
 }
 
@@ -1066,6 +1116,44 @@ void MainWindow::UpdateVideoUI()
     {
         ui->btnPlayVideo->setText(BTN_PLAY);
     }
+}
+
+void MainWindow::LoadPresets()
+{
+    QJsonArray jsonArray;
+
+    if (loadJsonFile(QCoreApplication::applicationDirPath() + PATH_JSON_BRIGHTNESS_CONTRAST, jsonArray))
+    {
+        this->presetsBrightnessContrast = convertJsonToBrightnessContrastPresets(jsonArray);
+    }
+
+    if (loadJsonFile(QCoreApplication::applicationDirPath() + PATH_JSON_STRESS, jsonArray))
+    {
+        this->presetsStress = convertJsonToStressPrestes(jsonArray);
+    }
+
+    if (loadJsonFile(QCoreApplication::applicationDirPath() + PATH_JSON_CONTRAST_CURVE, jsonArray))
+    {
+        this->presetsContrastCurve = convertJsonToPresetsImageCurve(jsonArray);
+    }
+}
+
+void MainWindow::UpdatePresetContrastCurve(const std::vector<preset_contrast_curve>& presets, const int index)
+{
+    ui->cbCurvePreset->clear();
+
+    if (presets.size() > 0)
+    {
+        for (const preset_contrast_curve& preset : presets)
+        {
+            QString message = QString("index: %1, points: %2")
+                                  .arg(preset.GetIndex()) // 'f' for floating point, 2 decimal places
+                                  .arg(preset.GetPoints().size());
+            ui->cbCurvePreset->addItem(message);
+        }
+    }
+
+    ui->cbCurvePreset->setCurrentIndex(index);
 }
 
 void MainWindow::InitGegl()
@@ -1491,18 +1579,10 @@ void MainWindow::UpdateGeglContrast(
             gegl_node_set(stretch_contrast, "keep-colors", keepColors, "perceptual", perceptual, nullptr);
         }
 
-        if (isUpdateContrastCurve)
+        if (isUpdateContrastCurve && contrastCurves)
         {
-            // 커브 설정 sample
-            //GeglCurve* curve = gegl_curve_new(0.0, 1.0);
-            //gegl_curve_add_point(curve, 0.0, 0.0);
-            //gegl_curve_add_point(curve, 0.25, 0.2);
-            //gegl_curve_add_point(curve, 0.5, 0.5);
-            //gegl_curve_add_point(curve, 0.75, 0.8);
-            //gegl_curve_add_point(curve, 1.0, 1.0);
-
             contrast_curve = gegl_node_new_child(graph, "operation", "gegl:contrast-curve", nullptr);
-            gegl_node_set(contrast_curve, "curve", curve, "sampling-points", samplingPoints, nullptr);
+            gegl_node_set(contrast_curve, "curve", contrastCurves, "sampling-points", samplingPoints, nullptr);
         }
 
         // Link nodes
@@ -1540,5 +1620,8 @@ void MainWindow::UpdateGeglContrast(
         g_object_unref(graph);
     }
 }
+
+
+
 
 

@@ -72,6 +72,9 @@ const QString KEY_RADIUS = "radius";
 const QString KEY_SAMPLES = "samples";
 const QString KEY_ITERATIONS = "iterations";
 const QString KEY_ENHANCE_SHADOWS = "enhance_shadows";
+const QString KEY_POINTS = "points";
+const QString KEY_POS_X = "pos_x";
+const QString KEY_POS_Y = "pos_y";
 
 
 const QString BTN_PLAY = "Play";

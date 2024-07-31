@@ -13,9 +13,10 @@ dialog_brightness_contrast::dialog_brightness_contrast(QWidget *parent)
     ui->setupUi(this);
 }
 
-dialog_brightness_contrast::dialog_brightness_contrast(bool enable, double brightness, double contrast, QWidget *parent)
+dialog_brightness_contrast::dialog_brightness_contrast(bool enable, double brightness, double contrast, std::vector<preset_brightness_contrast>& presets, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::dialog_brightness_contrast)
+    , presets(presets)
 {
     ui->setupUi(this);
 
@@ -29,15 +30,6 @@ dialog_brightness_contrast::dialog_brightness_contrast(bool enable, double brigh
     connect(ui->editContrast, &CustomPlainTextEdit::editingFinished, this, &dialog_brightness_contrast::editContrast_editingFinished);
 
     // combobox를 업데이트하면서 slider가 업데이트 되기 때문에 slider 보다 먼저 combobox를 업데이트한다.
-    // load preset
-    QString pathPreset = QCoreApplication::applicationDirPath() + PATH_JSON_BRIGHTNESS_CONTRAST;
-    QJsonArray jsonArray;
-
-    if (loadJsonFile(pathPreset, jsonArray))
-    {
-        this->presets = dialog_brightness_contrast::parseJsonArray(jsonArray);
-    }
-
     dialog_brightness_contrast::UpdatePresetUI(this->presets);
 
     // set min-max
@@ -54,7 +46,6 @@ dialog_brightness_contrast::dialog_brightness_contrast(bool enable, double brigh
 
     ui->chkBrightnessContrast->setCheckState(enable ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
     dialog_brightness_contrast::EnableUI(enable);
-
 }
 
 dialog_brightness_contrast::~dialog_brightness_contrast()
@@ -110,14 +101,7 @@ void dialog_brightness_contrast::btnSavePreset_Click()
 
     this->presets.emplace_back(index, brightness, contrast);
 
-    QJsonArray jsonArray;
-    dialog_brightness_contrast::convertJsonArray(this->presets, jsonArray);
-
-    QString pathPreset = QCoreApplication::applicationDirPath() + PATH_JSON_BRIGHTNESS_CONTRAST;
-    saveJsonFile(pathPreset, jsonArray);
-
-    // 추가한 것으로 선택
-    dialog_brightness_contrast::UpdatePresetUI(this->presets, this->presets.size());
+    dialog_brightness_contrast::UpdatePresetUI(this->presets, index);
 }
 
 void dialog_brightness_contrast::sliderBrightness_sliderMoved(int position)
@@ -228,30 +212,4 @@ void dialog_brightness_contrast::UpdatePresetUI(const std::vector<preset_brightn
     }
 
     ui->cbPresets->setCurrentIndex(index);
-}
-
-std::vector<preset_brightness_contrast> dialog_brightness_contrast::parseJsonArray(const QJsonArray& jsonArray)
-{
-    std::vector<preset_brightness_contrast> presets;
-    for (const QJsonValue& value : jsonArray)
-    {
-        QJsonObject obj = value.toObject();
-        int index = obj[KEY_INDEX].toInt();
-        double brightness = obj[KEY_BRIGHTNESS].toDouble();
-        double contrast = obj[KEY_CONTRAST].toDouble();
-        presets.emplace_back(index, brightness, contrast);
-    }
-    return presets;
-}
-
-void dialog_brightness_contrast::convertJsonArray(const std::vector<preset_brightness_contrast>& presets, QJsonArray& jsonArray)
-{
-    for (const preset_brightness_contrast& preset : presets)
-    {
-        QJsonObject jsonObject;
-        jsonObject[KEY_INDEX] = preset.GetIndex();
-        jsonObject[KEY_BRIGHTNESS] = preset.GetBrightness();
-        jsonObject[KEY_CONTRAST] = preset.GetContrast();
-        jsonArray.append(jsonObject);
-    }
 }

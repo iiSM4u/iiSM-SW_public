@@ -1,7 +1,6 @@
 #include "dialog_stress.h"
 #include "ui_dialog_stress.h"
 #include "constants.h"
-#include "utils.h"
 
 #include <QMessageBox>
 #include <QJsonObject>
@@ -13,9 +12,10 @@ dialog_stress::dialog_stress(QWidget *parent)
     ui->setupUi(this);
 }
 
-dialog_stress::dialog_stress(bool enable, int radius, int samples, int iterations, bool enhaceShadows, QWidget *parent)
+dialog_stress::dialog_stress(bool enable, int radius, int samples, int iterations, bool enhaceShadows, std::vector<preset_stress>& presets, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::dialog_stress)
+    , presets(presets)
 {
     ui->setupUi(this);
 
@@ -31,15 +31,6 @@ dialog_stress::dialog_stress(bool enable, int radius, int samples, int iteration
     connect(ui->editIterations, &CustomPlainTextEdit::editingFinished, this, &dialog_stress::editIterations_editingFinished);
 
     // combobox를 업데이트하면서 slider가 업데이트 되기 때문에 slider 보다 먼저 combobox를 업데이트한다.
-    // load preset
-    QString pathPreset = QCoreApplication::applicationDirPath() + PATH_JSON_STRESS;
-    QJsonArray jsonArray;
-
-    if (loadJsonFile(pathPreset, jsonArray))
-    {
-        this->presets = dialog_stress::parseJsonArray(jsonArray);
-    }
-
     dialog_stress::UpdatePresetUI(this->presets);
 
     // set min-max
@@ -130,14 +121,8 @@ void dialog_stress::btnSavePreset_Click()
 
     this->presets.emplace_back(index, radius, samples, iterations, enhanceShadows);
 
-    QJsonArray jsonArray;
-    dialog_stress::convertJsonArray(this->presets, jsonArray);
-
-    QString pathPreset = QCoreApplication::applicationDirPath() + PATH_JSON_STRESS;
-    saveJsonFile(pathPreset, jsonArray);
-
     // 추가한 것으로 선택
-    dialog_stress::UpdatePresetUI(this->presets, this->presets.size());
+    dialog_stress::UpdatePresetUI(this->presets, index);
 }
 
 void dialog_stress::sliderRadius_sliderMoved(int position)
@@ -277,34 +262,4 @@ void dialog_stress::UpdatePresetUI(const std::vector<preset_stress>& presets, co
     }
 
     ui->cbPresets->setCurrentIndex(index);
-}
-
-std::vector<preset_stress> dialog_stress::parseJsonArray(const QJsonArray& jsonArray)
-{
-    std::vector<preset_stress> presets;
-    for (const QJsonValue& value : jsonArray)
-    {
-        QJsonObject obj = value.toObject();
-        int index = obj[KEY_INDEX].toInt();
-        int radius = obj[KEY_RADIUS].toInt();
-        int samples = obj[KEY_SAMPLES].toInt();
-        int iterations = obj[KEY_ITERATIONS].toInt();
-        bool enhanceShadows = obj[KEY_ENHANCE_SHADOWS].toBool();
-        presets.emplace_back(index, radius, samples, iterations, enhanceShadows);
-    }
-    return presets;
-}
-
-void dialog_stress::convertJsonArray(const std::vector<preset_stress>& presets, QJsonArray& jsonArray)
-{
-    for (const preset_stress& preset : presets)
-    {
-        QJsonObject jsonObject;
-        jsonObject[KEY_INDEX] = preset.GetIndex();
-        jsonObject[KEY_RADIUS] = preset.GetRadius();
-        jsonObject[KEY_SAMPLES] = preset.GetSamples();
-        jsonObject[KEY_ITERATIONS] = preset.GetIterations();
-        jsonObject[KEY_ENHANCE_SHADOWS] = preset.GetEnhanceShadows();
-        jsonArray.append(jsonObject);
-    }
 }

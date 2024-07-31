@@ -14,7 +14,7 @@ class dialog_brightness_contrast : public QDialog
 
 public:
     explicit dialog_brightness_contrast(QWidget *parent = nullptr);
-    dialog_brightness_contrast(bool enable, double brightness, double contrast, QWidget *parent = nullptr);
+    dialog_brightness_contrast(bool enable, double brightness, double contrast, std::vector<preset_brightness_contrast>& presets, QWidget *parent = nullptr);
     ~dialog_brightness_contrast();
 
     bool getEnable() const;
@@ -39,7 +39,4 @@ private:
     Ui::dialog_brightness_contrast *ui;
 
     std::vector<preset_brightness_contrast> presets;
-
-    std::vector<preset_brightness_contrast> parseJsonArray(const QJsonArray& jsonArray);
-    void convertJsonArray(const std::vector<preset_brightness_contrast>& presets, QJsonArray& jsonArray);
 };

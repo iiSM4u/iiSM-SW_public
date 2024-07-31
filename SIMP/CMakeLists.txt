@@ -26,6 +26,7 @@ pkg_check_modules(GEGL REQUIRED gegl-0.4)
 pkg_check_modules(BABL REQUIRED babl-0.1)
 pkg_check_modules(GLIB REQUIRED glib-2.0)
 
+
 # Include directories
 include_directories(
     ${GEGL_INCLUDE_DIRS}
@@ -56,8 +57,8 @@ set(PROJECT_SOURCES
     dialog_stress.ui
     dialog_record_option.cpp
     dialog_record_option.ui
-    dialog_image_curve.cpp
-    dialog_image_curve.ui
+    dialog_contrast_curve.cpp
+    dialog_contrast_curve.ui
 )
 
 # Link directories

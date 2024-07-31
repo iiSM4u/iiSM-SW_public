@@ -13,7 +13,7 @@ class dialog_stress : public QDialog
 
 public:
     explicit dialog_stress(QWidget *parent = nullptr);
-    dialog_stress(bool enable, int radius, int samples, int iterations, bool enhaceShadows, QWidget *parent = nullptr);
+    dialog_stress(bool enable, int radius, int samples, int iterations, bool enhaceShadows, std::vector<preset_stress>& presets, QWidget *parent = nullptr);
     ~dialog_stress();
 
     bool getEnable() const;
@@ -43,7 +43,4 @@ private:
     Ui::dialog_stress *ui;
 
     std::vector<preset_stress> presets;
-
-    std::vector<preset_stress> parseJsonArray(const QJsonArray& jsonArray);
-    void convertJsonArray(const std::vector<preset_stress>& presets, QJsonArray& jsonArray);
 };

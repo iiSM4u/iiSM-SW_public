@@ -15,7 +15,9 @@
 
 #include "constants.h"
 #include "video_format_type.h"
-#include "videoloader.h"
+#include "preset_brightness_contrast.h"
+#include "preset_stress.h"
+#include "preset_contrast_curve.h"
 
 // C 라이브러리를 참조할 떄는 extern C로 묶는 것이 링킹 문제를 방지하는데 도움이 됨
 extern "C" {
@@ -49,10 +51,10 @@ signals:
     void evtCallback(unsigned nEvent);
 
 private slots:
-    // ui events
     void ConnectUI();
     void InitUI();
     void EnablePreviewUI(bool isPlay);
+    void UpdatePresetContrastCurve(const std::vector<preset_contrast_curve>& presets, const int index = -1);
 
     /////////////////////// preview
     // thread
@@ -182,7 +184,11 @@ private:
     int gegl_contrast_curve_sampling_points = GEGL_CONTRAST_CURVE_SAMPLING_POINTS_DEFAULT;
     GeglCurve *contrastCurves = nullptr;
 
-    QMutex imageMutex;
+    std::vector<preset_brightness_contrast> presetsBrightnessContrast;
+    std::vector<preset_stress> presetsStress;
+    std::vector<preset_contrast_curve> presetsContrastCurve;
+
+    QMutex imageMutex, contrastCurvesMutex;
 
     void onTimerFpsCallback();
 
@@ -237,6 +243,7 @@ private:
         , const int quality
     );
 
+    void LoadPresets();
 
     std::thread threadPreview, threadVideo;
 };

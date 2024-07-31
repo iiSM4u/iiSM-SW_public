@@ -1,10 +1,10 @@
 #pragma once
 
-class preset_point
+class curve_point
 {
 public:
-    preset_point() = default;
-    preset_point(int index, int x, int y)
+    curve_point() = default;
+    curve_point(int index, int x, int y)
         : index(index)
         , x(x)
         , y(y)
