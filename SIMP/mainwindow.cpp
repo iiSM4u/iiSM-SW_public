@@ -6,6 +6,7 @@
 #include "dialog_brightness_contrast.h"
 #include "dialog_stretch_contrast.h"
 #include "dialog_stress.h"
+#include "dialog_image_curve.h"
 
 #include <QGraphicsPixmapItem>
 #include <QFileDialog>
@@ -649,7 +650,11 @@ void MainWindow::editGamma_editingFinished()
 
 void MainWindow::btnCurveSetting_Click()
 {
+    dialog_image_curve dialog(this);
 
+    if (dialog.exec() == QDialog::Accepted)
+    {
+    }
 }
 
 void MainWindow::cbCurvePreset_SelectedIndexChanged(int index)
@@ -697,8 +702,8 @@ void MainWindow::btnDarkFieldCorrection_Click()
 void MainWindow::btnGroupCooling_Click(int id)
 {
     bool enable = id == 1;
-    ui->sliderTemperature->setEnabled(enable );
-    ui->editTemperature->setEnabled(enable );
+    ui->sliderTemperature->setEnabled(enable);
+    ui->editTemperature->setEnabled(enable);
 }
 
 void MainWindow::sliderTemperature_sliderMoved(int position)
