@@ -6,7 +6,9 @@ const float ZOOM_VALUE = 0.25f;
 const float ZOOM_MAX = 3.0f;
 const float ZOOM_MIN = 0.25f;
 
-const int FRAME_PER_SECOND = 30;
+const int DELAY_CAMERA = 30;
+const int DELAY_VIDEO = 30;
+
 const int RECORD_FRAME_RATE_MIN = 1;
 const int RECORD_FRAME_RATE_MAX = 60;
 const int RECORD_FRAME_RATE_DEFAULT = 30;

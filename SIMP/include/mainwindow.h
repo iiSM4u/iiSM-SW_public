@@ -8,12 +8,14 @@
 #include <QThread>
 #include <QMutex>
 #include <QButtonGroup>
+#include <QProgressDialog>
 
 #include <opencv2/opencv.hpp>
 #include <miicam.h>
 
 #include "constants.h"
 #include "video_format_type.h"
+#include "videoloader.h"
 
 // C 라이브러리를 참조할 떄는 extern C로 묶는 것이 링킹 문제를 방지하는데 도움이 됨
 extern "C" {
@@ -58,6 +60,7 @@ private slots:
     // thread
     void UpdatePreviewUI();
     void UpdateVideoUI();
+
 
     // custom
     void UpdatePreviewMousePosition(int x, int y, const QColor& color);
@@ -115,6 +118,10 @@ private slots:
 
     void sliderVideo_sliderMoved(int position);
 
+    void onVideoLoadingProgress(int value);
+    void onVideoLoadingFinished(bool success, const std::vector<QImage>& frames, double frameRate, int totalFrames);
+
+
     /////////////////////// frame
     void btnLoadFrame_Click();
     void lvFrame_Click(const QModelIndex& index);
@@ -122,6 +129,7 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+    QProgressDialog *progressDialog;
 
     QButtonGroup *btnGroupCooling;
 
@@ -156,7 +164,6 @@ private:
     double videoFrameRates;
     int currentFrame;
     std::vector<QImage> videoFrames;
-
 
     //void resizeEvent(QResizeEvent* event) override;
     bool isOn = false;

@@ -27,6 +27,7 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
+    , progressDialog(new QProgressDialog(this))
     , filesystemVideo(new QFileSystemModel(this))
     , filesystemFrame(new QFileSystemModel(this))
     , timerFPS(new QTimer(this))
@@ -242,6 +243,14 @@ void MainWindow::InitUI()
     ui->lvFrame->setModel(this->filesystemFrame);
     ui->lvFrame->setRootIndex(this->filesystemFrame->index(this->captureDir)); // Set the root index
     ui->lbDirFrames->setText(this->captureDir);
+
+
+    ////////////////////////// progressDialog
+    progressDialog->setLabelText("Loading video...");
+    progressDialog->setCancelButton(nullptr);
+    progressDialog->setRange(0, 100);
+    progressDialog->setModal(true);
+    progressDialog->reset();
 }
 
 void MainWindow::EnablePreviewUI(bool isPlay)
@@ -835,33 +844,39 @@ void MainWindow::btnLoadVideo_Click()
 
 void MainWindow::lvVideo_Click(const QModelIndex &index)
 {
+    // 일단 update를 중지시킨다.
+    this->isVideoPlay = false;
+
     QString filePath = this->filesystemVideo->filePath(index);
 
-    cv::VideoCapture video(filePath.toStdString());
+    progressDialog->reset();
+    progressDialog->show();
 
-    if (video.isOpened())
+    VideoLoader *loader = new VideoLoader(filePath);
+    connect(loader, &VideoLoader::progress, this, &MainWindow::onVideoLoadingProgress);
+    connect(loader, &VideoLoader::finished, this, &MainWindow::onVideoLoadingFinished);
+    connect(loader, &VideoLoader::finished, loader, &QObject::deleteLater);
+
+    loader->start();
+}
+
+void MainWindow::onVideoLoadingProgress(int value)
+{
+    progressDialog->setValue(value);
+}
+
+void MainWindow::onVideoLoadingFinished(bool success, const std::vector<QImage>& frames, double frameRate, int totalFrames)
+{
+    progressDialog->hide(); // Hide the progress dialog
+
+    if (success)
     {
-        // update를 중지시킨다.
-        this->isVideoPlay = false;
-
-        this->videoFrameRates = video.get(cv::CAP_PROP_FPS);
-        this->videoTotalFrame = video.get(cv::CAP_PROP_FRAME_COUNT);
+        this->videoFrames = frames;
+        this->videoFrameRates = frameRate;
+        this->videoTotalFrame = totalFrames;
         this->currentFrame = 0;
 
-        this->videoFrames.clear();
-
-        for (int i = 0; i < this->videoTotalFrame; i++)
-        {
-            cv::Mat frame;
-
-            if (video.read(frame))
-            {
-                QImage img(frame.data, frame.cols, frame.rows, frame.step, QImage::Format_RGB888);
-                this->videoFrames.emplace_back(img.rgbSwapped()); // Convert BGR to RGB
-            }
-        }
-
-        ui->sliderVideo->setRange(0, this->videoTotalFrame);
+        ui->sliderVideo->setRange(0, this->videoTotalFrame - 1);
         ui->sliderVideo->setSingleStep(1);
         ui->sliderVideo->setPageStep(10);
         ui->sliderVideo->setValue(0);
@@ -872,15 +887,64 @@ void MainWindow::lvVideo_Click(const QModelIndex &index)
         ui->btnStopVideo->setEnabled(true);
         ui->sliderVideo->setEnabled(true);
 
-        ui->btnPlayVideo->setText(BTN_PAUSE);
+        ui->btnPlayVideo->setText("Pause");
 
         this->isVideoPlay = true;
     }
     else
     {
-        QMessageBox::warning(this, TITLE_ERROR, MSG_FILE_OPEN_ERROR);
+        QMessageBox::warning(this, "Error", "Could not open the video file.");
     }
 }
+
+// void MainWindow::lvVideo_Click(const QModelIndex &index)
+// {
+//     // 일단 update를 중지시킨다.
+//     this->isVideoPlay = false;
+
+//     QString filePath = this->filesystemVideo->filePath(index);
+
+//     cv::VideoCapture video(filePath.toStdString());
+
+//     if (video.isOpened())
+//     {
+//         this->videoFrameRates = video.get(cv::CAP_PROP_FPS);
+//         this->videoTotalFrame = video.get(cv::CAP_PROP_FRAME_COUNT);
+//         this->currentFrame = 0;
+
+//         this->videoFrames.clear();
+
+//         for (int i = 0; i < this->videoTotalFrame; i++)
+//         {
+//             cv::Mat frame;
+
+//             if (video.read(frame))
+//             {
+//                 QImage img(frame.data, frame.cols, frame.rows, frame.step, QImage::Format_RGB888);
+//                 this->videoFrames.emplace_back(img.rgbSwapped()); // Convert BGR to RGB
+//             }
+//         }
+
+//         ui->sliderVideo->setRange(0, this->videoTotalFrame);
+//         ui->sliderVideo->setSingleStep(1);
+//         ui->sliderVideo->setPageStep(10);
+//         ui->sliderVideo->setValue(0);
+
+//         ui->lbVideoFrame->setText(QString("%1 / %2").arg(ui->sliderVideo->value()).arg(this->videoTotalFrame));
+
+//         ui->btnPlayVideo->setEnabled(true);
+//         ui->btnStopVideo->setEnabled(true);
+//         ui->sliderVideo->setEnabled(true);
+
+//         ui->btnPlayVideo->setText(BTN_PAUSE);
+
+//         this->isVideoPlay = true;
+//     }
+//     else
+//     {
+//         QMessageBox::warning(this, TITLE_ERROR, MSG_FILE_OPEN_ERROR);
+//     }
+// }
 
 
 void MainWindow::btnPlayVideo_Click()
@@ -894,9 +958,9 @@ void MainWindow::btnStopVideo_Click()
     this->isVideoPlay = false;
     this->currentFrame = 0;
 
-    ui->lbVideoFrame->setText(QString("%1 / %2").arg(0).arg(this->videoTotalFrame));
-    ui->sliderVideo->setValue(0);
-    ui->btnPlayVideo->setText(BTN_PLAY);
+    // play를 중지시켰으므로 직접 업데이트 한다.
+    this->resultVideo = this->videoFrames[this->currentFrame];
+    UpdateVideoUI();
 }
 
 void MainWindow::sliderVideo_sliderMoved(int position)
@@ -981,7 +1045,7 @@ void MainWindow::UpdatePreview()
             QMetaObject::invokeMethod(this, "UpdatePreviewUI", Qt::QueuedConnection);
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(FRAME_PER_SECOND)); // Frame rate delay
+        std::this_thread::sleep_for(std::chrono::milliseconds(DELAY_CAMERA)); // Frame rate delay
     }
 }
 
@@ -997,15 +1061,15 @@ void MainWindow::UpdateVideo()
             }
             else
             {
-                this->resultVideo = this->videoFrames[0];
                 this->currentFrame = 0;
+                this->resultVideo = this->videoFrames[this->currentFrame];
                 this->isVideoPlay = false;
             }
 
             QMetaObject::invokeMethod(this, "UpdateVideoUI", Qt::QueuedConnection);
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(FRAME_PER_SECOND)); // Frame rate delay
+        std::this_thread::sleep_for(std::chrono::milliseconds(DELAY_VIDEO)); // Frame rate delay
     }
 }
 
@@ -1043,8 +1107,13 @@ void MainWindow::UpdateVideoUI()
         ui->gvVideo->fitInView();
     }
 
-    ui->lbVideoFrame->setText(QString("%1 / %2").arg(this->currentFrame).arg(this->videoTotalFrame));
+    ui->lbVideoFrame->setText(QString("%1 / %2").arg(this->currentFrame + 1).arg(this->videoTotalFrame));
     ui->sliderVideo->setValue(this->currentFrame);
+
+    if (!this->isVideoPlay)
+    {
+        ui->btnPlayVideo->setText(BTN_PLAY);
+    }
 }
 
 void MainWindow::InitGegl()
