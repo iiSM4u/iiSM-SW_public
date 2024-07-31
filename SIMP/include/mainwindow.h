@@ -56,7 +56,8 @@ private slots:
 
     /////////////////////// preview
     // thread
-    void UpdateGraphicsView();
+    void UpdatePreviewUI();
+    void UpdateVideoUI();
 
     // custom
     void UpdatePreviewMousePosition(int x, int y, const QColor& color);
@@ -112,11 +113,7 @@ private slots:
     void btnStopVideo_Click();
     void lvVideo_Click(const QModelIndex& index);
 
-    void mediaVideo_durationChanged(qint64 duration);
-    void mediaVideo_positionChanged(qint64 position);
     void sliderVideo_sliderMoved(int position);
-
-    void mediaVideo_mediaStatusChanged(QMediaPlayer::MediaStatus status);
 
     /////////////////////// frame
     void btnLoadFrame_Click();
@@ -128,16 +125,16 @@ private:
 
     QButtonGroup *btnGroupCooling;
 
-    QMediaPlayer *mediaVideo;
-    QFileSystemModel *modelVideo, *modelFrame;
+    //QMediaPlayer *mediaVideo;
+    QFileSystemModel *filesystemVideo, *filesystemFrame;
     QTimer *timerFPS, *timerVideoRecord;
 
     MiicamDeviceV2 miiDevice;
     HMiicam miiHcam = nullptr;
 
     uchar *rawCameraData = nullptr;
-    QImage resultImage;
-    std::vector<cv::Mat> videoFrames;
+    QImage resultPreview, resultVideo;
+    std::vector<cv::Mat> recordFrames;
 
     unsigned int imageWidth = 0;
     unsigned int imageHeight = 0;
@@ -154,6 +151,12 @@ private:
     int recordQuality = RECORD_QUALITY_DEFAULT;
     int recordTimeLimit = 0;
     QString recordDir, captureDir; // 생성자에서 초기화 함
+
+    int videoTotalFrame;
+    double videoFrameRates;
+    int currentFrame;
+    std::vector<QImage> videoFrames;
+
 
     //void resizeEvent(QResizeEvent* event) override;
     bool isOn = false;
@@ -219,16 +222,16 @@ private:
     );
 
     // custom
-    void UpdatePreview();    
+    void UpdatePreview();
+    void UpdateVideo();
     bool RecordVideo(
-        std::vector<cv::Mat>& videoFrames
+        std::vector<cv::Mat>& frames
         , const QString& recordDir
         , const VideoFormatType format
         , const double frameRate
         , const int quality
     );
-    void SetVideoPlay(bool value);
 
 
-    std::thread updateThread;
+    std::thread threadPreview, threadVideo;
 };

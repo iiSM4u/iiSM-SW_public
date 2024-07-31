@@ -27,9 +27,8 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , mediaVideo(new QMediaPlayer(this))
-    , modelVideo(new QFileSystemModel(this))
-    , modelFrame(new QFileSystemModel(this))
+    , filesystemVideo(new QFileSystemModel(this))
+    , filesystemFrame(new QFileSystemModel(this))
     , timerFPS(new QTimer(this))
     , timerVideoRecord(new QTimer(this))
     , btnGroupCooling(new QButtonGroup(this))
@@ -57,7 +56,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     // thread 시작
     this->isOn = true;
-    updateThread = std::thread(&MainWindow::UpdatePreview, this);
+    threadPreview = std::thread(&MainWindow::UpdatePreview, this);
+    threadVideo = std::thread(&MainWindow::UpdateVideo, this);
 
     MainWindow::InitGegl();
 
@@ -74,8 +74,12 @@ void MainWindow::closeEvent(QCloseEvent*)
 {
     this->isOn = false;
 
-    if (updateThread.joinable()) {
-        updateThread.join();
+    if (threadPreview.joinable()) {
+        threadPreview.join();
+    }
+
+    if (threadVideo.joinable()) {
+        threadVideo.join();
     }
 
     MainWindow::CloseGegl();
@@ -86,7 +90,15 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 {
     QMainWindow::resizeEvent(event);
 
-    if (ui->tabWidget->currentWidget() == ui->tabCapture)
+    if (ui->tabWidget->currentWidget() == ui->tabVideo)
+    {
+        // play 중일 떄는 play하면서 업데이트하므로 하지 않는다.
+        if (!this->isVideoPlay && std::abs(this->zoomFactor - 1.0f) <= std::numeric_limits<float>::epsilon())
+        {
+            ui->gvVideo->fitInView();
+        }
+    }    
+    else if (ui->tabWidget->currentWidget() == ui->tabCapture)
     {
         ui->gvFrame->fitInView();
     }
@@ -103,6 +115,7 @@ void MainWindow::ConnectUI()
 
     // preview
     connect(ui->gvPreview, &CustomGraphicsView::mousePositionChanged, this, &MainWindow::UpdatePreviewMousePosition);
+    connect(ui->gvVideo, &CustomGraphicsView::mousePositionChanged, this, &MainWindow::UpdateVideoMousePosition);
     connect(ui->gvFrame, &CustomGraphicsView::mousePositionChanged, this, &MainWindow::UpdateFrameMousePosition);
 
     connect(ui->cbResolution, &QComboBox::currentIndexChanged, this, &MainWindow::cbResoution_SelectedIndexChanged);
@@ -156,12 +169,7 @@ void MainWindow::ConnectUI()
     connect(ui->btnPlayVideo, &QPushButton::clicked, this, &MainWindow::btnPlayVideo_Click);
     connect(ui->btnStopVideo, &QPushButton::clicked, this, &MainWindow::btnStopVideo_Click);
     connect(ui->lvVideo, &QListView::clicked, this, &MainWindow::lvVideo_Click);
-
-    connect(this->mediaVideo, &QMediaPlayer::mediaStatusChanged, this, &MainWindow::mediaVideo_mediaStatusChanged);
-    connect(this->mediaVideo, &QMediaPlayer::durationChanged, this, &MainWindow::mediaVideo_durationChanged);
-    connect(this->mediaVideo, &QMediaPlayer::positionChanged, this, &MainWindow::mediaVideo_positionChanged);
     connect(ui->sliderVideo, &QSlider::sliderMoved, this, &MainWindow::sliderVideo_sliderMoved);
-
 
     // capture
     connect(ui->btnLoadFrame, &QPushButton::clicked, this, &MainWindow::btnLoadFrame_Click);
@@ -198,7 +206,7 @@ void MainWindow::InitUI()
 
     ////////////////////////// tab video
 
-    this->mediaVideo->setVideoOutput(ui->widgetVideo);
+    //this->mediaVideo->setVideoOutput(ui->widgetVideo);
 
     // Check if the captures directory exists, and create it if it doesn't
     QDir dirVideo(this->recordDir);
@@ -207,16 +215,17 @@ void MainWindow::InitUI()
     }
 
     // Set model properties
-    this->modelVideo->setRootPath(this->recordDir);
-    this->modelVideo->setNameFilters(QStringList() << "*.avi" << "*.mp4" << "*.wmv");
-    this->modelVideo->setNameFilterDisables(false);
+    this->filesystemVideo->setRootPath(this->recordDir);
+    this->filesystemVideo->setNameFilters(QStringList() << "*.avi" << "*.mp4" << "*.wmv");
+    this->filesystemVideo->setNameFilterDisables(false);
 
-    ui->lvVideo->setModel(this->modelVideo);
-    ui->lvVideo->setRootIndex(this->modelVideo->index(this->recordDir)); // Set the root index
+    ui->lvVideo->setModel(this->filesystemVideo);
+    ui->lvVideo->setRootIndex(this->filesystemVideo->index(this->recordDir)); // Set the root index
     ui->lbDirVideo->setText(this->recordDir);
 
     ui->btnPlayVideo->setEnabled(false);
     ui->btnStopVideo->setEnabled(false);
+    ui->sliderVideo->setEnabled(false);
 
 
     ////////////////////////// tab frame
@@ -226,12 +235,12 @@ void MainWindow::InitUI()
     }
 
     // Set model properties
-    this->modelFrame->setRootPath(this->captureDir);
-    this->modelFrame->setNameFilters(QStringList() << "*.png" << "*.jpg" << "*.jpeg" << "*.bmp" << "*.gif");
-    this->modelFrame->setNameFilterDisables(false);
+    this->filesystemFrame->setRootPath(this->captureDir);
+    this->filesystemFrame->setNameFilters(QStringList() << "*.png" << "*.jpg" << "*.jpeg" << "*.bmp" << "*.gif");
+    this->filesystemFrame->setNameFilterDisables(false);
 
-    ui->lvFrame->setModel(this->modelFrame);
-    ui->lvFrame->setRootIndex(this->modelFrame->index(this->captureDir)); // Set the root index
+    ui->lvFrame->setModel(this->filesystemFrame);
+    ui->lvFrame->setRootIndex(this->filesystemFrame->index(this->captureDir)); // Set the root index
     ui->lbDirFrames->setText(this->captureDir);
 }
 
@@ -382,7 +391,7 @@ void MainWindow::btnPlayCamera_Click()
         MainWindow::StartCamera();
         this->isCameraPlay = true;
 
-        ui->btnPlayCamera->setText(MENU_PAUSE);
+        ui->btnPlayCamera->setText(BTN_PAUSE);
 
         MainWindow::EnablePreviewUI(true);
     }
@@ -394,7 +403,7 @@ void MainWindow::btnPlayCamera_Click()
         {
             // resume camera
             Miicam_Pause(this->miiHcam, 0);  /* 1 => pause, 0 => continue */
-            ui->btnPlayCamera->setText(MENU_PAUSE);
+            ui->btnPlayCamera->setText(BTN_PAUSE);
         }
         else
         {
@@ -416,7 +425,7 @@ void MainWindow::btnStopCamera_Click()
 
 void MainWindow::btnCaptureCamera_Click()
 {
-    if (!this->resultImage.isNull())
+    if (!this->resultPreview.isNull())
     {
         QString pathDir = QCoreApplication::applicationDirPath() + DIR_CAPTURE_FRAME;
 
@@ -430,7 +439,7 @@ void MainWindow::btnCaptureCamera_Click()
         QString timestamp = currentDateTime.toString(FORMAT_DATE_TIME);
         QString filePath = dir.absoluteFilePath(timestamp + EXTENSION_CAPTURE_IMAGE);
 
-        this->resultImage.save(filePath);
+        this->resultPreview.save(filePath);
     }
 }
 
@@ -439,7 +448,7 @@ void MainWindow::chkRecord_CheckedChanged(Qt::CheckState checkState)
     if (checkState == Qt::CheckState::Checked)
     {
         this->isRecordOn = true;
-        this->videoFrames.clear();
+        this->recordFrames.clear();
 
         this->recordStartTime = QTime::currentTime();
         this->timerVideoRecord->start(1000); // Update every second
@@ -447,10 +456,10 @@ void MainWindow::chkRecord_CheckedChanged(Qt::CheckState checkState)
     else if (checkState == Qt::CheckState::Unchecked)
     {
         this->isRecordOn = false;
-        if (this->videoFrames.size() > 0)
+        if (this->recordFrames.size() > 0)
         {
-            MainWindow::RecordVideo(this->videoFrames, this->recordDir, this->recordFormat, this->recordFrameRate, this->recordQuality);
-            this->videoFrames.clear();
+            MainWindow::RecordVideo(this->recordFrames, this->recordDir, this->recordFormat, this->recordFrameRate, this->recordQuality);
+            this->recordFrames.clear();
         }
     }
 }
@@ -752,26 +761,26 @@ void MainWindow::editTemperature_editingFinished()
 
 void MainWindow::btnZoomIn_Click()
 {
-    zoomFactor += ZOOM_VALUE;
+    this->zoomFactor += ZOOM_VALUE;
 
-    if (zoomFactor > ZOOM_MAX)
+    if (this->zoomFactor > ZOOM_MAX)
     {
-        zoomFactor = ZOOM_MAX;
+        this->zoomFactor = ZOOM_MAX;
     }
 
-    ui->gvPreview->scale(zoomFactor, zoomFactor);
+    ui->gvPreview->scale(this->zoomFactor, this->zoomFactor);
 }
 
 void MainWindow::btnZoomOut_Click()
 {
-    zoomFactor -= ZOOM_VALUE;
+    this->zoomFactor -= ZOOM_VALUE;
 
-    if (zoomFactor < ZOOM_MIN)
+    if (this->zoomFactor < ZOOM_MIN)
     {
-        zoomFactor = ZOOM_MIN;
+        this->zoomFactor = ZOOM_MIN;
     }
 
-    ui->gvPreview->scale(zoomFactor, zoomFactor);
+    ui->gvPreview->scale(this->zoomFactor, this->zoomFactor);
 }
 
 void MainWindow::btnBrightnessContrast_Click()
@@ -819,104 +828,88 @@ void MainWindow::btnLoadVideo_Click()
 
     if (!dir.isEmpty())
     {
-        ui->lvVideo->setRootIndex(this->modelVideo->setRootPath(dir));
+        ui->lvVideo->setRootIndex(this->filesystemVideo->setRootPath(dir));
         ui->lbDirVideo->setText(dir);
     }
 }
 
-// void MainWindow::btnLoadVideo_Click()
-// {
-//     QString fileName = QFileDialog::getOpenFileName(this, tr("Open Video"), "", tr("Video Files (*.mp4 *.avi *.mkv)"));
-
-//     if (!fileName.isEmpty())
-//     {
-//         // Ensure mpVideoFile is properly initialized
-//         if (mpVideoFile)
-//         {
-//             mpVideoFile->stop();
-//         }
-//         else
-//         {
-//             // Connect error signal for debugging
-//             connect(mpVideoFile, &QMediaPlayer::errorOccurred, this, [](QMediaPlayer::Error error){
-//                 qDebug() << "Media player error:" << error;
-//             });
-//         }
-
-//         // Set the source and start playback
-//         mpVideoFile->setSource(QUrl::fromLocalFile(fileName));
-//         mpVideoFile->play();
-//     }
-// }
-
-// void MainWindow::btnLoadVideo_Click()
-// {
-//     QString dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"), "", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
-
-//     if (!dir.isEmpty())
-//     {
-//         ui->lvVideos->setRootIndex(this->modelVideos->setRootPath(dir));
-//         ui->lbDirVideo->setText(dir);
-//     }
-// }
-
 void MainWindow::lvVideo_Click(const QModelIndex &index)
 {
-    QString filePath = this->modelVideo->filePath(index);
+    QString filePath = this->filesystemVideo->filePath(index);
 
-    this->mediaVideo->stop();
-    this->mediaVideo->setSource(QUrl::fromLocalFile(filePath));
-    this->mediaVideo->play(); // 자동으로 시작하게 한다.
+    cv::VideoCapture video(filePath.toStdString());
 
-    ui->btnPlayVideo->setEnabled(true);
-    ui->btnStopVideo->setEnabled(true);
-
-    MainWindow::SetVideoPlay(true);
-}
-
-void MainWindow::btnPlayVideo_Click()
-{
-    if (this->isVideoPlay)
+    if (video.isOpened())
     {
-        this->mediaVideo->pause();
-        MainWindow::SetVideoPlay(false);
+        // update를 중지시킨다.
+        this->isVideoPlay = false;
+
+        this->videoFrameRates = video.get(cv::CAP_PROP_FPS);
+        this->videoTotalFrame = video.get(cv::CAP_PROP_FRAME_COUNT);
+        this->currentFrame = 0;
+
+        this->videoFrames.clear();
+
+        for (int i = 0; i < this->videoTotalFrame; i++)
+        {
+            cv::Mat frame;
+
+            if (video.read(frame))
+            {
+                QImage img(frame.data, frame.cols, frame.rows, frame.step, QImage::Format_RGB888);
+                this->videoFrames.emplace_back(img.rgbSwapped()); // Convert BGR to RGB
+            }
+        }
+
+        ui->sliderVideo->setRange(0, this->videoTotalFrame);
+        ui->sliderVideo->setSingleStep(1);
+        ui->sliderVideo->setPageStep(10);
+        ui->sliderVideo->setValue(0);
+
+        ui->lbVideoFrame->setText(QString("%1 / %2").arg(ui->sliderVideo->value()).arg(this->videoTotalFrame));
+
+        ui->btnPlayVideo->setEnabled(true);
+        ui->btnStopVideo->setEnabled(true);
+        ui->sliderVideo->setEnabled(true);
+
+        ui->btnPlayVideo->setText(BTN_PAUSE);
+
+        this->isVideoPlay = true;
     }
     else
     {
-        this->mediaVideo->play();
-        MainWindow::SetVideoPlay(true);
+        QMessageBox::warning(this, TITLE_ERROR, MSG_FILE_OPEN_ERROR);
     }
+}
+
+
+void MainWindow::btnPlayVideo_Click()
+{
+    this->isVideoPlay = !this->isVideoPlay;
+    ui->btnPlayVideo->setText(!this->isVideoPlay ? BTN_PLAY : BTN_PAUSE);
 }
 
 void MainWindow::btnStopVideo_Click()
 {
-    this->mediaVideo->stop();
-    MainWindow::SetVideoPlay(false);
-}
+    this->isVideoPlay = false;
+    this->currentFrame = 0;
 
-void MainWindow::mediaVideo_mediaStatusChanged(QMediaPlayer::MediaStatus status)
-{
-    if (status == QMediaPlayer::EndOfMedia)
-    {
-        MainWindow::SetVideoPlay(false);
-    }
-}
-
-void MainWindow::mediaVideo_durationChanged(qint64 duration)
-{
-    ui->sliderVideo->setRange(0, duration);
-}
-
-void MainWindow::mediaVideo_positionChanged(qint64 position)
-{
-    ui->sliderVideo->setValue(position);
+    ui->lbVideoFrame->setText(QString("%1 / %2").arg(0).arg(this->videoTotalFrame));
+    ui->sliderVideo->setValue(0);
+    ui->btnPlayVideo->setText(BTN_PLAY);
 }
 
 void MainWindow::sliderVideo_sliderMoved(int position)
 {
-    this->mediaVideo->setPosition(position);
-}
+    this->currentFrame = position;
 
+    // play 중이 아니면 직접 업데이트한다.
+    if (!this->isVideoPlay)
+    {
+        this->resultVideo = this->videoFrames[this->currentFrame];
+        UpdateVideoUI();
+    }
+}
 
 /////////////////////// frame
 void MainWindow::btnLoadFrame_Click()
@@ -925,14 +918,14 @@ void MainWindow::btnLoadFrame_Click()
 
     if (!dir.isEmpty())
     {
-        ui->lvFrame->setRootIndex(this->modelFrame->setRootPath(dir));
+        ui->lvFrame->setRootIndex(this->filesystemFrame->setRootPath(dir));
         ui->lbDirFrames->setText(dir);
     }
 }
 
 void MainWindow::lvFrame_Click(const QModelIndex &index)
 {
-    QString filePath = this->modelFrame->filePath(index);
+    QString filePath = this->filesystemFrame->filePath(index);
     QImage image(filePath);
     ui->gvFrame->setImage(image);
     ui->gvFrame->fitInView();
@@ -974,29 +967,53 @@ void MainWindow::UpdatePreview()
             );
 
             // gegl을 적용한 후에 result에 넣는다. 그래야 video나 capture에서 gegl이 적용된 이미지가 사용될 수 있음.
-            this->resultImage = formattedSource.convertToFormat(QImage::Format_RGB888);
+            this->resultPreview = formattedSource.convertToFormat(QImage::Format_RGB888);
 
             if (this->isRecordOn)
             {
-                cv::Mat mat(this->resultImage.height(), this->resultImage.width(), CV_8UC3, const_cast<uchar*>(this->resultImage.bits()), this->resultImage.bytesPerLine());
+                cv::Mat mat(this->resultPreview.height(), this->resultPreview.width(), CV_8UC3, const_cast<uchar*>(this->resultPreview.bits()), this->resultPreview.bytesPerLine());
                 cv::Mat matBGR;
                 cv::cvtColor(mat, matBGR, cv::COLOR_RGB2BGR);  // rgb -> bgr
 
-                this->videoFrames.emplace_back(matBGR);
+                this->recordFrames.emplace_back(matBGR);
             }
 
-            QMetaObject::invokeMethod(this, "UpdateGraphicsView", Qt::QueuedConnection);
+            QMetaObject::invokeMethod(this, "UpdatePreviewUI", Qt::QueuedConnection);
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(FRAME_PER_SECOND)); // Frame rate delay
     }
 }
 
-void MainWindow::UpdateGraphicsView()
+void MainWindow::UpdateVideo()
 {
-    ui->gvPreview->setImage(this->resultImage);
+    while (this->isOn)
+    {
+        if (this->isVideoPlay)
+        {
+            if (this->currentFrame < this->videoTotalFrame)
+            {
+                this->resultVideo = this->videoFrames[this->currentFrame++];
+            }
+            else
+            {
+                this->resultVideo = this->videoFrames[0];
+                this->currentFrame = 0;
+                this->isVideoPlay = false;
+            }
 
-    if (std::abs(zoomFactor - 1.0f) <= std::numeric_limits<float>::epsilon())
+            QMetaObject::invokeMethod(this, "UpdateVideoUI", Qt::QueuedConnection);
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(FRAME_PER_SECOND)); // Frame rate delay
+    }
+}
+
+void MainWindow::UpdatePreviewUI()
+{
+    ui->gvPreview->setImage(this->resultPreview);
+
+    if (std::abs(this->zoomFactor - 1.0f) <= std::numeric_limits<float>::epsilon())
     {
         ui->gvPreview->fitInView();
     }
@@ -1015,6 +1032,19 @@ void MainWindow::UpdateGraphicsView()
             ui->chkRecord->setChecked(false);
         }
     }
+}
+
+void MainWindow::UpdateVideoUI()
+{
+    ui->gvVideo->setImage(this->resultVideo);
+
+    if (std::abs(zoomFactor - 1.0f) <= std::numeric_limits<float>::epsilon())
+    {
+        ui->gvVideo->fitInView();
+    }
+
+    ui->lbVideoFrame->setText(QString("%1 / %2").arg(this->currentFrame).arg(this->videoTotalFrame));
+    ui->sliderVideo->setValue(this->currentFrame);
 }
 
 void MainWindow::InitGegl()
@@ -1327,29 +1357,26 @@ void MainWindow::handleTempTintEvent()
 // }
 
 
-void MainWindow::SetVideoPlay(bool value)
-{
-    this->isVideoPlay = true;
+// void MainWindow::SetVideoPlay(bool value)
+// {
+//     this->isVideoPlay = true;
 
-    const QSignalBlocker blocker(ui->btnPlayVideo);
-    ui->btnPlayVideo->setText(!value ? BTN_PLAY : MENU_PAUSE);
-}
+//     const QSignalBlocker blocker(ui->btnPlayVideo);
+//     ui->btnPlayVideo->setText(!value ? BTN_PLAY : MENU_PAUSE);
+// }
+
 
 bool MainWindow::RecordVideo(
-    std::vector<cv::Mat>& videoFrames
+    std::vector<cv::Mat>& frames
     , const QString& recordDir
     , const VideoFormatType format
     , const double frameRate
     , const int quality
 )
 {
-    if (videoFrames.size() > 0)
+    if (frames.size() > 0)
     {
-        //QString pathDir = DIR_RECORD_VIDEO;
-        //QString pathDir = QCoreApplication::applicationDirPath() + recordDir;
-
         QDir dir(recordDir);
-
         if (!dir.exists())
         {
             dir.mkpath(recordDir);
@@ -1362,7 +1389,7 @@ bool MainWindow::RecordVideo(
         try
         {
             // Create VideoWriter object
-            cv::VideoWriter writer(filePath.toStdString(), fourcc, frameRate, cv::Size(videoFrames[0].cols, videoFrames[0].rows));
+            cv::VideoWriter writer(filePath.toStdString(), fourcc, frameRate, cv::Size(frames[0].cols, frames[0].rows));
 
             // quality는 특정 format에만 적용된다.
             if (format == VideoFormatType::MJPEG)
@@ -1371,7 +1398,7 @@ bool MainWindow::RecordVideo(
             }
 
             // Write frames to video file
-            for (const cv::Mat& mat : videoFrames)
+            for (const cv::Mat& mat : frames)
             {
                 writer.write(mat);
             }

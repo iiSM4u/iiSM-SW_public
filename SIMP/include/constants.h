@@ -63,8 +63,9 @@ const QString KEY_ENHANCE_SHADOWS = "enhance_shadows";
 
 
 const QString BTN_PLAY = "Play";
-const QString MENU_PAUSE = "Pause";
+const QString BTN_PAUSE = "Pause";
 
 const QString TITLE_ERROR = "Error";
 const QString MSG_INVALID_VALUE = "Invalid Value";
 const QString MSG_INVALID_RANGE = "Invalid Range";
+const QString MSG_FILE_OPEN_ERROR = "File open error";

@@ -844,7 +844,7 @@
             <widget class="QWidget" name="widget_10" native="true">
              <layout class="QHBoxLayout" name="horizontalLayout_11">
               <item>
-               <widget class="QVideoWidget" name="widgetVideo" native="true"/>
+               <widget class="CustomGraphicsView" name="gvVideo"/>
               </item>
               <item>
                <widget class="QListView" name="lvVideo">
@@ -863,6 +863,16 @@
             <widget class="QSlider" name="sliderVideo">
              <property name="orientation">
               <enum>Qt::Horizontal</enum>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="lbVideoFrame">
+             <property name="text">
+              <string>0 / 0</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
              </property>
             </widget>
            </item>
@@ -1109,12 +1119,6 @@
    <class>CustomPlainTextEdit</class>
    <extends>QPlainTextEdit</extends>
    <header>custom_plain_text_edit.h</header>
-  </customwidget>
-  <customwidget>
-   <class>QVideoWidget</class>
-   <extends>QWidget</extends>
-   <header>qvideowidget.h</header>
-   <container>1</container>
   </customwidget>
   <customwidget>
    <class>CustomGraphicsView</class>
