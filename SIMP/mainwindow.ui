@@ -511,24 +511,6 @@
             </widget>
            </item>
            <item>
-            <widget class="QCheckBox" name="chkDarkfield">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <bold>false</bold>
-              </font>
-             </property>
-             <property name="text">
-              <string>Enabled</string>
-             </property>
-            </widget>
-           </item>
-           <item>
             <widget class="QWidget" name="widget_8" native="true">
              <layout class="QHBoxLayout" name="horizontalLayout_9">
               <item>
@@ -553,7 +535,7 @@
                </widget>
               </item>
               <item>
-               <widget class="CustomPlainTextEdit" name="editDarkfieldQuantity">
+               <widget class="CustomPlainTextEdit" name="editDarkFieldCorrectionQuantity">
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
@@ -571,7 +553,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="btnDarkfieldCapture">
+            <widget class="QPushButton" name="btnDarkFieldCorrection">
              <property name="minimumSize">
               <size>
                <width>0</width>
@@ -585,6 +567,24 @@
              </property>
              <property name="text">
               <string>Capture</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="chkDarkFieldCorrection">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <bold>false</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>Enabled</string>
              </property>
             </widget>
            </item>

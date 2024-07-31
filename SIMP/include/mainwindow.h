@@ -53,8 +53,6 @@ private slots:
     void ConnectUI();
     void InitUI();
     void EnablePreviewUI(bool isPlay);
-    void EnableDarkfieldUI(bool value);
-    void EnableCoolingUI(bool value);
 
     /////////////////////// preview
     // thread
@@ -92,9 +90,8 @@ private slots:
     void btnCurveSetting_Click();
     void cbCurvePreset_SelectedIndexChanged(int index);
 
-    void chkDarkfield_CheckedChanged(Qt::CheckState checkState);
-    void btnDarkfieldCapture_Click();
-    void editDarkfieldQuantity_editingFinished();
+    void chkDarkFieldCorrection_CheckedChanged(Qt::CheckState checkState);
+    void btnDarkFieldCorrection_Click();
 
     void btnGroupCooling_Click(int id);
 
@@ -171,6 +168,7 @@ private:
     bool isCameraPlay = false;
     bool isVideoPlay = false;
     bool isRecordOn = false;
+    bool isDarkFieldCorrectCapture = false;
 
     bool isUpdateBrightnessContrast = false;
     bool isUpdateStress = false;

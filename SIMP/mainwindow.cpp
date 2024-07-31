@@ -52,8 +52,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 일단 false로 시작
     MainWindow::EnablePreviewUI(false);
-    MainWindow::EnableDarkfieldUI(false);
-    MainWindow::EnableCoolingUI(false);
+
+    ui->sliderTemperature->setEnabled(false);
+    ui->editTemperature->setEnabled(false);
 
     // thread 시작
     this->isOn = true;
@@ -144,9 +145,8 @@ void MainWindow::ConnectUI()
     connect(ui->btnCurveSetting, &QPushButton::clicked, this, &MainWindow::btnCurveSetting_Click);
     connect(ui->cbCurvePreset, &QComboBox::currentIndexChanged, this, &MainWindow::cbCurvePreset_SelectedIndexChanged);
 
-    connect(ui->chkDarkfield, &QCheckBox::checkStateChanged, this, &MainWindow::chkDarkfield_CheckedChanged);
-    connect(ui->editDarkfieldQuantity, &CustomPlainTextEdit::editingFinished, this, &MainWindow::editDarkfieldQuantity_editingFinished);
-    connect(ui->btnDarkfieldCapture, &QPushButton::clicked, this, &MainWindow::btnDarkfieldCapture_Click);
+    connect(ui->chkDarkFieldCorrection, &QCheckBox::checkStateChanged, this, &MainWindow::chkDarkFieldCorrection_CheckedChanged);
+    connect(ui->btnDarkFieldCorrection, &QPushButton::clicked, this, &MainWindow::btnDarkFieldCorrection_Click);
 
     // off가 클릭된 상태로 시작
     ui->rbCoolingOff->setChecked(true);
@@ -204,7 +204,7 @@ void MainWindow::InitUI()
     ui->sliderGamma->setValue(MIICAM_GAMMA_DEF);
     ui->editGamma->setPlainText(QString::number(MIICAM_GAMMA_DEF));
 
-    ui->editDarkfieldQuantity->setPlainText(QString::number(MIICAM_DARK_FIELD_QUANTITY_DEFAULT));
+    ui->editDarkFieldCorrectionQuantity->setPlainText(QString::number(MIICAM_DARK_FIELD_QUANTITY_DEFAULT));
 
 
     ////////////////////////// tab video
@@ -278,26 +278,16 @@ void MainWindow::EnablePreviewUI(bool isPlay)
     ui->btnCurveSetting->setEnabled(isPlay);
     ui->cbCurvePreset->setEnabled(isPlay);
 
-    ui->chkDarkfield->setEnabled(isPlay);
-
     ui->rbCoolingOn->setEnabled(isPlay);
     ui->rbCoolingOff->setEnabled(isPlay);
 ;
+    ui->editDarkFieldCorrectionQuantity->setEnabled(isPlay);
+    ui->btnDarkFieldCorrection->setEnabled(isPlay);
+    ui->chkDarkFieldCorrection->setEnabled(isPlay && this->isDarkFieldCorrectCapture);
+
     ui->btnBrightnessContrast->setEnabled(isPlay);
     ui->btnStress->setEnabled(isPlay);
     ui->btnStretchContrast->setEnabled(isPlay);
-}
-
-void MainWindow::EnableDarkfieldUI(bool value)
-{
-    ui->editDarkfieldQuantity->setEnabled(value);
-    ui->btnDarkfieldCapture->setEnabled(value);
-}
-
-void MainWindow::EnableCoolingUI(bool value)
-{
-    ui->sliderTemperature->setEnabled(value);
-    ui->editTemperature->setEnabled(value);
 }
 
 /////////////////////// preview
@@ -667,24 +657,31 @@ void MainWindow::cbCurvePreset_SelectedIndexChanged(int index)
 
 }
 
-void MainWindow::chkDarkfield_CheckedChanged(Qt::CheckState checkState)
+void MainWindow::chkDarkFieldCorrection_CheckedChanged(Qt::CheckState checkState)
 {
-    MainWindow::EnableDarkfieldUI(ui->chkDarkfield->isChecked());
+    int option = ui->chkDarkFieldCorrection->isChecked() ? 1 : 0;
+    Miicam_put_Option(this->miiHcam, MIICAM_OPTION_DFC, option);
 }
 
-void MainWindow::btnDarkfieldCapture_Click()
-{
-
-}
-
-void MainWindow::editDarkfieldQuantity_editingFinished()
+void MainWindow::btnDarkFieldCorrection_Click()
 {
     bool ok;
-    int value = ui->editDarkfieldQuantity->toPlainText().toInt(&ok);
+    int value = ui->editDarkFieldCorrectionQuantity->toPlainText().toInt(&ok);
 
     if (ok)
     {
-        if (value < MIICAM_DARK_FIELD_QUANTITY_MIN || value > MIICAM_DARK_FIELD_QUANTITY_MAX)
+        if (value >= MIICAM_DARK_FIELD_QUANTITY_MIN && value <= MIICAM_DARK_FIELD_QUANTITY_MAX)
+        {
+            int optionValue = 0xff000000 | value;
+            Miicam_put_Option(this->miiHcam, MIICAM_OPTION_DFC, optionValue);
+
+            // Dark Filed Correction 적용
+            Miicam_DfcOnce(this->miiHcam);
+
+            this->isDarkFieldCorrectCapture = true;
+            ui->chkDarkFieldCorrection->setEnabled(this->isDarkFieldCorrectCapture);
+        }
+        else
         {
             QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_RANGE);
             ui->editGamma->setPlainText(QString::number(MIICAM_DARK_FIELD_QUANTITY_DEFAULT));
@@ -699,7 +696,9 @@ void MainWindow::editDarkfieldQuantity_editingFinished()
 
 void MainWindow::btnGroupCooling_Click(int id)
 {
-    MainWindow::EnableCoolingUI(id == 1);
+    bool enable = id == 1;
+    ui->sliderTemperature->setEnabled(enable );
+    ui->editTemperature->setEnabled(enable );
 }
 
 void MainWindow::sliderTemperature_sliderMoved(int position)
@@ -760,6 +759,7 @@ void MainWindow::btnZoomIn_Click()
         this->zoomFactor = ZOOM_MAX;
     }
 
+    // 현재 창 크기 기준으로 zoom 조절. 실제 이미지 크기로 하면 창 크기를 넘어선다.
     ui->gvPreview->fitInView();
     ui->gvPreview->scale(this->zoomFactor, this->zoomFactor);
 
@@ -779,6 +779,7 @@ void MainWindow::btnZoomOut_Click()
         this->zoomFactor = ZOOM_MIN;
     }
 
+    // 현재 창 크기 기준으로 zoom 조절. 실제 이미지 크기로 하면 창 크기를 넘어선다.
     ui->gvPreview->fitInView();
     ui->gvPreview->scale(this->zoomFactor, this->zoomFactor);
 
