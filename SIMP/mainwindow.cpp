@@ -82,11 +82,6 @@ void MainWindow::closeEvent(QCloseEvent*)
 {
     this->isOn = false;
 
-    if (this->contrastCurves)
-    {
-        g_object_unref(this->contrastCurves);
-    }
-
     if (threadPreview.joinable()) {
         threadPreview.join();
     }
@@ -660,12 +655,13 @@ void MainWindow::editGamma_editingFinished()
 
 void MainWindow::btnCurveSetting_Click()
 {
-    dialog_contrast_curve dialog(this->isUpdateContrastCurve, this->presetsContrastCurve, this);
+    dialog_contrast_curve dialog(this->presetsContrastCurve, ui->cbCurvePreset->currentIndex() - 1, this->isUpdateContrastCurve, this);
 
     if (dialog.exec() == QDialog::Accepted)
     {
+        this->presetsContrastCurve = dialog.getPresets();
         this->isUpdateContrastCurve = dialog.getEnable();
-        int index = dialog.getSelectedIndex();
+        int index = this->isUpdateContrastCurve ? dialog.getSelectedIndex() + 1 : 0;
 
         QJsonArray jsonArray;
         convertPresetsImageCurveToJsonArray(this->presetsContrastCurve, jsonArray);
@@ -679,9 +675,10 @@ void MainWindow::btnCurveSetting_Click()
 
 void MainWindow::cbCurvePreset_SelectedIndexChanged(int index)
 {
-    if (index > -1)
+    // 0이면 none
+    if (index > 0)
     {
-        preset_contrast_curve preset = this->presetsContrastCurve[index];
+        preset_contrast_curve preset = this->presetsContrastCurve[index - 1];
 
         QMutexLocker locker(&contrastCurvesMutex);
 
@@ -697,6 +694,12 @@ void MainWindow::cbCurvePreset_SelectedIndexChanged(int index)
         {
             gegl_curve_add_point(this->contrastCurves, point.GetX(), point.GetY());
         }
+
+        this->isUpdateContrastCurve = true;
+    }
+    else
+    {
+        this->isUpdateContrastCurve = false;
     }
 }
 
@@ -834,13 +837,14 @@ void MainWindow::btnZoomOut_Click()
 
 void MainWindow::btnBrightnessContrast_Click()
 {
-    dialog_brightness_contrast dialog(this->isUpdateBrightnessContrast, this->gegl_brightness, this->gegl_contrast, this->presetsBrightnessContrast, this);
+    dialog_brightness_contrast dialog(this->presetsBrightnessContrast, this->gegl_brightness, this->gegl_contrast, this->isUpdateBrightnessContrast, this);
 
     if (dialog.exec() == QDialog::Accepted)
     {
-        this->isUpdateBrightnessContrast = dialog.getEnable();
+        this->presetsBrightnessContrast = dialog.getPresets();
         this->gegl_brightness = dialog.getBrightness();
         this->gegl_contrast = dialog.getContrast();
+        this->isUpdateBrightnessContrast = dialog.getEnable();
 
         QJsonArray jsonArray;
         convertBrightnessContrastPresetsToJsonArray(this->presetsBrightnessContrast, jsonArray);
@@ -852,15 +856,16 @@ void MainWindow::btnBrightnessContrast_Click()
 
 void MainWindow::btnStress_Click()
 {
-    dialog_stress dialog(this->isUpdateStress, this->gegl_stress_radius, this->gegl_stress_samples, this->gegl_stress_iterations, this->gegl_stress_enhance_shadows, this->presetsStress, this);
+    dialog_stress dialog(this->presetsStress, this->gegl_stress_radius, this->gegl_stress_samples, this->gegl_stress_iterations, this->gegl_stress_enhance_shadows, this->isUpdateStress, this);
 
     if (dialog.exec() == QDialog::Accepted)
     {
-        this->isUpdateStress = dialog.getEnable();
+        this->presetsStress = dialog.getPresets();
         this->gegl_stress_radius = dialog.getRadius();
         this->gegl_stress_samples = dialog.getSamples();
         this->gegl_stress_iterations = dialog.getIterations();
         this->gegl_stress_enhance_shadows = dialog.getEnhanceShadows();
+        this->isUpdateStress = dialog.getEnable();
 
         QJsonArray jsonArray;
         convertStressPrestesToJsonArray(this->presetsStress, jsonArray);
@@ -872,13 +877,13 @@ void MainWindow::btnStress_Click()
 
 void MainWindow::btnStretchContrast_Click()
 {
-    dialog_stretch_contrast dialog(this->isUpdateStretchContrast, this->gegl_stretch_contrast_keep_colors, this->gegl_stretch_contrast_perceptual);
+    dialog_stretch_contrast dialog(this->gegl_stretch_contrast_keep_colors, this->gegl_stretch_contrast_perceptual, this->isUpdateStretchContrast);
 
     if (dialog.exec() == QDialog::Accepted)
     {
-        this->isUpdateStretchContrast = dialog.getEnable();
         this->gegl_stretch_contrast_keep_colors = dialog.getKeepColors();
         this->gegl_stretch_contrast_perceptual = dialog.getNonLinearComponents();
+        this->isUpdateStretchContrast = dialog.getEnable();
     }
 }
 
@@ -1142,6 +1147,8 @@ void MainWindow::UpdatePresetContrastCurve(const std::vector<preset_contrast_cur
 {
     ui->cbCurvePreset->clear();
 
+    ui->cbCurvePreset->addItem(KEY_NONE);
+
     if (presets.size() > 0)
     {
         for (const preset_contrast_curve& preset : presets)
@@ -1171,7 +1178,7 @@ void MainWindow::CloseGegl()
 {
     if (this->contrastCurves)
     {
-        delete[] this->contrastCurves;
+        g_object_unref(this->contrastCurves);
     }
 
     // gegl 종료

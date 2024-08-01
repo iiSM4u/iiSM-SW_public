@@ -3,6 +3,8 @@
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QPointF>
+
 #include "video_format_type.h"
 #include "preset_brightness_contrast.h"
 #include "preset_stress.h"
@@ -23,3 +25,6 @@ void convertStressPrestesToJsonArray(const std::vector<preset_stress>& presets, 
 
 std::vector<preset_contrast_curve> convertJsonToPresetsImageCurve(const QJsonArray& jsonArray);
 void convertPresetsImageCurveToJsonArray(const std::vector<preset_contrast_curve>& presets, QJsonArray& jsonArray);
+
+QVector<QPointF> convertCurvePointsToQPointf(const std::vector<curve_point>& curvePoints);
+std::vector<curve_point> convertQPointfToCurvePoints(QVector<QPointF>& qpoints);

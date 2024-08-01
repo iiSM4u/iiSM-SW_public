@@ -9,11 +9,13 @@ const float ZOOM_MIN = 0.25f;
 const int DELAY_CAMERA = 30;
 const int DELAY_VIDEO = 30;
 
+const int RECORD_FRAME_RATE_DEFAULT = 30;
 const int RECORD_FRAME_RATE_MIN = 1;
 const int RECORD_FRAME_RATE_MAX = 60;
-const int RECORD_FRAME_RATE_DEFAULT = 30;
+
 const int RECORD_QUALITY_DEFAULT = 75;
 
+const int CHART_CLICK_RANGE = 10;
 
 const int MIICAM_EXPOGAIN_MAX = 5000;
 const double MIICAM_EXPOSURE_TIME_MIN = 0.1;
@@ -53,6 +55,9 @@ const int GEGL_CONTRAST_CURVE_SAMPLING_POINTS_DEFAULT = 0;
 const int GEGL_CONTRAST_CURVE_SAMPLING_POINTS_MIN = 0;
 const int GEGL_CONTRAST_CURVE_SAMPLING_POINTS_MAX = 65536;
 
+const int GEGL_CONTRAST_CURVE_VALUE_MIN = 0;
+const int GEGL_CONTRAST_CURVE_VALUE_MAX = 255;
+
 const QString DIR_CAPTURE_FRAME = "/captures";
 const QString DIR_RECORD_VIDEO = "/videos";
 const QString DIR_PRESET = "/presets";
@@ -76,11 +81,13 @@ const QString KEY_POINTS = "points";
 const QString KEY_POS_X = "pos_x";
 const QString KEY_POS_Y = "pos_y";
 
+const QString KEY_NONE = "none";
 
 const QString BTN_PLAY = "Play";
 const QString BTN_PAUSE = "Pause";
 
 const QString TITLE_ERROR = "Error";
+
 const QString MSG_INVALID_VALUE = "Invalid Value";
 const QString MSG_INVALID_RANGE = "Invalid Range";
 const QString MSG_FILE_OPEN_ERROR = "File open error";

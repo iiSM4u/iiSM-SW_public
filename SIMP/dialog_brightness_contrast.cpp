@@ -13,7 +13,7 @@ dialog_brightness_contrast::dialog_brightness_contrast(QWidget *parent)
     ui->setupUi(this);
 }
 
-dialog_brightness_contrast::dialog_brightness_contrast(bool enable, double brightness, double contrast, std::vector<preset_brightness_contrast>& presets, QWidget *parent)
+dialog_brightness_contrast::dialog_brightness_contrast(std::vector<preset_brightness_contrast>& presets, const double brightness, const double contrast, const bool enable, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::dialog_brightness_contrast)
     , presets(presets)
@@ -53,9 +53,9 @@ dialog_brightness_contrast::~dialog_brightness_contrast()
     delete ui;
 }
 
-bool dialog_brightness_contrast::getEnable() const
+std::vector<preset_brightness_contrast> dialog_brightness_contrast::getPresets() const
 {
-    return ui->chkBrightnessContrast->isChecked();
+    return this->presets;
 }
 
 double dialog_brightness_contrast::getBrightness() const
@@ -70,6 +70,11 @@ double dialog_brightness_contrast::getContrast() const
     bool ok;
     double value = ui->editContrast->toPlainText().toDouble(&ok);
     return value;
+}
+
+bool dialog_brightness_contrast::getEnable() const
+{
+    return ui->chkBrightnessContrast->isChecked();
 }
 
 void dialog_brightness_contrast::chkBrightnessContrast_CheckedChanged(Qt::CheckState checkState)
@@ -97,8 +102,8 @@ void dialog_brightness_contrast::btnSavePreset_Click()
     bool ok;
     double brightness = ui->editBrightness->toPlainText().toDouble(&ok);
     double contrast = ui->editContrast->toPlainText().toDouble(&ok);
-    int index = this->presets.size();
 
+    int index = this->presets.size();
     this->presets.emplace_back(index, brightness, contrast);
 
     dialog_brightness_contrast::UpdatePresetUI(this->presets, index);

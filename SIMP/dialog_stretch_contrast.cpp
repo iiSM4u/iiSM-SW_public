@@ -8,7 +8,7 @@ dialog_stretch_contrast::dialog_stretch_contrast(QWidget *parent)
     ui->setupUi(this);
 }
 
-dialog_stretch_contrast::dialog_stretch_contrast(bool enable, bool keepColors, bool nonLinearComponents, QWidget *parent)
+dialog_stretch_contrast::dialog_stretch_contrast(const bool keepColors, const bool nonLinearComponents, const bool enable, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::dialog_stretch_contrast)
 {
@@ -28,11 +28,6 @@ dialog_stretch_contrast::~dialog_stretch_contrast()
     delete ui;
 }
 
-bool dialog_stretch_contrast::getEnable() const
-{
-    return ui->chkStretchContrast->isChecked();
-}
-
 bool dialog_stretch_contrast::getKeepColors() const
 {
     return ui->chkKeepColors->isChecked();
@@ -41,6 +36,11 @@ bool dialog_stretch_contrast::getKeepColors() const
 bool dialog_stretch_contrast::getNonLinearComponents() const
 {
     return ui->chkNonLinearComponents->isChecked();
+}
+
+bool dialog_stretch_contrast::getEnable() const
+{
+    return ui->chkStretchContrast->isChecked();
 }
 
 void dialog_stretch_contrast::chkStretchContrast_CheckedChanged(Qt::CheckState checkState)

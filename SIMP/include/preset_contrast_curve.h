@@ -7,7 +7,7 @@ class preset_contrast_curve
 {
 public:
     preset_contrast_curve() = default;
-    preset_contrast_curve(int index, std::vector<curve_point> points)
+    preset_contrast_curve(const int index, std::vector<curve_point>& points)
         : index(index)
         , points(points)
     {}

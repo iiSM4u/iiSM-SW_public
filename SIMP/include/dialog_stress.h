@@ -13,14 +13,15 @@ class dialog_stress : public QDialog
 
 public:
     explicit dialog_stress(QWidget *parent = nullptr);
-    dialog_stress(bool enable, int radius, int samples, int iterations, bool enhaceShadows, std::vector<preset_stress>& presets, QWidget *parent = nullptr);
+    dialog_stress(const std::vector<preset_stress>& presets, const int radius, const int samples, int const iterations, bool const enhaceShadows, const bool enable, QWidget *parent = nullptr);
     ~dialog_stress();
 
-    bool getEnable() const;
+    std::vector<preset_stress> getPresets() const;
     int getRadius() const;
     int getSamples() const;
     int getIterations() const;
     bool getEnhanceShadows() const;
+    bool getEnable() const;
 
 private slots:
     void chkStress_CheckedChanged(Qt::CheckState checkState);

@@ -14,12 +14,13 @@ class dialog_brightness_contrast : public QDialog
 
 public:
     explicit dialog_brightness_contrast(QWidget *parent = nullptr);
-    dialog_brightness_contrast(bool enable, double brightness, double contrast, std::vector<preset_brightness_contrast>& presets, QWidget *parent = nullptr);
+    dialog_brightness_contrast(std::vector<preset_brightness_contrast>& presets, const double brightness, const double contrast, const bool enable, QWidget *parent = nullptr);
     ~dialog_brightness_contrast();
 
-    bool getEnable() const;
+    std::vector<preset_brightness_contrast> getPresets() const;
     double getBrightness() const;
     double getContrast() const;
+    bool getEnable() const;
 
 private slots:
     void chkBrightnessContrast_CheckedChanged(Qt::CheckState checkState);

@@ -186,3 +186,26 @@ void convertPresetsImageCurveToJsonArray(const std::vector<preset_contrast_curve
     }
 }
 
+
+QVector<QPointF> convertCurvePointsToQPointf(const std::vector<curve_point>& curvePoints)
+{
+    QVector<QPointF> qpoints;
+    for (const curve_point& curvePoint : curvePoints)
+    {
+        qpoints.emplaceBack(curvePoint.GetX(), curvePoint.GetY());
+    }
+    return qpoints;
+}
+
+std::vector<curve_point> convertQPointfToCurvePoints(QVector<QPointF>& qpoints)
+{
+    std::vector<curve_point> curvePoints;
+    int index = 0;
+    for (const QPointF& qpoint : qpoints)
+    {
+        curvePoints.emplace_back(curve_point(index++, qpoint.x(), qpoint.y()));
+    }
+    return curvePoints;
+}
+
+

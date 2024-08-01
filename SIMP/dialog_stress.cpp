@@ -12,7 +12,7 @@ dialog_stress::dialog_stress(QWidget *parent)
     ui->setupUi(this);
 }
 
-dialog_stress::dialog_stress(bool enable, int radius, int samples, int iterations, bool enhaceShadows, std::vector<preset_stress>& presets, QWidget *parent)
+dialog_stress::dialog_stress(const std::vector<preset_stress>& presets, const int radius, const int samples, int const iterations, bool const enhaceShadows, const bool enable, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::dialog_stress)
     , presets(presets)
@@ -60,10 +60,9 @@ dialog_stress::~dialog_stress()
     delete ui;
 }
 
-
-bool dialog_stress::getEnable() const
+std::vector<preset_stress> dialog_stress::getPresets() const
 {
-    return ui->chkStress->isChecked();
+    return this->presets;
 }
 
 int dialog_stress::getRadius() const
@@ -84,6 +83,11 @@ int dialog_stress::getIterations() const
 bool dialog_stress::getEnhanceShadows() const
 {
     return ui->chkEnhanceShadows->isChecked();
+}
+
+bool dialog_stress::getEnable() const
+{
+    return ui->chkStress->isChecked();
 }
 
 void dialog_stress::chkStress_CheckedChanged(Qt::CheckState checkState)
@@ -117,8 +121,8 @@ void dialog_stress::btnSavePreset_Click()
     int samples = ui->editSamples->toPlainText().toInt(&ok);
     int iterations = ui->editIterations->toPlainText().toInt(&ok);
     bool enhanceShadows = ui->chkEnhanceShadows->isChecked();
-    int index = this->presets.size();
 
+    int index = this->presets.size();
     this->presets.emplace_back(index, radius, samples, iterations, enhanceShadows);
 
     // 추가한 것으로 선택

@@ -12,7 +12,7 @@ dialog_record_option::dialog_record_option(QWidget *parent)
     ui->setupUi(this);
 }
 
-dialog_record_option::dialog_record_option(QString& dir, VideoFormatType format, int frameRate, int quality, int timeLimit, QWidget *parent)
+dialog_record_option::dialog_record_option(const QString& dir, const VideoFormatType format, const int frameRate, const int quality, const int timeLimit, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::dialog_record_option)
 {

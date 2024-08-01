@@ -4,7 +4,7 @@ class preset_stress
 {
 public:
     preset_stress() = default;
-    preset_stress(int index, int radius, int samples, int iterations, bool enhanceShadows)
+    preset_stress(const int index, const int radius, const int samples, const int iterations, const bool enhanceShadows)
         : index(index)
         , radius(radius)
         , samples(samples)

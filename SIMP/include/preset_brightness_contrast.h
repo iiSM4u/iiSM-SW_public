@@ -4,7 +4,7 @@ class preset_brightness_contrast
 {
 public:
     preset_brightness_contrast() = default;
-    preset_brightness_contrast(int index, double brightness, double contrast)
+    preset_brightness_contrast(const int index, const double brightness, const double contrast)
         : index(index)
         , brightenss(brightness)
         , contrast(contrast)

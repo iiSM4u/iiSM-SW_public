@@ -13,7 +13,7 @@ class dialog_record_option : public QDialog
 
 public:
     explicit dialog_record_option(QWidget *parent = nullptr);
-    dialog_record_option(QString& dir, VideoFormatType format, int frameRate, int quality, int timeLimit, QWidget *parent = nullptr);
+    dialog_record_option(const QString& dir, const VideoFormatType format, const int frameRate, const int quality, const int timeLimit, QWidget *parent = nullptr);
     ~dialog_record_option();
 
     QString getVideoDirectory() const;

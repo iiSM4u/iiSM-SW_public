@@ -54,7 +54,7 @@ private slots:
     void ConnectUI();
     void InitUI();
     void EnablePreviewUI(bool isPlay);
-    void UpdatePresetContrastCurve(const std::vector<preset_contrast_curve>& presets, const int index = -1);
+    void UpdatePresetContrastCurve(const std::vector<preset_contrast_curve>& presets, const int index = 0);
 
     /////////////////////// preview
     // thread
