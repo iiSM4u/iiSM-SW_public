@@ -15,7 +15,7 @@ const int RECORD_FRAME_RATE_MAX = 60;
 
 const int RECORD_QUALITY_DEFAULT = 75;
 
-const int CHART_CLICK_RANGE = 10;
+const int CHART_CLICK_RANGE = 20;
 
 const int MIICAM_EXPOGAIN_MAX = 5000;
 const double MIICAM_EXPOSURE_TIME_MIN = 0.1;
