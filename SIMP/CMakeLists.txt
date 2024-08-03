@@ -149,6 +149,17 @@ foreach(dll ${GEGL_DLLS})
     )
 endforeach()
 
+# Add MinGW DLLs to the output directory
+file(GLOB MINGW_DLLS "C:/msys64/mingw64/bin/*.dll")
+
+foreach(dll ${MINGW_DLLS})
+    add_custom_command(TARGET SIMP POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${dll}
+        $<TARGET_FILE_DIR:SIMP>
+    )
+endforeach()
+
 # Copy GEGL plugin DLLs to the target directory
 file(GLOB GEGL_PLUGIN_DLLS "${GEGL_LIBRARY_DIRS}/gegl-0.4/*.dll")
 
