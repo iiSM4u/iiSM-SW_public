@@ -160,6 +160,13 @@
         </property>
        </spacer>
       </item>
+      <item>
+       <widget class="QPushButton" name="btnDeletePoint">
+        <property name="text">
+         <string>Delete</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>

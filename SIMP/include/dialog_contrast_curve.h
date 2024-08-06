@@ -33,6 +33,7 @@ private slots:
     void btnRemovePreset_Click();
     void btnSavePreset_Click();
     void btnResetPreset_Click();
+    void btnDeletePoint_Click();
 
     void spinInput_ValueChanged(int value);
     void spinOutput_ValueChanged(int value);

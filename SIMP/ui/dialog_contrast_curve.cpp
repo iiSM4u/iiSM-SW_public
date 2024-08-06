@@ -28,6 +28,7 @@ dialog_contrast_curve::dialog_contrast_curve(std::vector<preset_contrast_curve>&
     connect(ui->btnRemovePreset, &QPushButton::clicked, this, &dialog_contrast_curve::btnRemovePreset_Click);
     connect(ui->btnSavePreset, &QPushButton::clicked, this, &dialog_contrast_curve::btnSavePreset_Click);
     connect(ui->btnResetPreset, &QPushButton::clicked, this, &dialog_contrast_curve::btnResetPreset_Click);
+    connect(ui->btnDeletePoint, &QPushButton::clicked, this, &dialog_contrast_curve::btnDeletePoint_Click);
 
     connect(ui->spinInput, &QSpinBox::valueChanged, this, &dialog_contrast_curve::spinInput_ValueChanged);
     connect(ui->spinOutput, &QSpinBox::valueChanged, this, &dialog_contrast_curve::spinOutput_ValueChanged);
@@ -127,6 +128,16 @@ void dialog_contrast_curve::btnResetPreset_Click()
     ui->cbPresets->setCurrentIndex(-1);
 }
 
+void dialog_contrast_curve::btnDeletePoint_Click()
+{
+    if (this->highlightPointIndex > -1)
+    {
+        this->qpoints.erase(this->qpoints.begin() + this->highlightPointIndex);
+        this->highlightPointIndex = -1;
+        dialog_contrast_curve::UpdateChart(this->qpoints, this->highlightPointIndex);
+    }
+}
+
 void dialog_contrast_curve::spinInput_ValueChanged(int value)
 {
     if (this->highlightPointIndex > -1)
@@ -149,11 +160,6 @@ void dialog_contrast_curve::spinOutput_ValueChanged(int value)
 
 void dialog_contrast_curve::handleChartClicked(const QPointF &point)
 {
-    // 일단 초기화
-    this->highlightPointIndex = -1;
-    ui->spinInput->setEnabled(false);
-    ui->spinOutput->setEnabled(false);
-
     double x = point.x();
     double y = point.y();
 
@@ -230,6 +236,7 @@ void dialog_contrast_curve::UpdateSpinUI(int x, int y, bool enable)
         ui->spinOutput->setValue(y);
         ui->spinInput->setEnabled(enable);
         ui->spinOutput->setEnabled(enable);
+        ui->btnDeletePoint->setEnabled(enable);
     }
 }
 
@@ -310,9 +317,9 @@ void dialog_contrast_curve::AddPoint(const int x, const int y)
         // 새로 추가한 후에 정렬한다.
         this->qpoints.emplaceBack(dialog.getInputValue(), dialog.getOutputValue());
         std::sort(this->qpoints.begin(), this->qpoints.end(), [](const QPointF &a, const QPointF &b) { return a.x() < b.x(); });
-
-        this->highlightPointIndex = -1;
-        dialog_contrast_curve::UpdateChart(this->qpoints, this->highlightPointIndex);
-        dialog_contrast_curve::UpdateSpinUI(0, 0, false);
     }
+
+    this->highlightPointIndex = -1;
+    dialog_contrast_curve::UpdateChart(this->qpoints, this->highlightPointIndex);
+    dialog_contrast_curve::UpdateSpinUI(0, 0, false);
 }
