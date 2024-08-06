@@ -34,23 +34,30 @@ private slots:
     void btnSavePreset_Click();
     void btnResetPreset_Click();
 
+    void spinInput_ValueChanged(int value);
+    void spinOutput_ValueChanged(int value);
+
     void EnableUI(bool enable);
     void UpdatePresetUI(const std::vector<preset_contrast_curve>& presets, const int index = -1);
+    void UpdateSpinUI(int x, int y, bool enable);
+
     void handleChartClicked(const QPointF &point);
-    void handlePointMoved(const int selectedPointIndex, const QPointF &newPos);
+    void handlePointMoved(const QPointF &newPos);
     void handlePointMovingFinished();
+
 
 private:
     Ui::dialog_contrast_curve *ui;
 
     QChart *chart;
     QSplineSeries *splineSeries;
-    QScatterSeries *scatterSeries;
+    QScatterSeries *scatterSeries, *highlightSeries;
     QVector<QPointF> qpoints;
 
     std::vector<preset_contrast_curve> presets;
-    int selectedPointIndex;
+    int highlightPointIndex = -1;
 
     void InitChart();
-    void UpdateChart(const QVector<QPointF>& points);
+    void UpdateChart(const QVector<QPointF>& points, const int highlightIndex);
+    void AddPoint(const int x, const int y);
 };

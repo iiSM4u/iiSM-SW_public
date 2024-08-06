@@ -13,7 +13,7 @@ public:
 
 signals:
     void chartClicked(const QPointF &point);
-    void pointMoved(const int index, const QPointF &newPos);
+    void pointMoved(const QPointF &newPos);
     void pointMovingFinishied();
 
 protected:
@@ -23,5 +23,4 @@ protected:
 
 private:
     bool pointSelected;
-    int selectedPointIndex;
 };

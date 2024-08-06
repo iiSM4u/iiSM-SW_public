@@ -1,5 +1,6 @@
 #include "dialog_contrast_curve.h"
 #include "ui_dialog_contrast_curve.h"
+#include "dialog_curve_point.h"
 #include "constants.h"
 #include "utils.h"
 
@@ -16,7 +17,7 @@ dialog_contrast_curve::dialog_contrast_curve(std::vector<preset_contrast_curve>&
     , chart(new QChart())
     , splineSeries(new QSplineSeries())
     , scatterSeries(new QScatterSeries())
-    , selectedPointIndex(-1)
+    , highlightSeries(new QScatterSeries())
     , presets(presets)
 {
     ui->setupUi(this);
@@ -28,6 +29,9 @@ dialog_contrast_curve::dialog_contrast_curve(std::vector<preset_contrast_curve>&
     connect(ui->btnSavePreset, &QPushButton::clicked, this, &dialog_contrast_curve::btnSavePreset_Click);
     connect(ui->btnResetPreset, &QPushButton::clicked, this, &dialog_contrast_curve::btnResetPreset_Click);
 
+    connect(ui->spinInput, &QSpinBox::valueChanged, this, &dialog_contrast_curve::spinInput_ValueChanged);
+    connect(ui->spinOutput, &QSpinBox::valueChanged, this, &dialog_contrast_curve::spinOutput_ValueChanged);
+
     connect(ui->gvChartCurve, &CustomChartView::chartClicked, this, &dialog_contrast_curve::handleChartClicked);
     connect(ui->gvChartCurve, &CustomChartView::pointMoved, this, &dialog_contrast_curve::handlePointMoved);
     connect(ui->gvChartCurve, &CustomChartView::pointMovingFinishied, this, &dialog_contrast_curve::handlePointMovingFinished);
@@ -36,6 +40,9 @@ dialog_contrast_curve::dialog_contrast_curve(std::vector<preset_contrast_curve>&
 
     ui->chkCurve->setCheckState(enable ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
     dialog_contrast_curve::EnableUI(enable);
+
+    this->highlightPointIndex = -1;
+    dialog_contrast_curve::UpdateSpinUI(0, 0, false);
 
     if (presetIndex > -1)
     {
@@ -46,7 +53,8 @@ dialog_contrast_curve::dialog_contrast_curve(std::vector<preset_contrast_curve>&
         this->qpoints.clear();
         this->qpoints.append(QPointF(GEGL_CONTRAST_CURVE_VALUE_MIN, GEGL_CONTRAST_CURVE_VALUE_MIN));
         this->qpoints.append(QPointF(GEGL_CONTRAST_CURVE_VALUE_MAX, GEGL_CONTRAST_CURVE_VALUE_MAX));
-        dialog_contrast_curve::UpdateChart(this->qpoints);
+
+        dialog_contrast_curve::UpdateChart(this->qpoints, this->highlightPointIndex);
     }
 }
 
@@ -89,7 +97,10 @@ void dialog_contrast_curve::cbPreset_SelectedIndexChanged(int index)
         this->qpoints.append(QPointF(GEGL_CONTRAST_CURVE_VALUE_MAX, GEGL_CONTRAST_CURVE_VALUE_MAX));
     }
 
-    dialog_contrast_curve::UpdateChart(this->qpoints);
+    ui->spinInput->setEnabled(false);
+    ui->spinOutput->setEnabled(false);
+    this->highlightPointIndex = -1;
+    dialog_contrast_curve::UpdateChart(this->qpoints, this->highlightPointIndex);
 }
 
 void dialog_contrast_curve::btnRemovePreset_Click()
@@ -116,43 +127,72 @@ void dialog_contrast_curve::btnResetPreset_Click()
     ui->cbPresets->setCurrentIndex(-1);
 }
 
+void dialog_contrast_curve::spinInput_ValueChanged(int value)
+{
+    if (this->highlightPointIndex > -1)
+    {
+        QPointF point = this->qpoints[this->highlightPointIndex];
+        this->qpoints[this->highlightPointIndex] = QPointF(value, point.y());
+        dialog_contrast_curve::UpdateChart(this->qpoints, this->highlightPointIndex);
+    }
+}
+
+void dialog_contrast_curve::spinOutput_ValueChanged(int value)
+{
+    if (this->highlightPointIndex > -1)
+    {
+        QPointF point = this->qpoints[this->highlightPointIndex];
+        this->qpoints[this->highlightPointIndex] = QPointF(point.x(), value);
+        dialog_contrast_curve::UpdateChart(this->qpoints, this->highlightPointIndex);
+    }
+}
+
 void dialog_contrast_curve::handleChartClicked(const QPointF &point)
 {
-    if (point.x() >= GEGL_CONTRAST_CURVE_VALUE_MIN && point.x() <= GEGL_CONTRAST_CURVE_VALUE_MAX
-        && point.y() >= GEGL_CONTRAST_CURVE_VALUE_MIN && point.y() <= GEGL_CONTRAST_CURVE_VALUE_MAX)
+    // 일단 초기화
+    this->highlightPointIndex = -1;
+    ui->spinInput->setEnabled(false);
+    ui->spinOutput->setEnabled(false);
+
+    double x = point.x();
+    double y = point.y();
+
+    if (x >= GEGL_CONTRAST_CURVE_VALUE_MIN && x <= GEGL_CONTRAST_CURVE_VALUE_MAX
+        && y >= GEGL_CONTRAST_CURVE_VALUE_MIN && y <= GEGL_CONTRAST_CURVE_VALUE_MAX)
     {
-        // Check if a point is selected for dragging
-        for (int i = 0; i < this->qpoints.size(); ++i)
+        // custom chart에서 들어오는 index가 여기의 vector index와 다르기 때문에 여기서 새로 찾아야 함.
+        for (int i = 0; i < this->qpoints.size(); i++)
         {
-            if (qAbs(this->qpoints[i].x() - point.x()) < 5 && qAbs(this->qpoints[i].y() - point.y()) < 5)
+            if (qAbs(this->qpoints[i].x() - x) < MARGIN_CHART_CLICK && qAbs(this->qpoints[i].y() - y) < MARGIN_CHART_CLICK)
             {
-                selectedPointIndex = i;
+                this->highlightPointIndex = i;
+                dialog_contrast_curve::UpdateSpinUI(this->qpoints[i].x(), this->qpoints[i].y(), true);
                 return;
             }
         }
 
-        // Add a new point
-        //AddPoint(point);
-
-        this->qpoints.append(point);
-        std::sort(this->qpoints.begin(), this->qpoints.end(), [](const QPointF &a, const QPointF &b) { return a.x() < b.x(); });
-
-        UpdateChart(this->qpoints);
+        // 선택된게 없었으면 add point
+        dialog_contrast_curve::AddPoint(x, y);
     }
 }
 
-void dialog_contrast_curve::handlePointMoved(const int selectedPointIndex, const QPointF &newPos)
+void dialog_contrast_curve::handlePointMoved(const QPointF &newPos)
 {
-    this->qpoints[selectedPointIndex] = newPos;
-    // 이동 중에는 sort를 하지 않는다.
-    UpdateChart(this->qpoints);
+    if (this->highlightPointIndex > -1)
+    {
+        this->qpoints[this->highlightPointIndex] = newPos;
+        // 이동 중에는 sort를 하지 않는다.
+
+        dialog_contrast_curve::UpdateSpinUI(newPos.x(), newPos.y(), true);
+        dialog_contrast_curve::UpdateChart(this->qpoints, this->highlightPointIndex);
+    }
 }
 
 void dialog_contrast_curve::handlePointMovingFinished()
 {
     // 이동이 끝나면 sort
     std::sort(this->qpoints.begin(), this->qpoints.end(), [](const QPointF &a, const QPointF &b) { return a.x() < b.x(); });
-    UpdateChart(this->qpoints);
+    dialog_contrast_curve::UpdateChart(this->qpoints, this->highlightPointIndex);
 }
 
 void dialog_contrast_curve::EnableUI(bool enable)
@@ -182,11 +222,23 @@ void dialog_contrast_curve::UpdatePresetUI(const std::vector<preset_contrast_cur
     ui->cbPresets->setCurrentIndex(index);
 }
 
+void dialog_contrast_curve::UpdateSpinUI(int x, int y, bool enable)
+{
+    {
+        const QSignalBlocker blocker(ui->spinInput);
+        ui->spinInput->setValue(x);
+        ui->spinOutput->setValue(y);
+        ui->spinInput->setEnabled(enable);
+        ui->spinOutput->setEnabled(enable);
+    }
+}
+
 void dialog_contrast_curve::InitChart()
 {
     // Setup the chart
     this->chart->addSeries(this->splineSeries);
     this->chart->addSeries(this->scatterSeries);
+    this->chart->addSeries(this->highlightSeries);
     this->chart->legend()->hide();
 
     QValueAxis *axisX = new QValueAxis();
@@ -204,18 +256,63 @@ void dialog_contrast_curve::InitChart()
     this->splineSeries->setPointLabelsClipping(true);
 
     this->scatterSeries->attachAxis(axisX);
-    this->scatterSeries->attachAxis(axisY);    
+    this->scatterSeries->attachAxis(axisY);
+
+    this->highlightSeries->attachAxis(axisX);
+    this->highlightSeries->attachAxis(axisY);
 
     // Set the chart in the QChartView
     ui->gvChartCurve->setChart(this->chart);
     ui->gvChartCurve->setRenderHint(QPainter::Antialiasing);
 }
 
-void dialog_contrast_curve::UpdateChart(const QVector<QPointF>& points)
+void dialog_contrast_curve::UpdateChart(const QVector<QPointF>& points, const int highlightIndex)
 {
+    QVector<QPointF> normals;
+    QVector<QPointF> highlights;
+
+    if (highlightIndex > -1)
+    {
+        for (int i = 0; i < points.size(); i++)
+        {
+            if (i != highlightIndex)
+            {
+                normals.emplaceBack(points[i]);
+            }
+            else
+            {
+                highlights.emplaceBack(points[i]);
+            }
+        }
+    }
+    else
+    {
+        normals = points;
+    }
+
     this->splineSeries->clear();
     this->splineSeries->append(points);
 
     this->scatterSeries->clear();
-    this->scatterSeries->append(points);
+    this->scatterSeries->append(normals);
+
+    this->highlightSeries->clear();
+    this->highlightSeries->append(highlights);
+}
+
+void dialog_contrast_curve::AddPoint(const int x, const int y)
+{
+    // select point가 없었으면 point 추가
+    dialog_curve_point dialog(this->qpoints, x, y, this);
+
+    if (dialog.exec() == QDialog::Accepted)
+    {
+        // 새로 추가한 후에 정렬한다.
+        this->qpoints.emplaceBack(dialog.getInputValue(), dialog.getOutputValue());
+        std::sort(this->qpoints.begin(), this->qpoints.end(), [](const QPointF &a, const QPointF &b) { return a.x() < b.x(); });
+
+        this->highlightPointIndex = -1;
+        dialog_contrast_curve::UpdateChart(this->qpoints, this->highlightPointIndex);
+        dialog_contrast_curve::UpdateSpinUI(0, 0, false);
+    }
 }

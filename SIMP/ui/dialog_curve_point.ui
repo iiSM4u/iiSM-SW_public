@@ -1,43 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>dialog_contrast_curve</class>
- <widget class="QDialog" name="dialog_contrast_curve">
+ <class>dialog_curve_point</class>
+ <widget class="QDialog" name="dialog_curve_point">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>627</width>
-    <height>505</height>
+    <width>416</width>
+    <height>118</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Contrast Curve</string>
+   <string>Curve Point</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QWidget" name="widget" native="true">
-     <property name="maximumSize">
-      <size>
-       <width>16777215</width>
-       <height>40</height>
-      </size>
+    <widget class="QGroupBox" name="groupBox">
+     <property name="font">
+      <font>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="title">
+      <string>Curve Point</string>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
        <widget class="QLabel" name="label">
-        <property name="maximumSize">
-         <size>
-          <width>60</width>
-          <height>16777215</height>
-         </size>
-        </property>
         <property name="font">
          <font>
-          <bold>true</bold>
+          <bold>false</bold>
          </font>
         </property>
         <property name="text">
-         <string>Presets:</string>
+         <string>Input:</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -45,63 +41,57 @@
        </widget>
       </item>
       <item>
-       <widget class="QComboBox" name="cbPresets"/>
-      </item>
-      <item>
-       <widget class="QPushButton" name="btnRemovePreset">
-        <property name="maximumSize">
+       <widget class="QSpinBox" name="spinInput">
+        <property name="minimumSize">
          <size>
-          <width>60</width>
-          <height>16777215</height>
+          <width>100</width>
+          <height>0</height>
          </size>
         </property>
-        <property name="text">
-         <string>Remove</string>
+        <property name="font">
+         <font>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="maximum">
+         <number>255</number>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="btnSavePreset">
-        <property name="maximumSize">
-         <size>
-          <width>60</width>
-          <height>16777215</height>
-         </size>
+       <widget class="QLabel" name="label_2">
+        <property name="font">
+         <font>
+          <bold>false</bold>
+         </font>
         </property>
         <property name="text">
-         <string>Save</string>
+         <string>Output:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="btnResetPreset">
-        <property name="maximumSize">
+       <widget class="QSpinBox" name="spinOutput">
+        <property name="minimumSize">
          <size>
-          <width>60</width>
-          <height>16777215</height>
+          <width>100</width>
+          <height>0</height>
          </size>
         </property>
-        <property name="text">
-         <string>Reset</string>
+        <property name="font">
+         <font>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="maximum">
+         <number>255</number>
         </property>
        </widget>
       </item>
      </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="CustomChartView" name="gvChartCurve"/>
-   </item>
-   <item>
-    <widget class="QCheckBox" name="chkCurve">
-     <property name="font">
-      <font>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="text">
-      <string>Enable Contrast Curve</string>
-     </property>
     </widget>
    </item>
    <item>
@@ -116,19 +106,12 @@
    </item>
   </layout>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>CustomChartView</class>
-   <extends>QGraphicsView</extends>
-   <header>custom_chart_view.h</header>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections>
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>dialog_contrast_curve</receiver>
+   <receiver>dialog_curve_point</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -144,7 +127,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>dialog_contrast_curve</receiver>
+   <receiver>dialog_curve_point</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

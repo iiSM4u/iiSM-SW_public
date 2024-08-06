@@ -46,6 +46,7 @@ MainWindow::MainWindow(QWidget *parent)
         "QCheckBox:disabled { color: darkgray; }"
         "QSlider:disabled { color: darkgray; }"
         "QRadioButton:disabled { color: darkgray; }"
+        "QSpinBox:disabled { background-color: lightgray; color: darkgray; }"
     );
 
     // ui init 전에 preset load를 해야 combobox를 채울 수 있다.

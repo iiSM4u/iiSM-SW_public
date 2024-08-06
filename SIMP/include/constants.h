@@ -15,7 +15,7 @@ const int RECORD_FRAME_RATE_MAX = 60;
 
 const int RECORD_QUALITY_DEFAULT = 75;
 
-const int CHART_CLICK_RANGE = 20;
+const int MARGIN_CHART_CLICK = 20;
 
 const int MIICAM_EXPOGAIN_MAX = 5000;
 const double MIICAM_EXPOSURE_TIME_MIN = 0.1;
@@ -93,3 +93,4 @@ const QString TITLE_ERROR = "Error";
 const QString MSG_INVALID_VALUE = "Invalid Value";
 const QString MSG_INVALID_RANGE = "Invalid Range";
 const QString MSG_FILE_OPEN_ERROR = "File open error";
+const QString MSG_EXISTS_VALUE = "Exists Value";

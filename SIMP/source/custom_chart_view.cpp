@@ -14,6 +14,9 @@ void CustomChartView::mousePressEvent(QMouseEvent *event)
         QPointF chartPos = chart()->mapToValue(mapToScene(event->pos()));
         emit chartClicked(chartPos);
 
+        int min = GEGL_CONTRAST_CURVE_VALUE_MIN + MARGIN_CHART_CLICK;
+        int max = GEGL_CONTRAST_CURVE_VALUE_MAX - MARGIN_CHART_CLICK;
+
         // Check if a point is selected for dragging
         for (const auto &series : chart()->series())
         {
@@ -22,12 +25,15 @@ void CustomChartView::mousePressEvent(QMouseEvent *event)
                 int index = 0;
                 for (const QPointF &point : scatter->points())
                 {
-                    if (qAbs(point.x() - chartPos.x()) < CHART_CLICK_RANGE && qAbs(point.y() - chartPos.y()) < CHART_CLICK_RANGE)
+                    // 클릭 시에는 (0, 0), (255, 255)의 점은 선택 못하도록
+                    if ((point.x() > min || point.y() > min) &&
+                        (point.x() < max || point.y() < max) &&
+                        qAbs(point.x() - chartPos.x()) < MARGIN_CHART_CLICK && qAbs(point.y() - chartPos.y()) < MARGIN_CHART_CLICK)
                     {
                         pointSelected = true;
-                        selectedPointIndex = index;
                         return;
                     }
+
                     index++;
                 }
             }
@@ -41,7 +47,7 @@ void CustomChartView::mouseMoveEvent(QMouseEvent *event)
     if (pointSelected && (event->buttons() & Qt::LeftButton))
     {
         QPointF chartPos = chart()->mapToValue(mapToScene(event->pos()));
-        emit pointMoved(selectedPointIndex, chartPos);
+        emit pointMoved(chartPos);
     }
     QChartView::mouseMoveEvent(event);
 }

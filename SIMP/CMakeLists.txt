@@ -40,25 +40,16 @@ include_directories(
 # 실행을 위한 파일들
 file(GLOB_RECURSE HEADER_FILES "include/*.h")
 file(GLOB_RECURSE SOURCE_FILES "source/*.cpp")
+# ui와 연결되는 cpp 파일은 ui와 같은 폴더 내에 있어야 한다. 다른 폴더에 있어도 include 경로를 맞추면 되긴 함.
+file(GLOB_RECURSE FORMS_FILES "ui/*.cpp")
+file(GLOB_RECURSE UI_FILES "ui/*.ui")
 
 # Project source files
 set(PROJECT_SOURCES
-    ${SOURCE_FILES}
     ${HEADER_FILES}
+    ${SOURCE_FILES}
+    ${FORMS_FILES}
     ${UI_FILES}
-    # 이유는 모르겠는데 아래 ui 관련 파일들이 root에 있어야 빌드가 된다.
-    mainwindow.cpp
-    mainwindow.ui
-    dialog_brightness_contrast.cpp
-    dialog_brightness_contrast.ui
-    dialog_stretch_contrast.cpp
-    dialog_stretch_contrast.ui
-    dialog_stress.cpp
-    dialog_stress.ui
-    dialog_record_option.cpp
-    dialog_record_option.ui
-    dialog_contrast_curve.cpp
-    dialog_contrast_curve.ui
 )
 
 # Link directories
