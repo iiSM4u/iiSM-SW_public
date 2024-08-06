@@ -48,9 +48,9 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>-455</y>
+         <y>0</y>
          <width>241</width>
-         <height>1192</height>
+         <height>1191</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -220,13 +220,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QCheckBox" name="chkRecord">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>25</height>
-              </size>
-             </property>
+            <widget class="QPushButton" name="btnRecordOn">
              <property name="font">
               <font>
                <bold>false</bold>

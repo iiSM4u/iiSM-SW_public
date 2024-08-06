@@ -74,7 +74,7 @@ private slots:
     void btnStopCamera_Click();
     void btnCaptureCamera_Click();
 
-    void chkRecord_CheckedChanged(Qt::CheckState checkState);
+    void btnRecordOn_Click();
     void btnRecordOption_Click();
 
     void sliderExposureTime_sliderMoved(int position);

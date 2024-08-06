@@ -132,8 +132,7 @@ void MainWindow::ConnectUI()
     connect(ui->btnPlayCamera, &QPushButton::clicked, this, &MainWindow::btnPlayCamera_Click);
     connect(ui->btnStopCamera, &QPushButton::clicked, this, &MainWindow::btnStopCamera_Click);
     connect(ui->btnCaptureCamera, &QPushButton::clicked, this, &MainWindow::btnCaptureCamera_Click);
-
-    connect(ui->chkRecord, &QCheckBox::checkStateChanged, this, &MainWindow::chkRecord_CheckedChanged);
+    connect(ui->btnRecordOn, &QPushButton::clicked, this, &MainWindow::btnRecordOn_Click);
     connect(ui->btnRecordOption, &QPushButton::clicked, this, &MainWindow::btnRecordOption_Click);
 
     connect(ui->sliderExposureTime, &QSlider::sliderMoved, this, &MainWindow::sliderExposureTime_sliderMoved);
@@ -266,7 +265,7 @@ void MainWindow::EnablePreviewUI(bool isPlay)
     ui->btnStopCamera->setEnabled(isPlay);
     ui->btnCaptureCamera->setEnabled(isPlay);
 
-    ui->chkRecord->setEnabled(isPlay);
+    ui->btnRecordOn->setEnabled(isPlay);
     ui->btnRecordOption->setEnabled(isPlay);
 
     ui->sliderExposureTime->setEnabled(isPlay);
@@ -445,19 +444,20 @@ void MainWindow::btnCaptureCamera_Click()
     }
 }
 
-void MainWindow::chkRecord_CheckedChanged(Qt::CheckState checkState)
+void MainWindow::btnRecordOn_Click()
 {
-    if (checkState == Qt::CheckState::Checked)
+    this->isRecordOn = !this->isRecordOn;
+    ui->btnRecordOn->setText(this->isRecordOn ? BTN_RECORD_OFF : BTN_RECORD_ON);
+
+    if (this->isRecordOn)
     {
-        this->isRecordOn = true;
         this->recordFrames.clear();
 
         this->recordStartTime = QTime::currentTime();
         this->timerVideoRecord->start(1000); // Update every second
     }
-    else if (checkState == Qt::CheckState::Unchecked)
+    else
     {
-        this->isRecordOn = false;
         if (this->recordFrames.size() > 0)
         {
             MainWindow::RecordVideo(this->recordFrames, this->recordDir, this->recordFormat, this->recordFrameRate, this->recordQuality);
@@ -1100,7 +1100,7 @@ void MainWindow::UpdatePreviewUI()
 
         if (this->recordTimeLimit > 0 && elapsedTime.second() >= this->recordTimeLimit)
         {
-            ui->chkRecord->setChecked(false);
+            ui->btnRecordOn->setText(BTN_RECORD_OFF);
         }
     }
 }
@@ -1223,6 +1223,9 @@ void MainWindow::OpenCamera()
         this->imageWidth = this->miiDevice.model->res[this->resolutionIndex].width;
         this->imageHeight = this->miiDevice.model->res[this->resolutionIndex].height;
 
+        Miicam_put_Option(this->miiHcam, MIICAM_OPTION_BYTEORDER, 0); //Qimage use RGB byte order
+        Miicam_put_AutoExpoEnable(this->miiHcam, 0);  // auto exposure disable
+
         // open에 성공하면 resolution 업데이트
         {
             const QSignalBlocker blocker(ui->cbResolution);
@@ -1236,8 +1239,6 @@ void MainWindow::OpenCamera()
             ui->btnPlayCamera->setText(BTN_PLAY);
         }
 
-        Miicam_put_Option(this->miiHcam, MIICAM_OPTION_BYTEORDER, 0); //Qimage use RGB byte order
-        Miicam_put_AutoExpoEnable(this->miiHcam, 1);
     }
 }
 
@@ -1326,22 +1327,25 @@ void MainWindow::UpdateExposureTime()
     ui->sliderExposureTime->setMinimum((int)(min * 10.0));
     ui->sliderExposureTime->setMaximum((int)(max * 10.0));
     ui->sliderExposureTime->setValue((int)(value * 10.0));
-    ui->editExposureTime->setPlainText(QString::number(round(value)));
+    ui->editExposureTime->setPlainText(QString::number(value, 'f', 1));
 }
 
 void MainWindow::UpdateSensorTemperature()
 {
+    // 강제로 -50도로 초기화
+    double value = MIICAM_TEMPERATURE_MIN * 10.0;
+    Miicam_put_Temperature(this->miiHcam, (short)value);
 
-    short temperature;
-    Miicam_get_Temperature(this->miiHcam, &temperature);
+    //short temperature;
+    //Miicam_get_Temperature(this->miiHcam, &temperature);
 
-    // temperature는 3.2도를 32로 받기 때문에 0.1을 곱한다.
-    double value = temperature * 0.1;
+    //// temperature는 3.2도를 32로 받기 때문에 0.1을 곱한다.
+    //double value = temperature * 0.1;
 
     ui->sliderTemperature->setMinimum((int)(MIICAM_TEMPERATURE_MIN * 10.0));
     ui->sliderTemperature->setMaximum((int)(MIICAM_TEMPERATURE_MAX * 10.0));
-    ui->sliderTemperature->setValue((int)(value * 10.0));
-    ui->editTemperature->setPlainText(QString::number(round(value)));
+    ui->sliderTemperature->setValue((int)value);
+    ui->editTemperature->setPlainText(QString::number(value * 0.1, 'f', 1));
 }
 
 void MainWindow::onTimerFpsCallback()

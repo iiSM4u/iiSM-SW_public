@@ -85,6 +85,8 @@ const QString KEY_NONE = "none";
 
 const QString BTN_PLAY = "Play";
 const QString BTN_PAUSE = "Pause";
+const QString BTN_RECORD_ON = "Record On";
+const QString BTN_RECORD_OFF = "Record Off";
 
 const QString TITLE_ERROR = "Error";
 
