@@ -15,18 +15,6 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QCheckBox" name="chkCurve">
-     <property name="font">
-      <font>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="text">
-      <string>Enable Contrast Curve</string>
-     </property>
-    </widget>
-   </item>
-   <item>
     <widget class="QWidget" name="widget" native="true">
      <property name="maximumSize">
       <size>
@@ -60,6 +48,19 @@
        <widget class="QComboBox" name="cbPresets"/>
       </item>
       <item>
+       <widget class="QPushButton" name="btnRemovePreset">
+        <property name="maximumSize">
+         <size>
+          <width>60</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Remove</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="btnSavePreset">
         <property name="maximumSize">
          <size>
@@ -73,7 +74,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="btnClear">
+       <widget class="QPushButton" name="btnResetPreset">
         <property name="maximumSize">
          <size>
           <width>60</width>
@@ -81,7 +82,7 @@
          </size>
         </property>
         <property name="text">
-         <string>Clear</string>
+         <string>Reset</string>
         </property>
        </widget>
       </item>
@@ -90,6 +91,18 @@
    </item>
    <item>
     <widget class="CustomChartView" name="gvChartCurve"/>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="chkCurve">
+     <property name="font">
+      <font>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="text">
+      <string>Enable Contrast Curve</string>
+     </property>
+    </widget>
    </item>
    <item>
     <widget class="QDialogButtonBox" name="buttonBox">

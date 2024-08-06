@@ -21,7 +21,10 @@ dialog_stress::dialog_stress(const std::vector<preset_stress>& presets, const in
 
     connect(ui->chkStress, &QCheckBox::checkStateChanged, this, &dialog_stress::chkStress_CheckedChanged);
     connect(ui->cbPresets, &QComboBox::currentIndexChanged, this, &dialog_stress::cbPreset_SelectedIndexChanged);
+
+    connect(ui->btnRemovePreset, &QPushButton::clicked, this, &dialog_stress::btnRemovePreset_Click);
     connect(ui->btnSavePreset, &QPushButton::clicked, this, &dialog_stress::btnSavePreset_Click);
+    connect(ui->btnResetPreset, &QPushButton::clicked, this, &dialog_stress::btnResetPreset_Click);
 
     connect(ui->sliderRadius, &QSlider::sliderMoved, this, &dialog_stress::sliderRadius_sliderMoved);
     connect(ui->editRadius, &CustomPlainTextEdit::editingFinished, this, &dialog_stress::editRadius_editingFinished);
@@ -97,20 +100,39 @@ void dialog_stress::chkStress_CheckedChanged(Qt::CheckState checkState)
 
 void dialog_stress::cbPreset_SelectedIndexChanged(int index)
 {
+    int radius = GEGL_STRESS_RADIUS_DEFAULT;
+    int samples = GEGL_STRESS_SAMPLES_DEFAULT;
+    int iterations = GEGL_STRESS_ITERATIONS_DEFAULT;
+    bool enhanceShadows = false;
+
     if (index > -1)
     {
         preset_stress preset = this->presets[index];
 
-        ui->sliderRadius->setValue(preset.GetRadius());
-        ui->editRadius->setPlainText(QString::number(preset.GetRadius()));
+        radius = preset.GetRadius();
+        samples = preset.GetSamples();
+        iterations = preset.GetIterations();
+        enhanceShadows = preset.GetEnhanceShadows();
+    }    
 
-        ui->sliderSamples->setValue(preset.GetSamples());
-        ui->editSamples->setPlainText(QString::number(preset.GetSamples()));
+    ui->sliderRadius->setValue(radius);
+    ui->editRadius->setPlainText(QString::number(radius));
 
-        ui->sliderIterations->setValue(preset.GetIterations());
-        ui->editIterations->setPlainText(QString::number(preset.GetIterations()));
+    ui->sliderSamples->setValue(samples);
+    ui->editSamples->setPlainText(QString::number(samples));
 
-        ui->chkEnhanceShadows->setCheckState(preset.GetEnhanceShadows() ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
+    ui->sliderIterations->setValue(iterations);
+    ui->editIterations->setPlainText(QString::number(iterations));
+
+    ui->chkEnhanceShadows->setCheckState(enhanceShadows ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
+}
+
+void dialog_stress::btnRemovePreset_Click()
+{
+    if (ui->cbPresets->currentIndex() > -1)
+    {
+        this->presets.erase(this->presets.begin() + ui->cbPresets->currentIndex());
+        dialog_stress::UpdatePresetUI(this->presets);
     }
 }
 
@@ -127,6 +149,11 @@ void dialog_stress::btnSavePreset_Click()
 
     // 추가한 것으로 선택
     dialog_stress::UpdatePresetUI(this->presets, index);
+}
+
+void dialog_stress::btnResetPreset_Click()
+{
+    ui->cbPresets->setCurrentIndex(-1);
 }
 
 void dialog_stress::sliderRadius_sliderMoved(int position)
@@ -238,7 +265,9 @@ void dialog_stress::editIterations_editingFinished()
 void dialog_stress::EnableUI(bool enable)
 {
     ui->cbPresets->setEnabled(enable);
+    ui->btnRemovePreset->setEnabled(enable);
     ui->btnSavePreset->setEnabled(enable);
+    ui->btnResetPreset->setEnabled(enable);
     ui->sliderRadius->setEnabled(enable);
     ui->editRadius->setEnabled(enable);
     ui->sliderSamples->setEnabled(enable);

@@ -29,8 +29,10 @@ public:
 private slots:
     void chkCurve_CheckedChanged(Qt::CheckState checkState);
     void cbPreset_SelectedIndexChanged(int index);
+
+    void btnRemovePreset_Click();
     void btnSavePreset_Click();
-    void btnClear_Click();
+    void btnResetPreset_Click();
 
     void EnableUI(bool enable);
     void UpdatePresetUI(const std::vector<preset_contrast_curve>& presets, const int index = -1);

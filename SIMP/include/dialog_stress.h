@@ -26,7 +26,10 @@ public:
 private slots:
     void chkStress_CheckedChanged(Qt::CheckState checkState);
     void cbPreset_SelectedIndexChanged(int index);
+
+    void btnRemovePreset_Click();
     void btnSavePreset_Click();
+    void btnResetPreset_Click();
 
     void sliderRadius_sliderMoved(int position);
     void editRadius_editingFinished();

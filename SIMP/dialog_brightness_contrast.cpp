@@ -22,7 +22,10 @@ dialog_brightness_contrast::dialog_brightness_contrast(std::vector<preset_bright
 
     connect(ui->chkBrightnessContrast, &QCheckBox::checkStateChanged, this, &dialog_brightness_contrast::chkBrightnessContrast_CheckedChanged);
     connect(ui->cbPresets, &QComboBox::currentIndexChanged, this, &dialog_brightness_contrast::cbPreset_SelectedIndexChanged);
+
+    connect(ui->btnRemovePreset, &QPushButton::clicked, this, &dialog_brightness_contrast::btnRemovePreset_Click);
     connect(ui->btnSavePreset, &QPushButton::clicked, this, &dialog_brightness_contrast::btnSavePreset_Click);
+    connect(ui->btnResetPreset, &QPushButton::clicked, this, &dialog_brightness_contrast::btnResetPreset_Click);
 
     connect(ui->sliderBrightness, &QSlider::sliderMoved, this, &dialog_brightness_contrast::sliderBrightness_sliderMoved);
     connect(ui->editBrightness, &CustomPlainTextEdit::editingFinished, this, &dialog_brightness_contrast::editBrightness_editingFinished);
@@ -84,16 +87,31 @@ void dialog_brightness_contrast::chkBrightnessContrast_CheckedChanged(Qt::CheckS
 
 void dialog_brightness_contrast::cbPreset_SelectedIndexChanged(int index)
 {
+    // combobox가 -1일 때는 default 값으로 띄운다.
+    double brightness = GEGL_BRIGHTNESS_DEFAULT;
+    double contrast = GEGL_CONTRAST_DEFAULT;
+
     if (index > -1)
     {
         preset_brightness_contrast preset = this->presets[index];
+        brightness = preset.GetBrightness();
+        contrast = preset.GetContrast();
+    }
 
-        // 10을 곱한다.
-        ui->sliderBrightness->setValue((int)(preset.GetBrightness() * 10.0));
-        ui->editBrightness->setPlainText(QString::number(preset.GetBrightness(), 'f', 1));
+    // 10을 곱한다.
+    ui->sliderBrightness->setValue((int)(brightness * 10.0));
+    ui->editBrightness->setPlainText(QString::number(brightness, 'f', 1));
 
-        ui->sliderContrast->setValue((int)(preset.GetContrast() * 10.0));
-        ui->editContrast->setPlainText(QString::number(preset.GetContrast(), 'f', 1));
+    ui->sliderContrast->setValue((int)(contrast * 10.0));
+    ui->editContrast->setPlainText(QString::number(contrast, 'f', 1));
+}
+
+void dialog_brightness_contrast::btnRemovePreset_Click()
+{
+    if (ui->cbPresets->currentIndex() > -1)
+    {
+        this->presets.erase(this->presets.begin() + ui->cbPresets->currentIndex());
+        dialog_brightness_contrast::UpdatePresetUI(this->presets);
     }
 }
 
@@ -107,6 +125,11 @@ void dialog_brightness_contrast::btnSavePreset_Click()
     this->presets.emplace_back(index, brightness, contrast);
 
     dialog_brightness_contrast::UpdatePresetUI(this->presets, index);
+}
+
+void dialog_brightness_contrast::btnResetPreset_Click()
+{
+    ui->cbPresets->setCurrentIndex(-1);
 }
 
 void dialog_brightness_contrast::sliderBrightness_sliderMoved(int position)
@@ -194,7 +217,9 @@ void dialog_brightness_contrast::editContrast_editingFinished()
 void dialog_brightness_contrast::EnableUI(bool enable)
 {
     ui->cbPresets->setEnabled(enable);
+    ui->btnRemovePreset->setEnabled(enable);
     ui->btnSavePreset->setEnabled(enable);
+    ui->btnResetPreset->setEnabled(enable);
     ui->sliderBrightness->setEnabled(enable);
     ui->editBrightness->setEnabled(enable);
     ui->sliderContrast->setEnabled(enable);

@@ -26,6 +26,8 @@ private slots:
     void chkBrightnessContrast_CheckedChanged(Qt::CheckState checkState);
     void cbPreset_SelectedIndexChanged(int index);
     void btnSavePreset_Click();
+    void btnRemovePreset_Click();
+    void btnResetPreset_Click();
 
     void sliderBrightness_sliderMoved(int position);
     void editBrightness_editingFinished();

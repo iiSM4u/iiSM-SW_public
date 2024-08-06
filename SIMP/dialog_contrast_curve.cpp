@@ -23,8 +23,11 @@ dialog_contrast_curve::dialog_contrast_curve(std::vector<preset_contrast_curve>&
 
     connect(ui->chkCurve, &QCheckBox::checkStateChanged, this, &dialog_contrast_curve::chkCurve_CheckedChanged);
     connect(ui->cbPresets, &QComboBox::currentIndexChanged, this, &dialog_contrast_curve::cbPreset_SelectedIndexChanged);
+
+    connect(ui->btnRemovePreset, &QPushButton::clicked, this, &dialog_contrast_curve::btnRemovePreset_Click);
     connect(ui->btnSavePreset, &QPushButton::clicked, this, &dialog_contrast_curve::btnSavePreset_Click);
-    connect(ui->btnClear, &QPushButton::clicked, this, &dialog_contrast_curve::btnClear_Click);
+    connect(ui->btnResetPreset, &QPushButton::clicked, this, &dialog_contrast_curve::btnResetPreset_Click);
+
     connect(ui->gvChartCurve, &CustomChartView::chartClicked, this, &dialog_contrast_curve::handleChartClicked);
     connect(ui->gvChartCurve, &CustomChartView::pointMoved, this, &dialog_contrast_curve::handlePointMoved);
     connect(ui->gvChartCurve, &CustomChartView::pointMovingFinishied, this, &dialog_contrast_curve::handlePointMovingFinished);
@@ -78,7 +81,23 @@ void dialog_contrast_curve::cbPreset_SelectedIndexChanged(int index)
     if (index > -1)
     {
         this->qpoints = convertCurvePointsToQPointf(this->presets[index].GetPoints());
-        dialog_contrast_curve::UpdateChart(this->qpoints);
+    }
+    else
+    {
+        this->qpoints.clear();
+        this->qpoints.append(QPointF(GEGL_CONTRAST_CURVE_VALUE_MIN, GEGL_CONTRAST_CURVE_VALUE_MIN));
+        this->qpoints.append(QPointF(GEGL_CONTRAST_CURVE_VALUE_MAX, GEGL_CONTRAST_CURVE_VALUE_MAX));
+    }
+
+    dialog_contrast_curve::UpdateChart(this->qpoints);
+}
+
+void dialog_contrast_curve::btnRemovePreset_Click()
+{
+    if (ui->cbPresets->currentIndex() > -1)
+    {
+        this->presets.erase(this->presets.begin() + ui->cbPresets->currentIndex());
+        dialog_contrast_curve::UpdatePresetUI(this->presets);
     }
 }
 
@@ -92,13 +111,8 @@ void dialog_contrast_curve::btnSavePreset_Click()
     dialog_contrast_curve::UpdatePresetUI(this->presets, index);
 }
 
-void dialog_contrast_curve::btnClear_Click()
+void dialog_contrast_curve::btnResetPreset_Click()
 {
-    this->qpoints.clear();
-    this->qpoints.append(QPointF(GEGL_CONTRAST_CURVE_VALUE_MIN, GEGL_CONTRAST_CURVE_VALUE_MIN));
-    this->qpoints.append(QPointF(GEGL_CONTRAST_CURVE_VALUE_MAX, GEGL_CONTRAST_CURVE_VALUE_MAX));
-    dialog_contrast_curve::UpdateChart(this->qpoints);
-
     ui->cbPresets->setCurrentIndex(-1);
 }
 
@@ -144,8 +158,9 @@ void dialog_contrast_curve::handlePointMovingFinished()
 void dialog_contrast_curve::EnableUI(bool enable)
 {
     ui->cbPresets->setEnabled(enable);
+    ui->btnRemovePreset->setEnabled(enable);
     ui->btnSavePreset->setEnabled(enable);
-    ui->btnClear->setEnabled(enable);
+    ui->btnResetPreset->setEnabled(enable);
     ui->gvChartCurve->setEnabled(enable);
 }
 
@@ -186,8 +201,10 @@ void dialog_contrast_curve::InitChart()
 
     this->splineSeries->attachAxis(axisX);
     this->splineSeries->attachAxis(axisY);
+    this->splineSeries->setPointLabelsClipping(true);
+
     this->scatterSeries->attachAxis(axisX);
-    this->scatterSeries->attachAxis(axisY);
+    this->scatterSeries->attachAxis(axisY);    
 
     // Set the chart in the QChartView
     ui->gvChartCurve->setChart(this->chart);
