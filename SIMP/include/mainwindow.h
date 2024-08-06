@@ -14,6 +14,7 @@
 #include <miicam.h>
 
 #include "constants.h"
+#include "pixel_format_type.h"
 #include "video_format_type.h"
 #include "preset_brightness_contrast.h"
 #include "preset_stress.h"
@@ -142,6 +143,7 @@ private:
     uchar *rawCameraData = nullptr;
     QImage resultPreview, resultVideo;
     std::vector<cv::Mat> recordFrames;
+    QImage::Format imageFormat = QImage::Format_RGB888;
 
     unsigned int imageWidth = 0;
     unsigned int imageHeight = 0;

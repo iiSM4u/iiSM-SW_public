@@ -1,6 +1,5 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "pixel_format_type.h"
 #include "utils.h"
 #include "dialog_record_option.h"
 #include "dialog_brightness_contrast.h"
@@ -187,7 +186,8 @@ void MainWindow::InitUI()
 {
     ////////////////////////// tab preview
     ui->cbFormat->clear();
-    for (const auto& format : {PixelFormatType::RGB24, PixelFormatType::RGB32, PixelFormatType::Raw})
+    for (const auto& format : {PixelFormatType::RGB24, PixelFormatType::Raw})
+        //for (const auto& format : {PixelFormatType::RGB24, PixelFormatType::RGB32, PixelFormatType::Raw})
     {
         ui->cbFormat->addItem(toString(format));
     }
@@ -371,16 +371,19 @@ void MainWindow::cbFormat_SelectedIndexChanged(int index)
     */
     if (index == static_cast<int>(PixelFormatType::RGB24))
     {
+        this->imageFormat = QImage::Format_RGB888;
         // Handle RGB24 case
         Miicam_put_Option(miiHcam, MIICAM_OPTION_RGB, 0);
     }
-    else if (index == static_cast<int>(PixelFormatType::RGB32))
-    {
-        Miicam_put_Option(miiHcam, MIICAM_OPTION_RGB, 2);
-    }
+    // else if (index == static_cast<int>(PixelFormatType::RGB32))
+    // {
+    //     this->imageFormat = QImage::Format_RGB32;
+    //     Miicam_put_Option(miiHcam, MIICAM_OPTION_RGB, 2);
+    // }
     else if (index == static_cast<int>(PixelFormatType::Raw))
     {
-        Miicam_put_Option(miiHcam, MIICAM_OPTION_RAW, 1);
+        this->imageFormat = QImage::Format_RGB888;
+        Miicam_put_Option(miiHcam, MIICAM_OPTION_RAW, 0);
     }
 }
 
@@ -1013,11 +1016,11 @@ void MainWindow::UpdatePreview()
     {
         if (this->isCameraPlay && this->rawCameraData)
         {
-            // 카메라 source는 RGB888로 받아와야 함
-            QImage source = QImage(this->rawCameraData, this->rawCameraWidth, this->rawCameraHeight, QImage::Format_RGB888);
+            QImage source = QImage(this->rawCameraData, this->rawCameraWidth, this->rawCameraHeight, this->imageFormat);
 
             // gegl에서는 rgba를 받기 때문에 무조건 rgba로 바꿔야 한다.
             QImage formattedSource = source.convertToFormat(QImage::Format_RGBA8888);
+            //QImage formattedSource = this->imageFormat != QImage::Format_RGBA8888 ? source.convertToFormat(QImage::Format_RGBA8888) : source;
 
             UpdateGeglContrast(
                 /*source*/ formattedSource
