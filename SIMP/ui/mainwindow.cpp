@@ -1520,113 +1520,94 @@ bool MainWindow::RecordVideo(
     return false;
 }
 
-
 void MainWindow::UpdateGegl(QImage& source)
 {
     // 하나라도 true여야 수행한다.
     if (this->isUpdateBrightnessContrast || this->isUpdateStress || this->isUpdateStretchContrast || this->isUpdateContrastCurve)
     {
-        GeglBuffer* input_buffer = nullptr;
-        GeglBuffer* output_buffer = nullptr;
-        GeglNode* graph = nullptr;
+        // Create GEGL buffers
+        GeglBuffer* input_buffer = gegl_buffer_new(GEGL_RECTANGLE(0, 0, source.width(), source.height()), babl_format("R'G'B'A u8"));
+        GeglBuffer* output_buffer = gegl_buffer_new(GEGL_RECTANGLE(0, 0, source.width(), source.height()), babl_format("R'G'B'A u8"));
 
-        try
+        // Set input buffer data
+        gegl_buffer_set(input_buffer, nullptr, 0, babl_format("R'G'B'A u8"), source.bits(), GEGL_AUTO_ROWSTRIDE);
+
+        // Create GEGL graph
+        GeglNode* graph = gegl_node_new();
+        GeglNode* input = gegl_node_new_child(graph, "operation", "gegl:buffer-source", "buffer", input_buffer, nullptr);
+        GeglNode* output = gegl_node_new_child(graph, "operation", "gegl:write-buffer", "buffer", output_buffer, nullptr);
+
+        GeglNode* brightness_contrast = nullptr;
+        GeglNode* stress = nullptr;
+        GeglNode* stretch_contrast = nullptr;
+        GeglNode* contrast_curve = nullptr;
+
+
+        // gegl_node_set()은 gegl_node_link()를 하기 전에 마쳐야 한다.
+        if (this->isUpdateBrightnessContrast)
         {
-            // Create GEGL buffers
-            input_buffer = gegl_buffer_new(GEGL_RECTANGLE(0, 0, source.width(), source.height()), babl_format("R'G'B'A u8"));
-            output_buffer = gegl_buffer_new(GEGL_RECTANGLE(0, 0, source.width(), source.height()), babl_format("R'G'B'A u8"));
-
-            // Set input buffer data
-            gegl_buffer_set(input_buffer, nullptr, 0, babl_format("R'G'B'A u8"), source.bits(), GEGL_AUTO_ROWSTRIDE);
-
-            // Create GEGL graph
-            graph = gegl_node_new();
-            GeglNode* input = gegl_node_new_child(graph, "operation", "gegl:buffer-source", "buffer", input_buffer, nullptr);
-            GeglNode* output = gegl_node_new_child(graph, "operation", "gegl:write-buffer", "buffer", output_buffer, nullptr);
-
-            GeglNode* brightness_contrast = nullptr;
-            GeglNode* stress = nullptr;
-            GeglNode* stretch_contrast = nullptr;
-            GeglNode* contrast_curve = nullptr;
-
-
-            // gegl_node_set()은 gegl_node_link()를 하기 전에 마쳐야 한다.
-            if (this->isUpdateBrightnessContrast)
-            {
-                brightness_contrast = gegl_node_new_child(graph, "operation", "gegl:brightness-contrast", nullptr);
-                gegl_node_set(brightness_contrast, "brightness", this->gegl_brightness, "contrast", this->gegl_contrast, nullptr);
-            }
-
-            if (this->isUpdateStress)
-            {
-                stress = gegl_node_new_child(graph, "operation", "gegl:stress", nullptr);
-                gegl_node_set(stress, "radius", this->gegl_stress_radius, "samples", this->gegl_stress_samples, "iterations", this->gegl_stress_iterations, "enhance-shadows", this->gegl_stress_enhance_shadows, nullptr);
-            }
-
-            if (this->isUpdateStretchContrast)
-            {
-                stretch_contrast = gegl_node_new_child(graph, "operation", "gegl:stretch-contrast", nullptr);
-                gegl_node_set(stretch_contrast, "keep-colors", this->gegl_stretch_contrast_keep_colors, "perceptual", this->gegl_stretch_contrast_perceptual, nullptr);
-            }
-
-            if (this->isUpdateContrastCurve && this->gegl_contrast_curve_points)
-            {
-                contrast_curve = gegl_node_new_child(graph, "operation", "gegl:contrast-curve", nullptr);
-                gegl_node_set(contrast_curve, "curve", this->gegl_contrast_curve_points, "sampling-points", this->gegl_contrast_curve_sampling_points, nullptr);
-            }
-
-            // Link nodes
-            GeglNode* last_node = input;
-            if (brightness_contrast)
-            {
-                gegl_node_link(last_node, brightness_contrast);
-                last_node = brightness_contrast;
-            }
-            if (stress)
-            {
-                gegl_node_link(last_node, stress);
-                last_node = stress;
-            }
-            if (stretch_contrast)
-            {
-                gegl_node_link(last_node, stretch_contrast);
-                last_node = stretch_contrast;
-            }
-            if (contrast_curve)
-            {
-                gegl_node_link(last_node, contrast_curve);
-                last_node = contrast_curve;
-            }
-            gegl_node_link(last_node, output);
-
-            gegl_node_process(output);
-
-            // Get output buffer data
-            gegl_buffer_get(output_buffer, nullptr, 1.0, babl_format("R'G'B'A u8"), source.bits(), GEGL_AUTO_ROWSTRIDE, GEGL_ABYSS_NONE);
-        }
-        catch (const std::exception& e)
-        {
-            qDebug() << "An error occurred during GEGL processing:" << e.what();
+            brightness_contrast = gegl_node_new_child(graph, "operation", "gegl:brightness-contrast", nullptr);
+            gegl_node_set(brightness_contrast, "brightness", this->gegl_brightness, "contrast", this->gegl_contrast, nullptr);
         }
 
-        // Unreference GEGL buffers and graph
-        if (input_buffer)
+        if (this->isUpdateStress)
         {
-            g_object_unref(input_buffer);
+            stress = gegl_node_new_child(graph, "operation", "gegl:stress", nullptr);
+            gegl_node_set(stress, "radius", this->gegl_stress_radius, "samples", this->gegl_stress_samples, "iterations", this->gegl_stress_iterations, "enhance-shadows", this->gegl_stress_enhance_shadows, nullptr);
         }
-        if (output_buffer)
+
+        if (this->isUpdateStretchContrast)
         {
-            g_object_unref(output_buffer);
+            stretch_contrast = gegl_node_new_child(graph, "operation", "gegl:stretch-contrast", nullptr);
+            gegl_node_set(stretch_contrast, "keep-colors", this->gegl_stretch_contrast_keep_colors, "perceptual", this->gegl_stretch_contrast_perceptual, nullptr);
         }
-        if (graph)
+
+        if (this->isUpdateContrastCurve && this->gegl_contrast_curve_points)
         {
-            g_object_unref(graph);
+            contrast_curve = gegl_node_new_child(graph, "operation", "gegl:contrast-curve", nullptr);
+            gegl_node_set(contrast_curve, "curve", this->gegl_contrast_curve_points, "sampling-points", this->gegl_contrast_curve_sampling_points, nullptr);
         }
+
+        // Link nodes
+        GeglNode* last_node = input;
+        if (brightness_contrast)
+        {
+            gegl_node_link(last_node, brightness_contrast);
+            last_node = brightness_contrast;
+        }
+        if (stress)
+        {
+            gegl_node_link(last_node, stress);
+            last_node = stress;
+        }
+        if (stretch_contrast)
+        {
+            gegl_node_link(last_node, stretch_contrast);
+            last_node = stretch_contrast;
+        }
+        if (contrast_curve)
+        {
+            gegl_node_link(last_node, contrast_curve);
+            last_node = contrast_curve;
+        }
+        gegl_node_link(last_node, output);
+
+        gegl_node_process(output);
+
+        // Get output buffer data
+        gegl_buffer_get(output_buffer, nullptr, 1.0, babl_format("R'G'B'A u8"), source.bits(), GEGL_AUTO_ROWSTRIDE, GEGL_ABYSS_NONE);
+
+        g_object_unref(input_buffer);
+        g_object_unref(output_buffer);
+        g_object_unref(graph);
     }
 }
 
 void MainWindow::UpdateContrastCurvePoints(const QVector<QPointF>& points)
 {
+    // 업데이트 안되게 일단 막는다.
+    this->isUpdateContrastCurve = false;
+
     QMutexLocker locker(&this->contrastCurvesMutex);
 
     if (this->gegl_contrast_curve_points)
