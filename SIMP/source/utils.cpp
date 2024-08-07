@@ -1,7 +1,7 @@
 #include "utils.h"
 #include "constants.h"
-#include "curve_point.h"
 
+#include <QPointF>
 #include <QJsonDocument>
 #include <QDir>
 #include <opencv2/opencv.hpp>
@@ -146,15 +146,14 @@ std::vector<preset_contrast_curve> convertJsonToPresetsImageCurve(const QJsonArr
         QJsonObject obj = value.toObject();
         int index = obj[KEY_INDEX].toInt();
 
-        std::vector<curve_point> points;
+        QVector<QPointF> points;
         for (const QJsonValue& pointValue : obj[KEY_POINTS].toArray())
         {
             QJsonObject point = pointValue.toObject();
-            int pointIndex = point[KEY_INDEX].toInt();
             int x = point[KEY_POS_X].toInt();
             int y = point[KEY_POS_Y].toInt();
 
-            points.emplace_back(pointIndex, x, y);
+            points.emplace_back(x, y);
         }
 
         presets.emplace_back(index, points);
@@ -168,12 +167,11 @@ void convertPresetsImageCurveToJsonArray(const std::vector<preset_contrast_curve
     {
         QJsonArray pointsArray;
 
-        for (const curve_point& point : preset.GetPoints())
+        for (const QPointF& point : preset.GetPoints())
         {
             QJsonObject pointObj;
-            pointObj[KEY_INDEX] = point.GetIndex();
-            pointObj[KEY_POS_X] = point.GetX();
-            pointObj[KEY_POS_Y] = point.GetY();
+            pointObj[KEY_POS_X] = point.x();
+            pointObj[KEY_POS_Y] = point.y();
 
             pointsArray.append(pointObj);
         }
@@ -185,27 +183,4 @@ void convertPresetsImageCurveToJsonArray(const std::vector<preset_contrast_curve
         jsonArray.append(jsonObject);
     }
 }
-
-
-QVector<QPointF> convertCurvePointsToQPointf(const std::vector<curve_point>& curvePoints)
-{
-    QVector<QPointF> qpoints;
-    for (const curve_point& curvePoint : curvePoints)
-    {
-        qpoints.emplaceBack(curvePoint.GetX(), curvePoint.GetY());
-    }
-    return qpoints;
-}
-
-std::vector<curve_point> convertQPointfToCurvePoints(QVector<QPointF>& qpoints)
-{
-    std::vector<curve_point> curvePoints;
-    int index = 0;
-    for (const QPointF& qpoint : qpoints)
-    {
-        curvePoints.emplace_back(curve_point(index++, qpoint.x(), qpoint.y()));
-    }
-    return curvePoints;
-}
-
 

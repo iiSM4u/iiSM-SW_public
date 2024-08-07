@@ -184,7 +184,7 @@ private:
     bool gegl_stress_enhance_shadows = GEGL_STRESS_ENHANCE_SHADOWS_DEFAULT;
     bool gegl_stretch_contrast_keep_colors = GEGL_STRETCH_CONTRAST_KEEP_COLORS_DEFAULT, gegl_stretch_contrast_perceptual = GEGL_STRETCH_CONTRAST_PERCEPTUAL_DEFAULT;
     int gegl_contrast_curve_sampling_points = GEGL_CONTRAST_CURVE_SAMPLING_POINTS_DEFAULT;
-    GeglCurve *gegl_contrast_curves = nullptr;
+    GeglCurve *gegl_contrast_curve_points = nullptr;
 
     std::vector<preset_brightness_contrast> presetsBrightnessContrast;
     std::vector<preset_stress> presetsStress;
@@ -217,6 +217,7 @@ private:
     void InitGegl();
     void CloseGegl();
     void UpdateGegl(QImage& source);
+    void UpdateContrastCurvePoints(const QVector<QPointF>& points);
 
     // custom
     void UpdatePreview();

@@ -1,22 +1,22 @@
 #pragma once
 
-#include <vector>
-#include "curve_point.h"
+#include "QVector"
+#include "QPointF"
 
 class preset_contrast_curve
 {
 public:
     preset_contrast_curve() = default;
-    preset_contrast_curve(const int index, std::vector<curve_point>& points)
+    preset_contrast_curve(const int index, QVector<QPointF>& points)
         : index(index)
         , points(points)
     {}
 
     int GetIndex() const { return this->index; }
-    std::vector<curve_point> GetPoints() const { return this->points; }
+    QVector<QPointF> GetPoints() const { return this->points; }
 
 private:
     int index;
-    std::vector<curve_point> points;
+    QVector<QPointF> points;
 };
 

@@ -2,7 +2,6 @@
 #include "ui_dialog_contrast_curve.h"
 #include "dialog_curve_point.h"
 #include "constants.h"
-#include "utils.h"
 
 dialog_contrast_curve::dialog_contrast_curve(QWidget *parent)
     : QDialog(parent)
@@ -82,19 +81,18 @@ void dialog_contrast_curve::onOkClicked()
     if (this->isPresetChanged)
     {
         int index = ui->cbPresets->currentIndex();
-        std::vector<curve_point> points = convertQPointfToCurvePoints(this->qpoints);
 
         // update
         if (index > -1)
         {
             index = this->presets[index].GetIndex();
-            this->presets[index] = preset_contrast_curve(index, points);
+            this->presets[index] = preset_contrast_curve(index, this->qpoints);
         }
         // add
         else
         {
-            index = this->presets[this->presets.size() - 1].GetIndex() + 1;
-            this->presets.emplace_back(index, points);
+            index = this->presets.size() > 0 ? this->presets[this->presets.size() - 1].GetIndex() + 1 : 0;
+            this->presets.emplace_back(index, this->qpoints);
         }
     }
 
@@ -110,7 +108,7 @@ void dialog_contrast_curve::cbPreset_SelectedIndexChanged(int index)
 {
     if (index > -1)
     {
-        this->qpoints = convertCurvePointsToQPointf(this->presets[index].GetPoints());
+        this->qpoints = this->presets[index].GetPoints();
     }
     else
     {
@@ -123,6 +121,8 @@ void dialog_contrast_curve::cbPreset_SelectedIndexChanged(int index)
     dialog_contrast_curve::UpdateChart(this->qpoints, this->highlightPointIndex);
     dialog_contrast_curve::UpdateSpinUI(0, 0, false);
     this->isPresetChanged = false;
+
+    emit contrastCurveUpdated(this->qpoints);
 }
 
 void dialog_contrast_curve::btnRemovePreset_Click()
@@ -138,19 +138,18 @@ void dialog_contrast_curve::btnRemovePreset_Click()
 void dialog_contrast_curve::btnSavePreset_Click()
 {
     int index = ui->cbPresets->currentIndex();
-    std::vector<curve_point> points = convertQPointfToCurvePoints(this->qpoints);
 
     // update
     if (index > -1)
     {
         index = this->presets[index].GetIndex();
-        this->presets[index] = preset_contrast_curve(index, points);
+        this->presets[index] = preset_contrast_curve(index, this->qpoints);
     }
     // add
     else
     {
         index = this->presets[this->presets.size() - 1].GetIndex() + 1;
-        this->presets.emplace_back(index, points);
+        this->presets.emplace_back(index, this->qpoints);
     }
 
     dialog_contrast_curve::UpdatePresetUI(this->presets, index);
@@ -170,6 +169,8 @@ void dialog_contrast_curve::btnDeletePoint_Click()
         this->highlightPointIndex = -1;
         dialog_contrast_curve::UpdateChart(this->qpoints, this->highlightPointIndex);
         this->isPresetChanged = true;
+
+        emit contrastCurveUpdated(this->qpoints);
     }
 }
 
@@ -177,9 +178,11 @@ void dialog_contrast_curve::spinInput_ValueChanged(int value)
 {
     if (this->highlightPointIndex > -1)
     {
-        this->qpoints[this->highlightPointIndex] = QPointF(value, this->qpoints[this->highlightPointIndex].y());
+        this->qpoints[this->highlightPointIndex].setX(value);
         dialog_contrast_curve::UpdateChart(this->qpoints, this->highlightPointIndex);
         this->isPresetChanged = true;
+
+        emit contrastCurveUpdated(this->qpoints);
     }
 }
 
@@ -187,9 +190,11 @@ void dialog_contrast_curve::spinOutput_ValueChanged(int value)
 {
     if (this->highlightPointIndex > -1)
     {
-        this->qpoints[this->highlightPointIndex] = QPointF(this->qpoints[this->highlightPointIndex].x(), value);
+        this->qpoints[this->highlightPointIndex].setY(value);
         dialog_contrast_curve::UpdateChart(this->qpoints, this->highlightPointIndex);
         this->isPresetChanged = true;
+
+        emit contrastCurveUpdated(this->qpoints);
     }
 }
 

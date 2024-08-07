@@ -26,6 +26,9 @@ public:
     int getSelectedIndex() const;
     bool getEnable() const;
 
+signals:
+    void contrastCurveUpdated(const QVector<QPointF>& points);
+
 private slots:
     void onOkClicked();
     void chkCurve_CheckedChanged(Qt::CheckState checkState);
