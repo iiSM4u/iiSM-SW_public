@@ -226,10 +226,31 @@ void dialog_contrast_curve::handlePointMoved(const QPointF &newPos)
 {
     if (this->highlightPointIndex > -1)
     {
-        this->qpoints[this->highlightPointIndex] = newPos;
+        QPointF pos = newPos;
+
+        // cap을 씌운다.
+        if (pos.x() < 0)
+        {
+            pos.setX(0);
+        }
+        else if (pos.x() > GEGL_CONTRAST_CURVE_VALUE_MAX)
+        {
+            pos.setX(GEGL_CONTRAST_CURVE_VALUE_MAX);
+        }
+
+        if (pos.y() < 0)
+        {
+            pos.setY(0);
+        }
+        else if (pos.y() > GEGL_CONTRAST_CURVE_VALUE_MAX)
+        {
+            pos.setY(GEGL_CONTRAST_CURVE_VALUE_MAX);
+        }
+
+        this->qpoints[this->highlightPointIndex] = pos;
         // 이동 중에는 sort를 하지 않는다.
 
-        dialog_contrast_curve::UpdateSpinUI(newPos.x(), newPos.y(), true);
+        dialog_contrast_curve::UpdateSpinUI(pos.x(), pos.y(), true);
         dialog_contrast_curve::UpdateChart(this->qpoints, this->highlightPointIndex);
     }
 }
