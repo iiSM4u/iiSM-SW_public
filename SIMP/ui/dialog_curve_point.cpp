@@ -18,7 +18,6 @@ dialog_curve_point::dialog_curve_point(const QVector<QPointF>& qpoints, const in
     ui->setupUi(this);
 
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &dialog_curve_point::onOkClicked);
-    //connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &dialog_curve_point::onCancelClicked);
 
     ui->spinInput->setValue(x);
     ui->spinOutput->setValue(y);

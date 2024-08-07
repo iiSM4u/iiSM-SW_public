@@ -27,6 +27,7 @@ public:
     bool getEnable() const;
 
 private slots:
+    void onOkClicked();
     void chkCurve_CheckedChanged(Qt::CheckState checkState);
     void cbPreset_SelectedIndexChanged(int index);
 
@@ -57,8 +58,11 @@ private:
 
     std::vector<preset_contrast_curve> presets;
     int highlightPointIndex = -1;
+    bool isPresetChanged = false;
 
     void InitChart();
     void UpdateChart(const QVector<QPointF>& points, const int highlightIndex);
     void AddPoint(const int x, const int y);
+    void SavePreset();
+    void UpdatePreset();
 };

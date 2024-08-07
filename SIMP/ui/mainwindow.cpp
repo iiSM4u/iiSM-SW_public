@@ -686,17 +686,17 @@ void MainWindow::cbCurvePreset_SelectedIndexChanged(int index)
 
         QMutexLocker locker(&contrastCurvesMutex);
 
-        if (this->contrastCurves)
+        if (this->gegl_contrast_curves)
         {
-            g_object_unref(this->contrastCurves);
-            this->contrastCurves = nullptr;
+            g_object_unref(this->gegl_contrast_curves);
+            this->gegl_contrast_curves = nullptr;
         }
 
-        this->contrastCurves = gegl_curve_new(0.0, 1.0);
+        this->gegl_contrast_curves = gegl_curve_new(0.0, 1.0);
 
         for (const curve_point& point : preset.GetPoints())
         {
-            gegl_curve_add_point(this->contrastCurves, point.GetX(), point.GetY());
+            gegl_curve_add_point(this->gegl_contrast_curves, point.GetX(), point.GetY());
         }
 
         this->isUpdateContrastCurve = true;
@@ -1023,23 +1023,7 @@ void MainWindow::UpdatePreview()
             QImage formattedSource = source.convertToFormat(QImage::Format_RGBA8888);
             //QImage formattedSource = this->imageFormat != QImage::Format_RGBA8888 ? source.convertToFormat(QImage::Format_RGBA8888) : source;
 
-            UpdateGeglContrast(
-                /*source*/ formattedSource
-                , /*brightness*/ this->gegl_brightness
-                , /*contrast*/ this->gegl_contrast
-                , /*radius*/ this->gegl_stress_radius
-                , /*samples*/ this->gegl_stress_samples
-                , /*iterations*/ this->gegl_stress_iterations
-                , /*enhanceShadows*/ this->gegl_stress_enhance_shadows
-                , /*keepColors*/ this->gegl_stretch_contrast_keep_colors
-                , /*perceptual*/ this->gegl_stretch_contrast_perceptual
-                , /*curve*/ this->contrastCurves
-                , /*samplingPoints*/ this->gegl_contrast_curve_sampling_points
-                , /*isUpdateBrightnessContrast*/ this->isUpdateBrightnessContrast
-                , /*isUpdateStress*/ this->isUpdateStress
-                , /*isUpdateStretchContrast*/ this->isUpdateStretchContrast
-                , /*isUpdateContrastCurve*/ this->isUpdateContrastCurve
-            );
+            UpdateGegl(formattedSource);
 
             // gegl을 적용한 후에 result에 넣는다. 그래야 video나 capture에서 gegl이 적용된 이미지가 사용될 수 있음.
             this->resultPreview = formattedSource.convertToFormat(QImage::Format_RGB888);
@@ -1180,9 +1164,9 @@ void MainWindow::InitGegl()
 
 void MainWindow::CloseGegl()
 {
-    if (this->contrastCurves)
+    if (this->gegl_contrast_curves)
     {
-        g_object_unref(this->contrastCurves);
+        g_object_unref(this->gegl_contrast_curves);
     }
 
     // gegl 종료
@@ -1537,26 +1521,10 @@ bool MainWindow::RecordVideo(
 }
 
 
-void MainWindow::UpdateGeglContrast(
-    QImage& source,
-    const double brightness,
-    const double contrast,
-    const int radius,
-    const int samples,
-    const int iterations,
-    const bool enhanceShadows,
-    const bool keepColors,
-    const bool perceptual,
-    const GeglCurve* curve,
-    const int samplingPoints,
-    const bool isUpdateBrightnessContrast,
-    const bool isUpdateStress,
-    const bool isUpdateStretchContrast,
-    const bool isUpdateContrastCurve
-    )
+void MainWindow::UpdateGegl(QImage& source)
 {
     // 하나라도 true여야 수행한다.
-    if (isUpdateBrightnessContrast || isUpdateStress || isUpdateStretchContrast || isUpdateContrastCurve)
+    if (this->isUpdateBrightnessContrast || this->isUpdateStress || this->isUpdateStretchContrast || this->isUpdateContrastCurve)
     {
         // Create GEGL buffers
         GeglBuffer* input_buffer = gegl_buffer_new(GEGL_RECTANGLE(0, 0, source.width(), source.height()), babl_format("R'G'B'A u8"));
@@ -1575,29 +1543,30 @@ void MainWindow::UpdateGeglContrast(
         GeglNode* stretch_contrast = nullptr;
         GeglNode* contrast_curve = nullptr;
 
+
         // gegl_node_set()은 gegl_node_link()를 하기 전에 마쳐야 한다.
-        if (isUpdateBrightnessContrast)
+        if (this->isUpdateBrightnessContrast)
         {
             brightness_contrast = gegl_node_new_child(graph, "operation", "gegl:brightness-contrast", nullptr);
-            gegl_node_set(brightness_contrast, "brightness", brightness, "contrast", contrast, nullptr);
+            gegl_node_set(brightness_contrast, "brightness", this->gegl_brightness, "contrast", this->gegl_contrast, nullptr);
         }
 
-        if (isUpdateStress)
+        if (this->isUpdateStress)
         {
             stress = gegl_node_new_child(graph, "operation", "gegl:stress", nullptr);
-            gegl_node_set(stress, "radius", radius, "samples", samples, "iterations", iterations, "enhance-shadows", enhanceShadows, nullptr);
+            gegl_node_set(stress, "radius", this->gegl_stress_radius, "samples", this->gegl_stress_samples, "iterations", this->gegl_stress_iterations, "enhance-shadows", this->gegl_stress_enhance_shadows, nullptr);
         }
 
-        if (isUpdateStretchContrast)
+        if (this->isUpdateStretchContrast)
         {
             stretch_contrast = gegl_node_new_child(graph, "operation", "gegl:stretch-contrast", nullptr);
-            gegl_node_set(stretch_contrast, "keep-colors", keepColors, "perceptual", perceptual, nullptr);
+            gegl_node_set(stretch_contrast, "keep-colors", this->gegl_stretch_contrast_keep_colors, "perceptual", this->gegl_stretch_contrast_perceptual, nullptr);
         }
 
-        if (isUpdateContrastCurve && contrastCurves)
+        if (this->isUpdateContrastCurve && this->gegl_contrast_curves)
         {
             contrast_curve = gegl_node_new_child(graph, "operation", "gegl:contrast-curve", nullptr);
-            gegl_node_set(contrast_curve, "curve", contrastCurves, "sampling-points", samplingPoints, nullptr);
+            gegl_node_set(contrast_curve, "curve", this->gegl_contrast_curves, "sampling-points", this->gegl_contrast_curve_sampling_points, nullptr);
         }
 
         // Link nodes

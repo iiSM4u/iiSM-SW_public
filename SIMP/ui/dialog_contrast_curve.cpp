@@ -22,6 +22,8 @@ dialog_contrast_curve::dialog_contrast_curve(std::vector<preset_contrast_curve>&
 {
     ui->setupUi(this);
 
+    connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &dialog_contrast_curve::onOkClicked);
+
     connect(ui->chkCurve, &QCheckBox::checkStateChanged, this, &dialog_contrast_curve::chkCurve_CheckedChanged);
     connect(ui->cbPresets, &QComboBox::currentIndexChanged, this, &dialog_contrast_curve::cbPreset_SelectedIndexChanged);
 
@@ -45,18 +47,12 @@ dialog_contrast_curve::dialog_contrast_curve(std::vector<preset_contrast_curve>&
     this->highlightPointIndex = -1;
     dialog_contrast_curve::UpdateSpinUI(0, 0, false);
 
-    if (presetIndex > -1)
-    {
-        dialog_contrast_curve::UpdatePresetUI(this->presets, presetIndex);
-    }
-    else
-    {
-        this->qpoints.clear();
-        this->qpoints.append(QPointF(GEGL_CONTRAST_CURVE_VALUE_MIN, GEGL_CONTRAST_CURVE_VALUE_MIN));
-        this->qpoints.append(QPointF(GEGL_CONTRAST_CURVE_VALUE_MAX, GEGL_CONTRAST_CURVE_VALUE_MAX));
+    this->qpoints.clear();
+    this->qpoints.append(QPointF(GEGL_CONTRAST_CURVE_VALUE_MIN, GEGL_CONTRAST_CURVE_VALUE_MIN));
+    this->qpoints.append(QPointF(GEGL_CONTRAST_CURVE_VALUE_MAX, GEGL_CONTRAST_CURVE_VALUE_MAX));
 
-        dialog_contrast_curve::UpdateChart(this->qpoints, this->highlightPointIndex);
-    }
+    dialog_contrast_curve::UpdateChart(this->qpoints, this->highlightPointIndex);
+    dialog_contrast_curve::UpdatePresetUI(this->presets, presetIndex);
 }
 
 
@@ -80,6 +76,31 @@ bool dialog_contrast_curve::getEnable() const
     return ui->chkCurve->isChecked();
 }
 
+void dialog_contrast_curve::onOkClicked()
+{
+    // 저장안된 변경이 있었으면 업데이트 한다.
+    if (this->isPresetChanged)
+    {
+        int index = ui->cbPresets->currentIndex();
+        std::vector<curve_point> points = convertQPointfToCurvePoints(this->qpoints);
+
+        // update
+        if (index > -1)
+        {
+            index = this->presets[index].GetIndex();
+            this->presets[index] = preset_contrast_curve(index, points);
+        }
+        // add
+        else
+        {
+            index = this->presets[this->presets.size() - 1].GetIndex() + 1;
+            this->presets.emplace_back(index, points);
+        }
+    }
+
+    accept();
+}
+
 void dialog_contrast_curve::chkCurve_CheckedChanged(Qt::CheckState checkState)
 {
     dialog_contrast_curve::EnableUI(checkState == Qt::CheckState::Checked);
@@ -98,10 +119,10 @@ void dialog_contrast_curve::cbPreset_SelectedIndexChanged(int index)
         this->qpoints.append(QPointF(GEGL_CONTRAST_CURVE_VALUE_MAX, GEGL_CONTRAST_CURVE_VALUE_MAX));
     }
 
-    ui->spinInput->setEnabled(false);
-    ui->spinOutput->setEnabled(false);
     this->highlightPointIndex = -1;
     dialog_contrast_curve::UpdateChart(this->qpoints, this->highlightPointIndex);
+    dialog_contrast_curve::UpdateSpinUI(0, 0, false);
+    this->isPresetChanged = false;
 }
 
 void dialog_contrast_curve::btnRemovePreset_Click()
@@ -110,17 +131,30 @@ void dialog_contrast_curve::btnRemovePreset_Click()
     {
         this->presets.erase(this->presets.begin() + ui->cbPresets->currentIndex());
         dialog_contrast_curve::UpdatePresetUI(this->presets);
+        this->isPresetChanged = false;
     }
 }
 
 void dialog_contrast_curve::btnSavePreset_Click()
 {
-    bool ok;
+    int index = ui->cbPresets->currentIndex();
     std::vector<curve_point> points = convertQPointfToCurvePoints(this->qpoints);
-    int index = this->presets.size();
-    this->presets.emplace_back(index, points);
+
+    // update
+    if (index > -1)
+    {
+        index = this->presets[index].GetIndex();
+        this->presets[index] = preset_contrast_curve(index, points);
+    }
+    // add
+    else
+    {
+        index = this->presets[this->presets.size() - 1].GetIndex() + 1;
+        this->presets.emplace_back(index, points);
+    }
 
     dialog_contrast_curve::UpdatePresetUI(this->presets, index);
+    this->isPresetChanged = false;
 }
 
 void dialog_contrast_curve::btnResetPreset_Click()
@@ -135,6 +169,7 @@ void dialog_contrast_curve::btnDeletePoint_Click()
         this->qpoints.erase(this->qpoints.begin() + this->highlightPointIndex);
         this->highlightPointIndex = -1;
         dialog_contrast_curve::UpdateChart(this->qpoints, this->highlightPointIndex);
+        this->isPresetChanged = true;
     }
 }
 
@@ -142,9 +177,9 @@ void dialog_contrast_curve::spinInput_ValueChanged(int value)
 {
     if (this->highlightPointIndex > -1)
     {
-        QPointF point = this->qpoints[this->highlightPointIndex];
-        this->qpoints[this->highlightPointIndex] = QPointF(value, point.y());
+        this->qpoints[this->highlightPointIndex] = QPointF(value, this->qpoints[this->highlightPointIndex].y());
         dialog_contrast_curve::UpdateChart(this->qpoints, this->highlightPointIndex);
+        this->isPresetChanged = true;
     }
 }
 
@@ -152,9 +187,9 @@ void dialog_contrast_curve::spinOutput_ValueChanged(int value)
 {
     if (this->highlightPointIndex > -1)
     {
-        QPointF point = this->qpoints[this->highlightPointIndex];
-        this->qpoints[this->highlightPointIndex] = QPointF(point.x(), value);
+        this->qpoints[this->highlightPointIndex] = QPointF(this->qpoints[this->highlightPointIndex].x(), value);
         dialog_contrast_curve::UpdateChart(this->qpoints, this->highlightPointIndex);
+        this->isPresetChanged = true;
     }
 }
 
@@ -234,6 +269,7 @@ void dialog_contrast_curve::UpdateSpinUI(int x, int y, bool enable)
         const QSignalBlocker blocker(ui->spinInput);
         ui->spinInput->setValue(x);
         ui->spinOutput->setValue(y);
+
         ui->spinInput->setEnabled(enable);
         ui->spinOutput->setEnabled(enable);
         ui->btnDeletePoint->setEnabled(enable);
@@ -314,6 +350,7 @@ void dialog_contrast_curve::AddPoint(const int x, const int y)
 
     if (dialog.exec() == QDialog::Accepted)
     {
+        this->isPresetChanged = true;
         // 새로 추가한 후에 정렬한다.
         this->qpoints.emplaceBack(dialog.getInputValue(), dialog.getOutputValue());
         std::sort(this->qpoints.begin(), this->qpoints.end(), [](const QPointF &a, const QPointF &b) { return a.x() < b.x(); });
