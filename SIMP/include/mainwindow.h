@@ -231,6 +231,7 @@ private:
     );
 
     void LoadPresets();
+    void logMessage(const QString &message);
 
     std::thread threadPreview, threadVideo;
 };

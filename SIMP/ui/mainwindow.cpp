@@ -8,6 +8,7 @@
 #include "dialog_contrast_curve.h"
 #include "videoloader.h"
 
+#include <QFile>
 #include <QGraphicsPixmapItem>
 #include <QFileDialog>
 #include <QMessageBox>
@@ -1153,10 +1154,18 @@ void MainWindow::UpdatePresetContrastCurve(const std::vector<preset_contrast_cur
 
 void MainWindow::InitGegl()
 {
+    //std::setlocale(LC_ALL, "C");
+
     // 실행파일 경로 아래 lib에 babl, gegl의 plugin dll을 복사해 놨기 때문에 프로그램 실행 중에 사용할 환경 변수를 등록해 둠. 프로그램 종료시 해제됨.
     QString appDir = QCoreApplication::applicationDirPath();
     qputenv("BABL_PATH", (appDir + "/lib/babl-0.1").toUtf8());
     qputenv("GEGL_PATH", (appDir + "/lib/gegl-0.4").toUtf8());
+
+    // PATH에 GEGL, BABL, GLib 라이브러리 경로 추가
+    QString pathEnv = qgetenv("PATH");
+    pathEnv += ";" + appDir + "/lib/babl-0.1";
+    pathEnv += ";" + appDir + "/lib/gegl-0.4";
+    qputenv("PATH", pathEnv.toUtf8());
 
     // gegl 초기화
     gegl_init(nullptr, nullptr);
@@ -1520,52 +1529,143 @@ bool MainWindow::RecordVideo(
     return false;
 }
 
+// void MainWindow::UpdateGegl(QImage& source)
+// {
+//     // 하나라도 true여야 수행한다.
+//     if (this->isUpdateBrightnessContrast || this->isUpdateStress || this->isUpdateStretchContrast || this->isUpdateContrastCurve)
+//     {
+//         // Create GEGL buffers
+//         GeglBuffer* input_buffer = gegl_buffer_new(GEGL_RECTANGLE(0, 0, source.width(), source.height()), babl_format("RGBA u8"));
+//         GeglBuffer* output_buffer = gegl_buffer_new(GEGL_RECTANGLE(0, 0, source.width(), source.height()), babl_format("RGBA u8"));
+
+//         // Set input buffer data
+//         gegl_buffer_set(input_buffer, nullptr, 0, babl_format("RGBA u8"), source.bits(), GEGL_AUTO_ROWSTRIDE);
+
+//         // Create GEGL graph
+//         GeglNode* graph = gegl_node_new();
+//         GeglNode* input = gegl_node_new_child(graph, "operation", "gegl:buffer-source", "buffer", input_buffer, nullptr);
+//         GeglNode* output = gegl_node_new_child(graph, "operation", "gegl:write-buffer", "buffer", output_buffer, nullptr);
+
+//         GeglNode* brightness_contrast = nullptr;
+//         GeglNode* stress = nullptr;
+//         GeglNode* stretch_contrast = nullptr;
+//         GeglNode* contrast_curve = nullptr;
+
+
+//         // gegl_node_set()은 gegl_node_link()를 하기 전에 마쳐야 한다.
+//         if (this->isUpdateBrightnessContrast)
+//         {
+//             brightness_contrast = gegl_node_new_child(graph, "operation", "gegl:brightness-contrast", nullptr);
+//             gegl_node_set(brightness_contrast, "brightness", this->gegl_brightness, "contrast", this->gegl_contrast, nullptr);
+//         }
+
+//         if (this->isUpdateStress)
+//         {
+//             stress = gegl_node_new_child(graph, "operation", "gegl:stress", nullptr);
+//             gegl_node_set(stress, "radius", this->gegl_stress_radius, "samples", this->gegl_stress_samples, "iterations", this->gegl_stress_iterations, "enhance-shadows", this->gegl_stress_enhance_shadows, nullptr);
+//         }
+
+//         if (this->isUpdateStretchContrast)
+//         {
+//             stretch_contrast = gegl_node_new_child(graph, "operation", "gegl:stretch-contrast", nullptr);
+//             gegl_node_set(stretch_contrast, "keep-colors", this->gegl_stretch_contrast_keep_colors, "perceptual", this->gegl_stretch_contrast_perceptual, nullptr);
+//         }
+
+//         if (this->isUpdateContrastCurve && this->gegl_contrast_curve_points)
+//         {
+//             contrast_curve = gegl_node_new_child(graph, "operation", "gegl:contrast-curve", nullptr);
+//             gegl_node_set(contrast_curve, "curve", this->gegl_contrast_curve_points, "sampling-points", this->gegl_contrast_curve_sampling_points, nullptr);
+//         }
+
+//         // Link nodes
+//         GeglNode* last_node = input;
+//         if (brightness_contrast)
+//         {
+//             gegl_node_link(last_node, brightness_contrast);
+//             last_node = brightness_contrast;
+//         }
+//         if (stress)
+//         {
+//             gegl_node_link(last_node, stress);
+//             last_node = stress;
+//         }
+//         if (stretch_contrast)
+//         {
+//             gegl_node_link(last_node, stretch_contrast);
+//             last_node = stretch_contrast;
+//         }
+//         if (contrast_curve)
+//         {
+//             gegl_node_link(last_node, contrast_curve);
+//             last_node = contrast_curve;
+//         }
+//         gegl_node_link(last_node, output);
+
+//         gegl_node_process(output);
+
+//         // Get output buffer data
+//         gegl_buffer_get(output_buffer, nullptr, 1.0, babl_format("RGBA u8"), source.bits(), GEGL_AUTO_ROWSTRIDE, GEGL_ABYSS_NONE);
+
+//         g_object_unref(input_buffer);
+//         g_object_unref(output_buffer);
+//         g_object_unref(graph);
+//     }
+// }
+
 void MainWindow::UpdateGegl(QImage& source)
 {
     // 하나라도 true여야 수행한다.
     if (this->isUpdateBrightnessContrast || this->isUpdateStress || this->isUpdateStretchContrast || this->isUpdateContrastCurve)
     {
+        logMessage("Starting GEGL update process.");
+
         // Create GEGL buffers
         GeglBuffer* input_buffer = gegl_buffer_new(GEGL_RECTANGLE(0, 0, source.width(), source.height()), babl_format("R'G'B'A u8"));
         GeglBuffer* output_buffer = gegl_buffer_new(GEGL_RECTANGLE(0, 0, source.width(), source.height()), babl_format("R'G'B'A u8"));
+        logMessage("GEGL buffers created.");
 
         // Set input buffer data
         gegl_buffer_set(input_buffer, nullptr, 0, babl_format("R'G'B'A u8"), source.bits(), GEGL_AUTO_ROWSTRIDE);
+        logMessage("Input buffer data set.");
 
         // Create GEGL graph
         GeglNode* graph = gegl_node_new();
         GeglNode* input = gegl_node_new_child(graph, "operation", "gegl:buffer-source", "buffer", input_buffer, nullptr);
         GeglNode* output = gegl_node_new_child(graph, "operation", "gegl:write-buffer", "buffer", output_buffer, nullptr);
+        logMessage("GEGL graph created.");
 
         GeglNode* brightness_contrast = nullptr;
         GeglNode* stress = nullptr;
         GeglNode* stretch_contrast = nullptr;
         GeglNode* contrast_curve = nullptr;
 
-
         // gegl_node_set()은 gegl_node_link()를 하기 전에 마쳐야 한다.
         if (this->isUpdateBrightnessContrast)
         {
             brightness_contrast = gegl_node_new_child(graph, "operation", "gegl:brightness-contrast", nullptr);
             gegl_node_set(brightness_contrast, "brightness", this->gegl_brightness, "contrast", this->gegl_contrast, nullptr);
+            logMessage("Brightness and contrast operation added.");
         }
 
         if (this->isUpdateStress)
         {
             stress = gegl_node_new_child(graph, "operation", "gegl:stress", nullptr);
             gegl_node_set(stress, "radius", this->gegl_stress_radius, "samples", this->gegl_stress_samples, "iterations", this->gegl_stress_iterations, "enhance-shadows", this->gegl_stress_enhance_shadows, nullptr);
+            logMessage("Stress operation added.");
         }
 
         if (this->isUpdateStretchContrast)
         {
             stretch_contrast = gegl_node_new_child(graph, "operation", "gegl:stretch-contrast", nullptr);
             gegl_node_set(stretch_contrast, "keep-colors", this->gegl_stretch_contrast_keep_colors, "perceptual", this->gegl_stretch_contrast_perceptual, nullptr);
+            logMessage("Stretch contrast operation added.");
         }
 
         if (this->isUpdateContrastCurve && this->gegl_contrast_curve_points)
         {
             contrast_curve = gegl_node_new_child(graph, "operation", "gegl:contrast-curve", nullptr);
             gegl_node_set(contrast_curve, "curve", this->gegl_contrast_curve_points, "sampling-points", this->gegl_contrast_curve_sampling_points, nullptr);
+            logMessage("Contrast curve operation added.");
         }
 
         // Link nodes
@@ -1574,32 +1674,40 @@ void MainWindow::UpdateGegl(QImage& source)
         {
             gegl_node_link(last_node, brightness_contrast);
             last_node = brightness_contrast;
+            logMessage("Brightness and contrast node linked.");
         }
         if (stress)
         {
             gegl_node_link(last_node, stress);
             last_node = stress;
+            logMessage("Stress node linked.");
         }
         if (stretch_contrast)
         {
             gegl_node_link(last_node, stretch_contrast);
             last_node = stretch_contrast;
+            logMessage("Stretch contrast node linked.");
         }
         if (contrast_curve)
         {
             gegl_node_link(last_node, contrast_curve);
             last_node = contrast_curve;
+            logMessage("Contrast curve node linked.");
         }
         gegl_node_link(last_node, output);
+        logMessage("All nodes linked to output.");
 
         gegl_node_process(output);
+        logMessage("GEGL processing completed.");
 
         // Get output buffer data
         gegl_buffer_get(output_buffer, nullptr, 1.0, babl_format("R'G'B'A u8"), source.bits(), GEGL_AUTO_ROWSTRIDE, GEGL_ABYSS_NONE);
+        logMessage("Output buffer data retrieved.");
 
         g_object_unref(input_buffer);
         g_object_unref(output_buffer);
         g_object_unref(graph);
+        logMessage("GEGL buffers and graph unreferenced.");
     }
 }
 
@@ -1624,6 +1732,16 @@ void MainWindow::UpdateContrastCurvePoints(const QVector<QPointF>& points)
     }
 
     this->isUpdateContrastCurve = true;
+}
+
+void MainWindow::logMessage(const QString &message)
+{
+    QFile file("log.txt");
+    if (file.open(QIODevice::Append | QIODevice::Text))
+    {
+        QTextStream out(&file);
+        out << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss") << " - " << message << "\n";
+    }
 }
 
 
