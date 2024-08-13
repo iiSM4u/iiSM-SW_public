@@ -150,8 +150,8 @@ std::vector<preset_contrast_curve> convertJsonToPresetsImageCurve(const QJsonArr
         for (const QJsonValue& pointValue : obj[KEY_POINTS].toArray())
         {
             QJsonObject point = pointValue.toObject();
-            int x = point[KEY_POS_X].toInt();
-            int y = point[KEY_POS_Y].toInt();
+            double x = point[KEY_POS_X].toDouble();
+            double y = point[KEY_POS_Y].toDouble();
 
             points.emplace_back(x, y);
         }

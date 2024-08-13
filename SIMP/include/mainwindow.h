@@ -204,7 +204,7 @@ private:
 
     void InitCameraResolution();
     void UpdateExposureTime();
-    void UpdateSensorTemperature();
+    void InitSensorTemperature();
 
     void onMiiCameraCallback(unsigned nEvent);
     void handleImageEvent();

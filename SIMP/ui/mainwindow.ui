@@ -48,7 +48,7 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>0</y>
+         <y>-454</y>
          <width>241</width>
          <height>1191</height>
         </rect>
@@ -263,7 +263,7 @@
               </font>
              </property>
              <property name="text">
-              <string>Exposure Time</string>
+              <string>Exposure Time (ms)</string>
              </property>
             </widget>
            </item>
@@ -608,6 +608,9 @@
                 <property name="text">
                  <string>On</string>
                 </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
                </widget>
               </item>
               <item>
@@ -627,7 +630,7 @@
                  <string>Off</string>
                 </property>
                 <property name="checked">
-                 <bool>true</bool>
+                 <bool>false</bool>
                 </property>
                </widget>
               </item>

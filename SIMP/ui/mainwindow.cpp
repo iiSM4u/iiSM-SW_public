@@ -65,8 +65,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     // thread 시작
     this->isOn = true;
-    threadPreview = std::thread(&MainWindow::UpdatePreview, this);
-    threadVideo = std::thread(&MainWindow::UpdateVideo, this);
+    this->threadPreview = std::thread(&MainWindow::UpdatePreview, this);
+    this->threadVideo = std::thread(&MainWindow::UpdateVideo, this);
 
     MainWindow::InitGegl();
 
@@ -83,12 +83,12 @@ void MainWindow::closeEvent(QCloseEvent*)
 {
     this->isOn = false;
 
-    if (threadPreview.joinable()) {
-        threadPreview.join();
+    if (this->threadPreview.joinable()) {
+        this->threadPreview.join();
     }
 
-    if (threadVideo.joinable()) {
-        threadVideo.join();
+    if (this->threadVideo.joinable()) {
+        this->threadVideo.join();
     }
 
     MainWindow::CloseGegl();
@@ -154,8 +154,6 @@ void MainWindow::ConnectUI()
     connect(ui->chkDarkFieldCorrection, &QCheckBox::checkStateChanged, this, &MainWindow::chkDarkFieldCorrection_CheckedChanged);
     connect(ui->btnDarkFieldCorrection, &QPushButton::clicked, this, &MainWindow::btnDarkFieldCorrection_Click);
 
-    // off가 클릭된 상태로 시작
-    ui->rbCoolingOff->setChecked(true);
     this->btnGroupCooling->addButton(ui->rbCoolingOn, 1);
     this->btnGroupCooling->addButton(ui->rbCoolingOff, 2);
     connect(this->btnGroupCooling, &QButtonGroup::idClicked, this, &MainWindow::btnGroupCooling_Click);
@@ -284,9 +282,6 @@ void MainWindow::EnablePreviewUI(bool isPlay)
 
     ui->btnCurveSetting->setEnabled(isPlay);
     ui->cbCurvePreset->setEnabled(isPlay);
-
-    ui->rbCoolingOn->setEnabled(isPlay);
-    ui->rbCoolingOff->setEnabled(isPlay);
 ;
     ui->editDarkFieldCorrectionQuantity->setEnabled(isPlay);
     ui->btnDarkFieldCorrection->setEnabled(isPlay);
@@ -949,9 +944,8 @@ void MainWindow::onVideoLoadingFinished(bool success, const std::vector<QImage>&
         ui->btnStopVideo->setEnabled(true);
         ui->sliderVideo->setEnabled(true);
 
-        ui->btnPlayVideo->setText("Pause");
-
-        this->isVideoPlay = true;
+        ui->btnPlayVideo->setText("Play");
+        this->isVideoPlay = false;  // 자동실행 안 함
     }
     else
     {
@@ -1160,11 +1154,13 @@ void MainWindow::InitGegl()
     QString appDir = QCoreApplication::applicationDirPath();
     qputenv("BABL_PATH", (appDir + "/lib/babl-0.1").toUtf8());
     qputenv("GEGL_PATH", (appDir + "/lib/gegl-0.4").toUtf8());
+    qputenv("G_MODULE_PATH", (appDir + "/lib/glib-2.0/modules").toUtf8());
 
     // PATH에 GEGL, BABL, GLib 라이브러리 경로 추가
     QString pathEnv = qgetenv("PATH");
     pathEnv += ";" + appDir + "/lib/babl-0.1";
     pathEnv += ";" + appDir + "/lib/gegl-0.4";
+    pathEnv += ";" + appDir + "/lib/glib-2.0";
     qputenv("PATH", pathEnv.toUtf8());
 
     // gegl 초기화
@@ -1226,14 +1222,21 @@ void MainWindow::OpenCamera()
         // open에 성공하면 resolution 업데이트
         {
             const QSignalBlocker blocker(ui->cbResolution);
+
             MainWindow::InitCameraResolution();
+            MainWindow::InitSensorTemperature();
 
             // open에 성공하면 true
             ui->cbResolution->setEnabled(true);
             ui->cbFormat->setEnabled(true);
             ui->btnPlayCamera->setEnabled(true);
+            ui->rbCoolingOn->setEnabled(true);
+            ui->rbCoolingOff->setEnabled(true);
+            ui->sliderTemperature->setEnabled(true);
+            ui->editTemperature->setEnabled(true);
 
             ui->btnPlayCamera->setText(BTN_PLAY);
+            ui->rbCoolingOn->setChecked(true);
         }
 
     }
@@ -1267,7 +1270,6 @@ void MainWindow::StartCamera()
     this->rawCameraData = new uchar[TDIBWIDTHBYTES(imageWidth * 24) * this->imageHeight];
 
     MainWindow::UpdateExposureTime();
-    MainWindow::UpdateSensorTemperature();
 
     if ((this->miiDevice.model->flag & MIICAM_FLAG_MONO) == 0)
     {
@@ -1327,7 +1329,7 @@ void MainWindow::UpdateExposureTime()
     ui->editExposureTime->setPlainText(QString::number(value, 'f', 1));
 }
 
-void MainWindow::UpdateSensorTemperature()
+void MainWindow::InitSensorTemperature()
 {
     // 강제로 -50도로 초기화
     double value = MIICAM_TEMPERATURE_MIN * 10.0;
