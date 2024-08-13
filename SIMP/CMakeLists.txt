@@ -65,6 +65,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(SIMP
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
+        resources.rc
     )
 else()
     if(ANDROID)
@@ -73,7 +74,9 @@ else()
         )
     else()
         add_executable(SIMP
+            WIN32
             ${PROJECT_SOURCES}
+            resources.rc
         )
     endif()
 endif()

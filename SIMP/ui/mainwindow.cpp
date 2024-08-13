@@ -107,7 +107,7 @@ void MainWindow::resizeEvent(QResizeEvent *event)
             ui->gvVideo->fitInView();
         }
     }    
-    else if (ui->tabWidget->currentWidget() == ui->tabCapture)
+    else if (ui->tabWidget->currentWidget() == ui->tabFrame)
     {
         ui->gvFrame->fitInView();
     }
@@ -123,7 +123,7 @@ void MainWindow::ConnectUI()
     connect(timerFPS, &QTimer::timeout, this, &MainWindow::onTimerFpsCallback);
 
     ///////////////////////////////// preview
-    connect(ui->gvPreview, &CustomGraphicsView::mousePositionChanged, this, &MainWindow::UpdatePreviewMousePosition);
+    connect(ui->gvCamera, &CustomGraphicsView::mousePositionChanged, this, &MainWindow::UpdatePreviewMousePosition);
     connect(ui->gvVideo, &CustomGraphicsView::mousePositionChanged, this, &MainWindow::UpdateVideoMousePosition);
     connect(ui->gvFrame, &CustomGraphicsView::mousePositionChanged, this, &MainWindow::UpdateFrameMousePosition);
 
@@ -164,17 +164,17 @@ void MainWindow::ConnectUI()
     connect(ui->btnZoomIn, &QPushButton::clicked, this, &MainWindow::btnZoomIn_Click);
     connect(ui->btnZoomOut, &QPushButton::clicked, this, &MainWindow::btnZoomOut_Click);
 
-    connect(ui->btnBrightnessContrast, &QPushButton::clicked, this, &MainWindow::btnBrightnessContrast_Click);
-    connect(ui->btnStress, &QPushButton::clicked, this, &MainWindow::btnStress_Click);
-    connect(ui->btnStretchContrast, &QPushButton::clicked, this, &MainWindow::btnStretchContrast_Click);
+    // connect(ui->btnBrightnessContrast, &QPushButton::clicked, this, &MainWindow::btnBrightnessContrast_Click);
+    // connect(ui->btnStress, &QPushButton::clicked, this, &MainWindow::btnStress_Click);
+    // connect(ui->btnStretchContrast, &QPushButton::clicked, this, &MainWindow::btnStretchContrast_Click);
 
 
     ///////////////////////////////// video
     connect(ui->btnLoadVideo, &QPushButton::clicked, this, &MainWindow::btnLoadVideo_Click);
-    connect(ui->btnPlayVideo, &QPushButton::clicked, this, &MainWindow::btnPlayVideo_Click);
-    connect(ui->btnStopVideo, &QPushButton::clicked, this, &MainWindow::btnStopVideo_Click);
+    connect(ui->btnVideoPlay, &QPushButton::clicked, this, &MainWindow::btnPlayVideo_Click);
+    connect(ui->btnVideoStop, &QPushButton::clicked, this, &MainWindow::btnStopVideo_Click);
     connect(ui->lvVideo, &QListView::clicked, this, &MainWindow::lvVideo_Click);
-    connect(ui->sliderVideo, &QSlider::sliderMoved, this, &MainWindow::sliderVideo_sliderMoved);
+    connect(ui->sliderVideoFrame, &QSlider::sliderMoved, this, &MainWindow::sliderVideo_sliderMoved);
 
 
     ///////////////////////////////// frame
@@ -228,9 +228,9 @@ void MainWindow::InitUI()
     ui->lvVideo->setRootIndex(this->filesystemVideo->index(this->recordDir)); // Set the root index
     ui->lbDirVideo->setText(this->recordDir);
 
-    ui->btnPlayVideo->setEnabled(false);
-    ui->btnStopVideo->setEnabled(false);
-    ui->sliderVideo->setEnabled(false);
+    ui->btnVideoPlay->setEnabled(false);
+    ui->btnVideoStop->setEnabled(false);
+    ui->sliderVideoFrame->setEnabled(false);
 
 
     ////////////////////////// tab frame
@@ -287,15 +287,15 @@ void MainWindow::EnablePreviewUI(bool isPlay)
     ui->btnDarkFieldCorrection->setEnabled(isPlay);
     ui->chkDarkFieldCorrection->setEnabled(isPlay && this->isDarkFieldCorrectCapture);
 
-    ui->btnBrightnessContrast->setEnabled(isPlay);
-    ui->btnStress->setEnabled(isPlay);
-    ui->btnStretchContrast->setEnabled(isPlay);
+    // ui->btnBrightnessContrast->setEnabled(isPlay);
+    // ui->btnStress->setEnabled(isPlay);
+    // ui->btnStretchContrast->setEnabled(isPlay);
 }
 
 /////////////////////// preview
 void MainWindow::UpdatePreviewMousePosition(int x, int y, const QColor &color)
 {
-    if (ui->tabWidget->currentWidget() == ui->tabPreview)
+    if (ui->tabWidget->currentWidget() == ui->tabCamera)
     {
         QString text = QString("(x: %1, y: %2), (r: %3, g: %4, b: %5)")
                            .arg(x)
@@ -303,7 +303,7 @@ void MainWindow::UpdatePreviewMousePosition(int x, int y, const QColor &color)
                            .arg(color.red())
                            .arg(color.green())
                            .arg(color.blue());
-        ui->lbColor->setText(text);  // Assume you have a QLabel named label in your .ui file
+        ui->lbCameraPixel->setText(text);  // Assume you have a QLabel named label in your .ui file
     }
 }
 
@@ -317,13 +317,13 @@ void MainWindow::UpdateVideoMousePosition(int x, int y, const QColor &color)
                            .arg(color.red())
                            .arg(color.green())
                            .arg(color.blue());
-        ui->lbColor->setText(text);  // Assume you have a QLabel named label in your .ui file
+        ui->lbVideoPixel->setText(text);  // Assume you have a QLabel named label in your .ui file
     }
 }
 
 void MainWindow::UpdateFrameMousePosition(int x, int y, const QColor &color)
 {
-    if (ui->tabWidget->currentWidget() == ui->tabCapture)
+    if (ui->tabWidget->currentWidget() == ui->tabFrame)
     {
         QString text = QString("(x: %1, y: %2), (r: %3, g: %4, b: %5)")
                            .arg(x)
@@ -331,7 +331,7 @@ void MainWindow::UpdateFrameMousePosition(int x, int y, const QColor &color)
                            .arg(color.red())
                            .arg(color.green())
                            .arg(color.blue());
-        ui->lbColor->setText(text);  // Assume you have a QLabel named label in your .ui file
+        ui->lbFramePixel->setText(text);  // Assume you have a QLabel named label in your .ui file
     }
 }
 
@@ -798,8 +798,8 @@ void MainWindow::btnZoomIn_Click()
     }
 
     // 현재 창 크기 기준으로 zoom 조절. 실제 이미지 크기로 하면 창 크기를 넘어선다.
-    ui->gvPreview->fitInView();
-    ui->gvPreview->scale(this->zoomFactor, this->zoomFactor);
+    ui->gvCamera->fitInView();
+    ui->gvCamera->scale(this->zoomFactor, this->zoomFactor);
 
     ui->gvVideo->fitInView();
     ui->gvVideo->scale(this->zoomFactor, this->zoomFactor);
@@ -818,8 +818,8 @@ void MainWindow::btnZoomOut_Click()
     }
 
     // 현재 창 크기 기준으로 zoom 조절. 실제 이미지 크기로 하면 창 크기를 넘어선다.
-    ui->gvPreview->fitInView();
-    ui->gvPreview->scale(this->zoomFactor, this->zoomFactor);
+    ui->gvCamera->fitInView();
+    ui->gvCamera->scale(this->zoomFactor, this->zoomFactor);
 
     ui->gvVideo->fitInView();
     ui->gvVideo->scale(this->zoomFactor, this->zoomFactor);
@@ -925,18 +925,18 @@ void MainWindow::onVideoLoadingFinished(bool success, const std::vector<QImage>&
         this->videoTotalFrame = totalFrames;
         this->currentFrame = 0;
 
-        ui->sliderVideo->setRange(0, this->videoTotalFrame - 1);
-        ui->sliderVideo->setSingleStep(1);
-        ui->sliderVideo->setPageStep(10);
-        ui->sliderVideo->setValue(0);
+        ui->sliderVideoFrame->setRange(0, this->videoTotalFrame - 1);
+        ui->sliderVideoFrame->setSingleStep(1);
+        ui->sliderVideoFrame->setPageStep(10);
+        ui->sliderVideoFrame->setValue(0);
 
-        ui->lbVideoFrame->setText(QString("%1 / %2").arg(ui->sliderVideo->value()).arg(this->videoTotalFrame));
+        ui->lbVideoFrame->setText(QString("%1 / %2").arg(ui->sliderVideoFrame->value()).arg(this->videoTotalFrame));
 
-        ui->btnPlayVideo->setEnabled(true);
-        ui->btnStopVideo->setEnabled(true);
-        ui->sliderVideo->setEnabled(true);
+        ui->btnVideoPlay->setEnabled(true);
+        ui->btnVideoStop->setEnabled(true);
+        ui->sliderVideoFrame->setEnabled(true);
 
-        ui->btnPlayVideo->setText("Play");
+        ui->btnVideoPlay->setText("Play");
         this->isVideoPlay = false;  // 자동실행 안 함
     }
     else
@@ -948,7 +948,7 @@ void MainWindow::onVideoLoadingFinished(bool success, const std::vector<QImage>&
 void MainWindow::btnPlayVideo_Click()
 {
     this->isVideoPlay = !this->isVideoPlay;
-    ui->btnPlayVideo->setText(!this->isVideoPlay ? BTN_PLAY : BTN_PAUSE);
+    ui->btnVideoPlay->setText(!this->isVideoPlay ? BTN_PLAY : BTN_PAUSE);
 }
 
 void MainWindow::btnStopVideo_Click()
@@ -1057,11 +1057,11 @@ void MainWindow::UpdateVideo()
 
 void MainWindow::UpdatePreviewUI()
 {
-    ui->gvPreview->setImage(this->resultPreview);
+    ui->gvCamera->setImage(this->resultPreview);
 
     if (std::abs(this->zoomFactor - 1.0f) <= std::numeric_limits<float>::epsilon())
     {
-        ui->gvPreview->fitInView();
+        ui->gvCamera->fitInView();
     }
 
     if (this->isRecordOn)
@@ -1071,7 +1071,7 @@ void MainWindow::UpdatePreviewUI()
         QTime elapsedTime(0, 0);
         elapsedTime = elapsedTime.addSecs(elapsedSeconds);
 
-        ui->lbRunTime->setText("Recoding Time: " + elapsedTime.toString("hh:mm:ss"));
+        ui->lbRecordingTime->setText("Recoding Time: " + elapsedTime.toString("hh:mm:ss"));
 
         if (this->recordTimeLimit > 0 && elapsedTime.second() >= this->recordTimeLimit)
         {
@@ -1091,11 +1091,11 @@ void MainWindow::UpdateVideoUI()
     }
 
     ui->lbVideoFrame->setText(QString("%1 / %2").arg(this->currentFrame + 1).arg(this->videoTotalFrame));
-    ui->sliderVideo->setValue(this->currentFrame);
+    ui->sliderVideoFrame->setValue(this->currentFrame);
 
     if (!this->isVideoPlay)
     {
-        ui->btnPlayVideo->setText(BTN_PLAY);
+        ui->btnVideoPlay->setText(BTN_PLAY);
     }
 }
 
@@ -1141,20 +1141,10 @@ void MainWindow::UpdatePresetContrastCurve(const std::vector<preset_contrast_cur
 
 void MainWindow::InitGegl()
 {
-    //std::setlocale(LC_ALL, "C");
-
     // 실행파일 경로 아래 lib에 babl, gegl의 plugin dll을 복사해 놨기 때문에 프로그램 실행 중에 사용할 환경 변수를 등록해 둠. 프로그램 종료시 해제됨.
     QString appDir = QCoreApplication::applicationDirPath();
     qputenv("BABL_PATH", (appDir + "/lib/babl-0.1").toUtf8());
     qputenv("GEGL_PATH", (appDir + "/lib/gegl-0.4").toUtf8());
-    qputenv("G_MODULE_PATH", (appDir + "/lib/glib-2.0/modules").toUtf8());
-
-    // PATH에 GEGL, BABL, GLib 라이브러리 경로 추가
-    QString pathEnv = qgetenv("PATH");
-    pathEnv += ";" + appDir + "/lib/babl-0.1";
-    pathEnv += ";" + appDir + "/lib/gegl-0.4";
-    pathEnv += ";" + appDir + "/lib/glib-2.0";
-    qputenv("PATH", pathEnv.toUtf8());
 
     // gegl 초기화
     gegl_init(nullptr, nullptr);
@@ -1346,7 +1336,7 @@ void MainWindow::onTimerFpsCallback()
 
     if (miiHcam && SUCCEEDED(Miicam_get_FrameRate(this->miiHcam, &nFrame, &nTime, &nTotalFrame)) && (nTime > 0))
     {
-        ui->lbFPS->setText(QString::asprintf("%u, fps = %.1f", nTotalFrame, nFrame * 1000.0 / nTime));
+        ui->lbCameraFPS->setText(QString::asprintf("%u, fps = %.1f", nTotalFrame, nFrame * 1000.0 / nTime));
     }
 }
 
