@@ -222,13 +222,8 @@ private:
     // custom
     void UpdatePreview();
     void UpdateVideo();
-    bool RecordVideo(
-        std::vector<cv::Mat>& frames
-        , const QString& recordDir
-        , const VideoFormatType format
-        , const double frameRate
-        , const int quality
-    );
+    void StartRecord();
+    void FinishRecord();
 
     void LoadPresets();
     void logMessage(const QString &message);

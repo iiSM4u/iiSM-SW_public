@@ -447,22 +447,14 @@ void MainWindow::btnCaptureCamera_Click()
 void MainWindow::btnRecordOn_Click()
 {
     this->isRecordOn = !this->isRecordOn;
-    ui->btnRecordOn->setText(this->isRecordOn ? BTN_RECORD_OFF : BTN_RECORD_ON);
 
     if (this->isRecordOn)
     {
-        this->recordFrames.clear();
-
-        this->recordStartTime = QTime::currentTime();
-        this->timerVideoRecord->start(1000); // Update every second
+        MainWindow::StartRecord();
     }
     else
     {
-        if (this->recordFrames.size() > 0)
-        {
-            MainWindow::RecordVideo(this->recordFrames, this->recordDir, this->recordFormat, this->recordFrameRate, this->recordQuality);
-            this->recordFrames.clear();
-        }
+        MainWindow::FinishRecord();
     }
 }
 
@@ -1083,7 +1075,8 @@ void MainWindow::UpdatePreviewUI()
 
         if (this->recordTimeLimit > 0 && elapsedTime.second() >= this->recordTimeLimit)
         {
-            ui->btnRecordOn->setText(BTN_RECORD_OFF);
+            this->isRecordOn = false;
+            MainWindow::FinishRecord();
         }
     }
 }
@@ -1480,15 +1473,18 @@ void MainWindow::handleTempTintEvent()
 // }
 
 
-bool MainWindow::RecordVideo(
-    std::vector<cv::Mat>& frames
-    , const QString& recordDir
-    , const VideoFormatType format
-    , const double frameRate
-    , const int quality
-)
+void MainWindow::StartRecord()
 {
-    if (frames.size() > 0)
+    ui->btnRecordOn->setText(BTN_RECORD_OFF);
+
+    this->recordFrames.clear();
+    this->recordStartTime = QTime::currentTime();
+    this->timerVideoRecord->start(1000); // Update every second
+}
+
+void MainWindow::FinishRecord()
+{
+    if (this->recordFrames.size() > 0)
     {
         QDir dir(recordDir);
         if (!dir.exists())
@@ -1497,38 +1493,38 @@ bool MainWindow::RecordVideo(
         }
 
         QString timestamp = QDateTime::currentDateTime().toString(FORMAT_DATE_TIME);
-        QString filePath = dir.absoluteFilePath(timestamp + getVideoExtension(format));
-        int fourcc = getVideoFourcc(format);
+        QString filePath = dir.absoluteFilePath(timestamp + getVideoExtension(this->recordFormat));
+        int fourcc = getVideoFourcc(this->recordFormat);
 
         try
         {
             // Create VideoWriter object
-            cv::VideoWriter writer(filePath.toStdString(), fourcc, frameRate, cv::Size(frames[0].cols, frames[0].rows));
+            cv::VideoWriter writer(filePath.toStdString(), fourcc, this->recordFrameRate, cv::Size(this->recordFrames[0].cols, this->recordFrames[0].rows));
 
             // quality는 특정 format에만 적용된다.
-            if (format == VideoFormatType::MJPEG)
+            if (this->recordFormat == VideoFormatType::MJPEG)
             {
-                writer.set(cv::VIDEOWRITER_PROP_QUALITY, quality);
+                writer.set(cv::VIDEOWRITER_PROP_QUALITY, this->recordQuality);
             }
 
             // Write frames to video file
-            for (const cv::Mat& mat : frames)
+            for (const cv::Mat& mat : this->recordFrames)
             {
                 writer.write(mat);
             }
 
             // Release the VideoWriter
             writer.release();
-
-            return true;
         }
         catch (cv::Exception ex)
         {
             QMessageBox::critical(this, TITLE_ERROR, QString::fromStdString(ex.msg));
         }
+
+        this->recordFrames.clear();
     }
 
-    return false;
+    ui->btnRecordOn->setText(BTN_RECORD_ON);
 }
 
 void MainWindow::UpdateGegl(QImage& source)
