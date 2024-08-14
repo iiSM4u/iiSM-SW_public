@@ -26,7 +26,6 @@ pkg_check_modules(GEGL REQUIRED gegl-0.4)
 pkg_check_modules(BABL REQUIRED babl-0.1)
 pkg_check_modules(GLIB REQUIRED glib-2.0)
 
-
 # Include directories
 include_directories(
     ${GEGL_INCLUDE_DIRS}

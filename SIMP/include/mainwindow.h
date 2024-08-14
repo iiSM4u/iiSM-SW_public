@@ -12,8 +12,7 @@
 
 #include <opencv2/opencv.hpp>
 #include <miicam.h>
-
-#include "constants.h"
+#include "simp_const_value.h"
 #include "pixel_format_type.h"
 #include "video_format_type.h"
 #include "preset_brightness_contrast.h"
@@ -160,8 +159,8 @@ private:
 
     QTime recordStartTime;
     VideoFormatType recordFormat = VideoFormatType::MJPEG;
-    double recordFrameRate = RECORD_FRAME_RATE_DEFAULT;
-    int recordQuality = RECORD_QUALITY_DEFAULT;
+    double recordFrameRate = SimpConstValue::RECORD_FRAME_RATE_DEFAULT;
+    int recordQuality = SimpConstValue::RECORD_QUALITY_DEFAULT;
     int recordTimeLimit = 0;
     QString recordDir, captureDir; // 생성자에서 초기화 함
 
@@ -183,11 +182,11 @@ private:
     bool isUpdateStretchContrast = false;
     bool isUpdateContrastCurve = false;
 
-    double gegl_brightness = GEGL_BRIGHTNESS_DEFAULT, gegl_contrast = GEGL_CONTRAST_DEFAULT;
-    int gegl_stress_radius = GEGL_STRESS_RADIUS_DEFAULT, gegl_stress_samples = GEGL_STRESS_SAMPLES_DEFAULT, gegl_stress_iterations = GEGL_STRESS_ITERATIONS_DEFAULT;
-    bool gegl_stress_enhance_shadows = GEGL_STRESS_ENHANCE_SHADOWS_DEFAULT;
-    bool gegl_stretch_contrast_keep_colors = GEGL_STRETCH_CONTRAST_KEEP_COLORS_DEFAULT, gegl_stretch_contrast_perceptual = GEGL_STRETCH_CONTRAST_PERCEPTUAL_DEFAULT;
-    int gegl_contrast_curve_sampling_points = GEGL_CONTRAST_CURVE_SAMPLING_POINTS_DEFAULT;
+    double gegl_brightness = SimpConstValue::GEGL_BRIGHTNESS_DEFAULT, gegl_contrast = SimpConstValue::GEGL_CONTRAST_DEFAULT;
+    int gegl_stress_radius = SimpConstValue::GEGL_STRESS_RADIUS_DEFAULT, gegl_stress_samples = SimpConstValue::GEGL_STRESS_SAMPLES_DEFAULT, gegl_stress_iterations = SimpConstValue::GEGL_STRESS_ITERATIONS_DEFAULT;
+    bool gegl_stress_enhance_shadows = SimpConstValue::GEGL_STRESS_ENHANCE_SHADOWS_DEFAULT;
+    bool gegl_stretch_contrast_keep_colors = SimpConstValue::GEGL_STRETCH_CONTRAST_KEEP_COLORS_DEFAULT, gegl_stretch_contrast_perceptual = SimpConstValue::GEGL_STRETCH_CONTRAST_PERCEPTUAL_DEFAULT;
+    int gegl_contrast_curve_sampling_points = SimpConstValue::GEGL_CONTRAST_CURVE_SAMPLING_POINTS_DEFAULT;
     GeglCurve *gegl_contrast_curve_points = nullptr;
 
     std::vector<preset_brightness_contrast> presetsBrightnessContrast;

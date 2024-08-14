@@ -1,6 +1,6 @@
 #include "dialog_curve_point.h"
 #include "ui_dialog_curve_point.h"
-#include "constants.h"
+#include "simp_const_menu.h"
 #include "QMessageBox"
 
 dialog_curve_point::dialog_curve_point(QWidget *parent)
@@ -48,7 +48,7 @@ void dialog_curve_point::onOkClicked()
         if (std::abs(point.x() - x) <= std::numeric_limits<double>::epsilon() &&
             std::abs(point.y() - y) <= std::numeric_limits<double>::epsilon())
         {
-            QMessageBox::warning(this, TITLE_ERROR, MSG_EXISTS_VALUE);
+            QMessageBox::warning(this, SimpConstMenu::TITLE_ERROR, SimpConstMenu::MSG_EXISTS_VALUE);
             return;
         }
     }

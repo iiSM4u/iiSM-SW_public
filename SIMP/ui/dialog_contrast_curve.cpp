@@ -1,7 +1,7 @@
 #include "dialog_contrast_curve.h"
 #include "ui_dialog_contrast_curve.h"
 #include "dialog_curve_point.h"
-#include "constants.h"
+#include "simp_const_value.h"
 
 dialog_contrast_curve::dialog_contrast_curve(QWidget *parent)
     : QDialog(parent)
@@ -47,8 +47,8 @@ dialog_contrast_curve::dialog_contrast_curve(std::vector<preset_contrast_curve>&
     dialog_contrast_curve::UpdateSpinUI(0, 0, false);
 
     this->qpoints.clear();
-    this->qpoints.append(QPointF(GEGL_CONTRAST_CURVE_VALUE_MIN, GEGL_CONTRAST_CURVE_VALUE_MIN));
-    this->qpoints.append(QPointF(GEGL_CONTRAST_CURVE_VALUE_MAX, GEGL_CONTRAST_CURVE_VALUE_MAX));
+    this->qpoints.append(QPointF(SimpConstValue::GEGL_CONTRAST_CURVE_VALUE_MIN, SimpConstValue::GEGL_CONTRAST_CURVE_VALUE_MIN));
+    this->qpoints.append(QPointF(SimpConstValue::GEGL_CONTRAST_CURVE_VALUE_MAX, SimpConstValue::GEGL_CONTRAST_CURVE_VALUE_MAX));
 
     dialog_contrast_curve::UpdateChart(this->qpoints, this->highlightPointIndex);
     dialog_contrast_curve::UpdatePresetUI(this->presets, presetIndex);
@@ -113,8 +113,8 @@ void dialog_contrast_curve::cbPreset_SelectedIndexChanged(int index)
     else
     {
         this->qpoints.clear();
-        this->qpoints.append(QPointF(GEGL_CONTRAST_CURVE_VALUE_MIN, GEGL_CONTRAST_CURVE_VALUE_MIN));
-        this->qpoints.append(QPointF(GEGL_CONTRAST_CURVE_VALUE_MAX, GEGL_CONTRAST_CURVE_VALUE_MAX));
+        this->qpoints.append(QPointF(SimpConstValue::GEGL_CONTRAST_CURVE_VALUE_MIN, SimpConstValue::GEGL_CONTRAST_CURVE_VALUE_MIN));
+        this->qpoints.append(QPointF(SimpConstValue::GEGL_CONTRAST_CURVE_VALUE_MAX, SimpConstValue::GEGL_CONTRAST_CURVE_VALUE_MAX));
     }
 
     this->highlightPointIndex = -1;
@@ -203,13 +203,13 @@ void dialog_contrast_curve::handleChartClicked(const QPointF &point)
     double x = point.x();
     double y = point.y();
 
-    if (x >= GEGL_CONTRAST_CURVE_VALUE_MIN && x <= GEGL_CONTRAST_CURVE_VALUE_MAX
-        && y >= GEGL_CONTRAST_CURVE_VALUE_MIN && y <= GEGL_CONTRAST_CURVE_VALUE_MAX)
+    if (x >= SimpConstValue::GEGL_CONTRAST_CURVE_VALUE_MIN && x <= SimpConstValue::GEGL_CONTRAST_CURVE_VALUE_MAX
+        && y >= SimpConstValue::GEGL_CONTRAST_CURVE_VALUE_MIN && y <= SimpConstValue::GEGL_CONTRAST_CURVE_VALUE_MAX)
     {
         // custom chart에서 들어오는 index가 여기의 vector index와 다르기 때문에 여기서 새로 찾아야 함.
         for (int i = 0; i < this->qpoints.size(); i++)
         {
-            if (qAbs(this->qpoints[i].x() - x) < MARGIN_CHART_CLICK && qAbs(this->qpoints[i].y() - y) < MARGIN_CHART_CLICK)
+            if (qAbs(this->qpoints[i].x() - x) < SimpConstValue::MARGIN_CHART_CLICK && qAbs(this->qpoints[i].y() - y) < SimpConstValue::MARGIN_CHART_CLICK)
             {
                 this->highlightPointIndex = i;
                 dialog_contrast_curve::UpdateSpinUI(this->qpoints[i].x(), this->qpoints[i].y(), true);
@@ -233,18 +233,18 @@ void dialog_contrast_curve::handlePointMoved(const QPointF &newPos)
         {
             pos.setX(0);
         }
-        else if (pos.x() > GEGL_CONTRAST_CURVE_VALUE_MAX)
+        else if (pos.x() > SimpConstValue::GEGL_CONTRAST_CURVE_VALUE_MAX)
         {
-            pos.setX(GEGL_CONTRAST_CURVE_VALUE_MAX);
+            pos.setX(SimpConstValue::GEGL_CONTRAST_CURVE_VALUE_MAX);
         }
 
         if (pos.y() < 0)
         {
             pos.setY(0);
         }
-        else if (pos.y() > GEGL_CONTRAST_CURVE_VALUE_MAX)
+        else if (pos.y() > SimpConstValue::GEGL_CONTRAST_CURVE_VALUE_MAX)
         {
-            pos.setY(GEGL_CONTRAST_CURVE_VALUE_MAX);
+            pos.setY(SimpConstValue::GEGL_CONTRAST_CURVE_VALUE_MAX);
         }
 
         this->qpoints[this->highlightPointIndex] = pos;
@@ -314,8 +314,8 @@ void dialog_contrast_curve::InitChart()
     QValueAxis *axisY = new QValueAxis();
 
     // Setup the axes
-    axisX->setRange(GEGL_CONTRAST_CURVE_VALUE_MIN, GEGL_CONTRAST_CURVE_VALUE_MAX);
-    axisY->setRange(GEGL_CONTRAST_CURVE_VALUE_MIN, GEGL_CONTRAST_CURVE_VALUE_MAX);
+    axisX->setRange(SimpConstValue::GEGL_CONTRAST_CURVE_VALUE_MIN, SimpConstValue::GEGL_CONTRAST_CURVE_VALUE_MAX);
+    axisY->setRange(SimpConstValue::GEGL_CONTRAST_CURVE_VALUE_MIN, SimpConstValue::GEGL_CONTRAST_CURVE_VALUE_MAX);
 
     this->chart->addAxis(axisX, Qt::AlignBottom);
     this->chart->addAxis(axisY, Qt::AlignLeft);

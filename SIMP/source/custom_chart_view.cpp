@@ -1,5 +1,5 @@
 #include "custom_chart_view.h"
-#include "constants.h"
+#include "simp_const_value.h"
 #include <QtCharts/QScatterSeries>
 
 CustomChartView::CustomChartView(QWidget *parent)
@@ -14,8 +14,8 @@ void CustomChartView::mousePressEvent(QMouseEvent *event)
         QPointF chartPos = chart()->mapToValue(mapToScene(event->pos()));
         emit chartClicked(chartPos);
 
-        int min = GEGL_CONTRAST_CURVE_VALUE_MIN + MARGIN_CHART_CLICK;
-        int max = GEGL_CONTRAST_CURVE_VALUE_MAX - MARGIN_CHART_CLICK;
+        int min = SimpConstValue::GEGL_CONTRAST_CURVE_VALUE_MIN + SimpConstValue::MARGIN_CHART_CLICK;
+        int max = SimpConstValue::GEGL_CONTRAST_CURVE_VALUE_MAX - SimpConstValue::MARGIN_CHART_CLICK;
 
         // Check if a point is selected for dragging
         for (const auto &series : chart()->series())
@@ -28,7 +28,7 @@ void CustomChartView::mousePressEvent(QMouseEvent *event)
                     // 클릭 시에는 (0, 0), (255, 255)의 점은 선택 못하도록
                     if ((point.x() > min || point.y() > min) &&
                         (point.x() < max || point.y() < max) &&
-                        qAbs(point.x() - chartPos.x()) < MARGIN_CHART_CLICK && qAbs(point.y() - chartPos.y()) < MARGIN_CHART_CLICK)
+                        qAbs(point.x() - chartPos.x()) < SimpConstValue::MARGIN_CHART_CLICK && qAbs(point.y() - chartPos.y()) < SimpConstValue::MARGIN_CHART_CLICK)
                     {
                         pointSelected = true;
                         return;

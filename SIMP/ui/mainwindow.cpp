@@ -1,13 +1,21 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "utils.h"
+#include "simp_util.h"
+#include "simp_const_value.h"
+#include "simp_const_path.h"
+#include "simp_const_format.h"
+#include "simp_const_menu.h"
 #include "dialog_record_option.h"
 #include "dialog_brightness_contrast.h"
 #include "dialog_stretch_contrast.h"
 #include "dialog_stress.h"
 #include "dialog_contrast_curve.h"
 #include "dialog_image_processing.h"
-#include "videoloader.h"
+#include "video_loader.h"
+#include "tab_camera.h"
+#include "tab_video.h"
+#include "tab_frame.h"
+#include "simp_gegl.h"
 
 #include <QFile>
 #include <QGraphicsPixmapItem>
@@ -36,8 +44,8 @@ MainWindow::MainWindow(QWidget *parent)
     , timerFPS(new QTimer(this))
     , timerVideoRecord(new QTimer(this))
     , btnGroupCooling(new QButtonGroup(this))
-    , recordDir(QCoreApplication::applicationDirPath() + DIR_RECORD_VIDEO)
-    , captureDir(QCoreApplication::applicationDirPath() + DIR_CAPTURE_FRAME)
+    , recordDir(QCoreApplication::applicationDirPath() + SimpConstPath::DIR_RECORD_VIDEO)
+    , captureDir(QCoreApplication::applicationDirPath() + SimpConstPath::DIR_CAPTURE_FRAME)
 {
     ui->setupUi(this);
 
@@ -51,28 +59,34 @@ MainWindow::MainWindow(QWidget *parent)
         "QSpinBox:disabled { background-color: lightgray; color: darkgray; }"
     );
 
-    // ui init 전에 preset load를 해야 combobox를 채울 수 있다.
-    MainWindow::LoadPresets();
+    ui->tabWidget->addTab(new TabCamera(this), "Preview");
+    ui->tabWidget->addTab(new TabVideo(this), "Video");
+    ui->tabWidget->addTab(new TabFrame(this), "Capture");
 
-    MainWindow::ConnectUI();
-    MainWindow::InitUI();
-    MainWindow::UpdatePresetContrastCurve(this->presetsContrastCurve);
+    SimpGEGL::Init(QCoreApplication::applicationDirPath());
 
-    // 일단 false로 시작
-    MainWindow::EnablePreviewUI(false);
+    // // ui init 전에 preset load를 해야 combobox를 채울 수 있다.
+    // MainWindow::LoadPresets();
 
-    ui->sliderTemperature->setEnabled(false);
-    ui->editTemperature->setEnabled(false);
+    // MainWindow::ConnectUI();
+    // MainWindow::InitUI();
+    // MainWindow::UpdatePresetContrastCurve(this->presetsContrastCurve);
 
-    // thread 시작
-    this->isOn = true;
-    this->threadPreview = std::thread(&MainWindow::UpdatePreview, this);
-    this->threadVideo = std::thread(&MainWindow::UpdateVideo, this);
+    // // 일단 false로 시작
+    // MainWindow::EnablePreviewUI(false);
 
-    MainWindow::InitGegl();
+    // ui->sliderTemperature->setEnabled(false);
+    // ui->editTemperature->setEnabled(false);
 
-    // ui 초기화 후에 우선 카메라부터 찾는다.
-    MainWindow::FindCamera();
+    // // thread 시작
+    // this->isOn = true;
+    // this->threadPreview = std::thread(&MainWindow::UpdatePreview, this);
+    // this->threadVideo = std::thread(&MainWindow::UpdateVideo, this);
+
+    // MainWindow::InitGegl();
+
+    // // ui 초기화 후에 우선 카메라부터 찾는다.
+    // MainWindow::FindCamera();
 }
 
 MainWindow::~MainWindow()
@@ -92,7 +106,8 @@ void MainWindow::closeEvent(QCloseEvent*)
         this->threadVideo.join();
     }
 
-    MainWindow::CloseGegl();
+    SimpGEGL::Close();
+    //MainWindow::CloseGegl();
     MainWindow::CloseCamera();
 }
 
@@ -100,18 +115,18 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 {
     QMainWindow::resizeEvent(event);
 
-    if (ui->tabWidget->currentWidget() == ui->tabVideo)
-    {
-        // play 중일 떄는 play하면서 업데이트하므로 하지 않는다.
-        if (!this->isVideoPlay && std::abs(this->zoomFactor - 1.0f) <= std::numeric_limits<float>::epsilon())
-        {
-            ui->gvVideo->fitInView();
-        }
-    }    
-    else if (ui->tabWidget->currentWidget() == ui->tabFrame)
-    {
-        ui->gvFrame->fitInView();
-    }
+    // if (ui->tabWidget->currentWidget() == ui->tabVideo)
+    // {
+    //     // play 중일 떄는 play하면서 업데이트하므로 하지 않는다.
+    //     if (!this->isVideoPlay && std::abs(this->zoomFactor - 1.0f) <= std::numeric_limits<float>::epsilon())
+    //     {
+    //         ui->gvVideo->fitInView();
+    //     }
+    // }
+    // else if (ui->tabWidget->currentWidget() == ui->tabFrame)
+    // {
+    //     ui->gvFrame->fitInView();
+    // }
 }
 
 
@@ -123,174 +138,174 @@ void MainWindow::ConnectUI()
     connect(this, &MainWindow::evtCallback, this, &MainWindow::onMiiCameraCallback);
     connect(timerFPS, &QTimer::timeout, this, &MainWindow::onTimerFpsCallback);
 
-    ///////////////////////////////// preview
-    connect(ui->gvCamera, &CustomGraphicsView::mousePositionChanged, this, &MainWindow::UpdatePreviewMousePosition);
-    connect(ui->gvVideo, &CustomGraphicsView::mousePositionChanged, this, &MainWindow::UpdateVideoMousePosition);
-    connect(ui->gvFrame, &CustomGraphicsView::mousePositionChanged, this, &MainWindow::UpdateFrameMousePosition);
+    // ///////////////////////////////// preview
+    // connect(ui->gvCamera, &CustomGraphicsView::mousePositionChanged, this, &MainWindow::UpdatePreviewMousePosition);
+    // connect(ui->gvVideo, &CustomGraphicsView::mousePositionChanged, this, &MainWindow::UpdateVideoMousePosition);
+    // connect(ui->gvFrame, &CustomGraphicsView::mousePositionChanged, this, &MainWindow::UpdateFrameMousePosition);
 
-    connect(ui->cbResolution, &QComboBox::currentIndexChanged, this, &MainWindow::cbResoution_SelectedIndexChanged);
-    connect(ui->cbFormat, &QComboBox::currentIndexChanged, this, &MainWindow::cbFormat_SelectedIndexChanged);
+    // connect(ui->cbResolution, &QComboBox::currentIndexChanged, this, &MainWindow::cbResoution_SelectedIndexChanged);
+    // connect(ui->cbFormat, &QComboBox::currentIndexChanged, this, &MainWindow::cbFormat_SelectedIndexChanged);
 
-    connect(ui->btnPlayCamera, &QPushButton::clicked, this, &MainWindow::btnPlayCamera_Click);
-    connect(ui->btnStopCamera, &QPushButton::clicked, this, &MainWindow::btnStopCamera_Click);
-    connect(ui->btnCaptureCamera, &QPushButton::clicked, this, &MainWindow::btnCaptureCamera_Click);
-    connect(ui->btnRecordOn, &QPushButton::clicked, this, &MainWindow::btnRecordOn_Click);
-    connect(ui->btnRecordOption, &QPushButton::clicked, this, &MainWindow::btnRecordOption_Click);
+    // connect(ui->btnPlayCamera, &QPushButton::clicked, this, &MainWindow::btnPlayCamera_Click);
+    // connect(ui->btnStopCamera, &QPushButton::clicked, this, &MainWindow::btnStopCamera_Click);
+    // connect(ui->btnCaptureCamera, &QPushButton::clicked, this, &MainWindow::btnCaptureCamera_Click);
+    // connect(ui->btnRecordOn, &QPushButton::clicked, this, &MainWindow::btnRecordOn_Click);
+    // connect(ui->btnRecordOption, &QPushButton::clicked, this, &MainWindow::btnRecordOption_Click);
 
-    connect(ui->sliderExposureTime, &QSlider::sliderMoved, this, &MainWindow::sliderExposureTime_sliderMoved);
-    connect(ui->editExposureTime, &CustomPlainTextEdit::editingFinished, this, &MainWindow::editExposureTime_editingFinished);
+    // connect(ui->sliderExposureTime, &QSlider::sliderMoved, this, &MainWindow::sliderExposureTime_sliderMoved);
+    // connect(ui->editExposureTime, &CustomPlainTextEdit::editingFinished, this, &MainWindow::editExposureTime_editingFinished);
 
-    connect(ui->sliderGain, &QSlider::sliderMoved, this, &MainWindow::sliderGain_sliderMoved);
-    connect(ui->editGain, &CustomPlainTextEdit::editingFinished, this, &MainWindow::editGain_editingFinished);
+    // connect(ui->sliderGain, &QSlider::sliderMoved, this, &MainWindow::sliderGain_sliderMoved);
+    // connect(ui->editGain, &CustomPlainTextEdit::editingFinished, this, &MainWindow::editGain_editingFinished);
 
-    connect(ui->sliderContrast, &QSlider::sliderMoved, this, &MainWindow::sliderContrast_sliderMoved);
-    connect(ui->editContrast, &CustomPlainTextEdit::editingFinished, this, &MainWindow::editContrast_editingFinished);
+    // connect(ui->sliderContrast, &QSlider::sliderMoved, this, &MainWindow::sliderContrast_sliderMoved);
+    // connect(ui->editContrast, &CustomPlainTextEdit::editingFinished, this, &MainWindow::editContrast_editingFinished);
 
-    connect(ui->sliderGamma, &QSlider::sliderMoved, this, &MainWindow::sliderGamma_sliderMoved);
-    connect(ui->editGamma, &CustomPlainTextEdit::editingFinished, this, &MainWindow::editGamma_editingFinished);
+    // connect(ui->sliderGamma, &QSlider::sliderMoved, this, &MainWindow::sliderGamma_sliderMoved);
+    // connect(ui->editGamma, &CustomPlainTextEdit::editingFinished, this, &MainWindow::editGamma_editingFinished);
 
-    connect(ui->btnCurveSetting, &QPushButton::clicked, this, &MainWindow::btnCurveSetting_Click);
-    connect(ui->cbCurvePreset, &QComboBox::currentIndexChanged, this, &MainWindow::cbCurvePreset_SelectedIndexChanged);
+    // connect(ui->btnCurveSetting, &QPushButton::clicked, this, &MainWindow::btnCurveSetting_Click);
+    // connect(ui->cbCurvePreset, &QComboBox::currentIndexChanged, this, &MainWindow::cbCurvePreset_SelectedIndexChanged);
 
-    connect(ui->chkDarkFieldCorrection, &QCheckBox::checkStateChanged, this, &MainWindow::chkDarkFieldCorrection_CheckedChanged);
-    connect(ui->btnDarkFieldCorrection, &QPushButton::clicked, this, &MainWindow::btnDarkFieldCorrection_Click);
+    // connect(ui->chkDarkFieldCorrection, &QCheckBox::checkStateChanged, this, &MainWindow::chkDarkFieldCorrection_CheckedChanged);
+    // connect(ui->btnDarkFieldCorrection, &QPushButton::clicked, this, &MainWindow::btnDarkFieldCorrection_Click);
 
-    this->btnGroupCooling->addButton(ui->rbCoolingOn, 1);
-    this->btnGroupCooling->addButton(ui->rbCoolingOff, 2);
-    connect(this->btnGroupCooling, &QButtonGroup::idClicked, this, &MainWindow::btnGroupCooling_Click);
+    // this->btnGroupCooling->addButton(ui->rbCoolingOn, 1);
+    // this->btnGroupCooling->addButton(ui->rbCoolingOff, 2);
+    // connect(this->btnGroupCooling, &QButtonGroup::idClicked, this, &MainWindow::btnGroupCooling_Click);
 
-    connect(ui->sliderTemperature, &QSlider::sliderMoved, this, &MainWindow::sliderTemperature_sliderMoved);
-    connect(ui->editTemperature, &CustomPlainTextEdit::editingFinished, this, &MainWindow::editTemperature_editingFinished);
+    // connect(ui->sliderTemperature, &QSlider::sliderMoved, this, &MainWindow::sliderTemperature_sliderMoved);
+    // connect(ui->editTemperature, &CustomPlainTextEdit::editingFinished, this, &MainWindow::editTemperature_editingFinished);
 
-    connect(ui->btnZoomIn, &QPushButton::clicked, this, &MainWindow::btnZoomIn_Click);
-    connect(ui->btnZoomOut, &QPushButton::clicked, this, &MainWindow::btnZoomOut_Click);
+    // connect(ui->btnZoomIn, &QPushButton::clicked, this, &MainWindow::btnZoomIn_Click);
+    // connect(ui->btnZoomOut, &QPushButton::clicked, this, &MainWindow::btnZoomOut_Click);
 
-    // connect(ui->btnBrightnessContrast, &QPushButton::clicked, this, &MainWindow::btnBrightnessContrast_Click);
-    // connect(ui->btnStress, &QPushButton::clicked, this, &MainWindow::btnStress_Click);
-    // connect(ui->btnStretchContrast, &QPushButton::clicked, this, &MainWindow::btnStretchContrast_Click);
-
-
-    ///////////////////////////////// video
-    connect(ui->btnLoadVideo, &QPushButton::clicked, this, &MainWindow::btnLoadVideo_Click);
-    connect(ui->btnVideoPlay, &QPushButton::clicked, this, &MainWindow::btnPlayVideo_Click);
-    connect(ui->btnVideoStop, &QPushButton::clicked, this, &MainWindow::btnStopVideo_Click);
-    connect(ui->lvVideo, &QListView::clicked, this, &MainWindow::lvVideo_Click);
-    connect(ui->sliderVideoFrame, &QSlider::sliderMoved, this, &MainWindow::sliderVideo_sliderMoved);
+    // // connect(ui->btnBrightnessContrast, &QPushButton::clicked, this, &MainWindow::btnBrightnessContrast_Click);
+    // // connect(ui->btnStress, &QPushButton::clicked, this, &MainWindow::btnStress_Click);
+    // // connect(ui->btnStretchContrast, &QPushButton::clicked, this, &MainWindow::btnStretchContrast_Click);
 
 
-    ///////////////////////////////// frame
-    connect(ui->btnLoadFrame, &QPushButton::clicked, this, &MainWindow::btnLoadFrame_Click);
-    connect(ui->lvFrame, &QListView::clicked, this, &MainWindow::lvFrame_Click);
+    // ///////////////////////////////// video
+    // connect(ui->btnLoadVideo, &QPushButton::clicked, this, &MainWindow::btnLoadVideo_Click);
+    // connect(ui->btnVideoPlay, &QPushButton::clicked, this, &MainWindow::btnPlayVideo_Click);
+    // connect(ui->btnVideoStop, &QPushButton::clicked, this, &MainWindow::btnStopVideo_Click);
+    // connect(ui->lvVideo, &QListView::clicked, this, &MainWindow::lvVideo_Click);
+    // connect(ui->sliderVideoFrame, &QSlider::sliderMoved, this, &MainWindow::sliderVideo_sliderMoved);
 
 
-    connect(ui->btnVideoProcessing, &QPushButton::clicked, this, &MainWindow::btnVideoProcessing_Click);
-    connect(ui->btnFrameProcessing, &QPushButton::clicked, this, &MainWindow::btnFrameProcessing_Click);
+    // ///////////////////////////////// frame
+    // connect(ui->btnLoadFrame, &QPushButton::clicked, this, &MainWindow::btnLoadFrame_Click);
+    // connect(ui->lvFrame, &QListView::clicked, this, &MainWindow::lvFrame_Click);
+
+
+    // connect(ui->btnVideoProcessing, &QPushButton::clicked, this, &MainWindow::btnVideoProcessing_Click);
+    // connect(ui->btnFrameProcessing, &QPushButton::clicked, this, &MainWindow::btnFrameProcessing_Click);
 }
 
 void MainWindow::InitUI()
 {
     ////////////////////////// tab preview
-    ui->cbFormat->clear();
-    for (const auto& format : {PixelFormatType::RGB24, PixelFormatType::Raw})
-        //for (const auto& format : {PixelFormatType::RGB24, PixelFormatType::RGB32, PixelFormatType::Raw})
-    {
-        ui->cbFormat->addItem(toString(format));
-    }
-    ui->cbFormat->setCurrentIndex(0);
+    // ui->cbFormat->clear();
+    // for (const auto& format : {PixelFormatType::RGB24, PixelFormatType::Raw})
+    //     //for (const auto& format : {PixelFormatType::RGB24, PixelFormatType::RGB32, PixelFormatType::Raw})
+    // {
+    //     ui->cbFormat->addItem(toString(format));
+    // }
+    // ui->cbFormat->setCurrentIndex(0);
 
-    // init gain, contrast, gamma
-    ui->sliderGain->setMinimum(MIICAM_EXPOGAIN_MIN);
-    ui->sliderGain->setMaximum(MIICAM_EXPOGAIN_MAX);
-    ui->sliderGain->setValue(MIICAM_EXPOGAIN_DEF);
-    ui->editGain->setPlainText(QString::number(MIICAM_EXPOGAIN_DEF));
+    // // init gain, contrast, gamma
+    // ui->sliderGain->setMinimum(MIICAM_EXPOGAIN_MIN);
+    // ui->sliderGain->setMaximum(MIICAM_EXPOGAIN_MAX);
+    // ui->sliderGain->setValue(MIICAM_EXPOGAIN_DEF);
+    // ui->editGain->setPlainText(QString::number(MIICAM_EXPOGAIN_DEF));
 
-    ui->sliderContrast->setMinimum(MIICAM_CONTRAST_MIN);
-    ui->sliderContrast->setMaximum(MIICAM_CONTRAST_MAX);
-    ui->sliderContrast->setValue(MIICAM_CONTRAST_DEF);
-    ui->editContrast->setPlainText(QString::number(MIICAM_CONTRAST_DEF));
+    // ui->sliderContrast->setMinimum(MIICAM_CONTRAST_MIN);
+    // ui->sliderContrast->setMaximum(MIICAM_CONTRAST_MAX);
+    // ui->sliderContrast->setValue(MIICAM_CONTRAST_DEF);
+    // ui->editContrast->setPlainText(QString::number(MIICAM_CONTRAST_DEF));
 
-    ui->sliderGamma->setMinimum(MIICAM_GAMMA_MIN);
-    ui->sliderGamma->setMaximum(MIICAM_GAMMA_MAX);
-    ui->sliderGamma->setValue(MIICAM_GAMMA_DEF);
-    ui->editGamma->setPlainText(QString::number(MIICAM_GAMMA_DEF));
+    // ui->sliderGamma->setMinimum(MIICAM_GAMMA_MIN);
+    // ui->sliderGamma->setMaximum(MIICAM_GAMMA_MAX);
+    // ui->sliderGamma->setValue(MIICAM_GAMMA_DEF);
+    // ui->editGamma->setPlainText(QString::number(MIICAM_GAMMA_DEF));
 
-    ui->editDarkFieldCorrectionQuantity->setPlainText(QString::number(MIICAM_DARK_FIELD_QUANTITY_DEFAULT));
-
-
-    ////////////////////////// tab video
-    // Check if the captures directory exists, and create it if it doesn't
-    QDir dirVideo(this->recordDir);
-    if (!dirVideo.exists()) {
-       dirVideo.mkpath(this->recordDir);
-    }
-
-    // Set model properties
-    this->filesystemVideo->setRootPath(this->recordDir);
-    this->filesystemVideo->setNameFilters(QStringList() << "*.avi" << "*.mp4" << "*.wmv");
-    this->filesystemVideo->setNameFilterDisables(false);
-
-    ui->lvVideo->setModel(this->filesystemVideo);
-    ui->lvVideo->setRootIndex(this->filesystemVideo->index(this->recordDir)); // Set the root index
-    ui->lbDirVideo->setText(this->recordDir);
-
-    ui->btnVideoPlay->setEnabled(false);
-    ui->btnVideoStop->setEnabled(false);
-    ui->sliderVideoFrame->setEnabled(false);
+    // ui->editDarkFieldCorrectionQuantity->setPlainText(QString::number(MIICAM_DARK_FIELD_QUANTITY_DEFAULT));
 
 
-    ////////////////////////// tab frame
-    QDir dirFrame(this->captureDir);
-    if (!dirFrame.exists()) {
-        dirFrame.mkpath(this->captureDir);
-    }
+    // ////////////////////////// tab video
+    // // Check if the captures directory exists, and create it if it doesn't
+    // QDir dirVideo(this->recordDir);
+    // if (!dirVideo.exists()) {
+    //    dirVideo.mkpath(this->recordDir);
+    // }
 
-    // Set model properties
-    this->filesystemFrame->setRootPath(this->captureDir);
-    this->filesystemFrame->setNameFilters(QStringList() << "*.png" << "*.jpg" << "*.jpeg" << "*.bmp" << "*.gif");
-    this->filesystemFrame->setNameFilterDisables(false);
+    // // Set model properties
+    // this->filesystemVideo->setRootPath(this->recordDir);
+    // this->filesystemVideo->setNameFilters(QStringList() << "*.avi" << "*.mp4" << "*.wmv");
+    // this->filesystemVideo->setNameFilterDisables(false);
 
-    ui->lvFrame->setModel(this->filesystemFrame);
-    ui->lvFrame->setRootIndex(this->filesystemFrame->index(this->captureDir)); // Set the root index
-    ui->lbDirFrames->setText(this->captureDir);
+    // ui->lvVideo->setModel(this->filesystemVideo);
+    // ui->lvVideo->setRootIndex(this->filesystemVideo->index(this->recordDir)); // Set the root index
+    // ui->lbDirVideo->setText(this->recordDir);
+
+    // ui->btnVideoPlay->setEnabled(false);
+    // ui->btnVideoStop->setEnabled(false);
+    // ui->sliderVideoFrame->setEnabled(false);
 
 
-    ////////////////////////// progressDialog
-    progressDialog->setLabelText("Loading video...");
-    progressDialog->setCancelButton(nullptr);
-    progressDialog->setRange(0, 100);
-    progressDialog->setModal(true);
-    progressDialog->reset();
+    // ////////////////////////// tab frame
+    // QDir dirFrame(this->captureDir);
+    // if (!dirFrame.exists()) {
+    //     dirFrame.mkpath(this->captureDir);
+    // }
+
+    // // Set model properties
+    // this->filesystemFrame->setRootPath(this->captureDir);
+    // this->filesystemFrame->setNameFilters(QStringList() << "*.png" << "*.jpg" << "*.jpeg" << "*.bmp" << "*.gif");
+    // this->filesystemFrame->setNameFilterDisables(false);
+
+    // ui->lvFrame->setModel(this->filesystemFrame);
+    // ui->lvFrame->setRootIndex(this->filesystemFrame->index(this->captureDir)); // Set the root index
+    // ui->lbDirFrames->setText(this->captureDir);
+
+
+    // ////////////////////////// progressDialog
+    // progressDialog->setLabelText("Loading video...");
+    // progressDialog->setCancelButton(nullptr);
+    // progressDialog->setRange(0, 100);
+    // progressDialog->setModal(true);
+    // progressDialog->reset();
 }
 
 void MainWindow::EnablePreviewUI(bool isPlay)
 {
-    ui->cbResolution->setEnabled(!isPlay);
-    ui->cbFormat->setEnabled(!isPlay);
+//     ui->cbResolution->setEnabled(!isPlay);
+//     ui->cbFormat->setEnabled(!isPlay);
 
-    ui->btnStopCamera->setEnabled(isPlay);
-    ui->btnCaptureCamera->setEnabled(isPlay);
+//     ui->btnStopCamera->setEnabled(isPlay);
+//     ui->btnCaptureCamera->setEnabled(isPlay);
 
-    ui->btnRecordOn->setEnabled(isPlay);
-    ui->btnRecordOption->setEnabled(isPlay);
+//     ui->btnRecordOn->setEnabled(isPlay);
+//     ui->btnRecordOption->setEnabled(isPlay);
 
-    ui->sliderExposureTime->setEnabled(isPlay);
-    ui->editExposureTime->setEnabled(isPlay);
+//     ui->sliderExposureTime->setEnabled(isPlay);
+//     ui->editExposureTime->setEnabled(isPlay);
 
-    ui->sliderGain->setEnabled(isPlay);
-    ui->editGain->setEnabled(isPlay);
+//     ui->sliderGain->setEnabled(isPlay);
+//     ui->editGain->setEnabled(isPlay);
 
-    ui->sliderContrast->setEnabled(isPlay);
-    ui->editContrast->setEnabled(isPlay);
+//     ui->sliderContrast->setEnabled(isPlay);
+//     ui->editContrast->setEnabled(isPlay);
 
-    ui->sliderGamma->setEnabled(isPlay);
-    ui->editGamma->setEnabled(isPlay);
+//     ui->sliderGamma->setEnabled(isPlay);
+//     ui->editGamma->setEnabled(isPlay);
 
-    ui->btnCurveSetting->setEnabled(isPlay);
-    ui->cbCurvePreset->setEnabled(isPlay);
-;
-    ui->editDarkFieldCorrectionQuantity->setEnabled(isPlay);
-    ui->btnDarkFieldCorrection->setEnabled(isPlay);
-    ui->chkDarkFieldCorrection->setEnabled(isPlay && this->isDarkFieldCorrectCapture);
+//     ui->btnCurveSetting->setEnabled(isPlay);
+//     ui->cbCurvePreset->setEnabled(isPlay);
+// ;
+//     ui->editDarkFieldCorrectionQuantity->setEnabled(isPlay);
+//     ui->btnDarkFieldCorrection->setEnabled(isPlay);
+//     ui->chkDarkFieldCorrection->setEnabled(isPlay && this->isDarkFieldCorrectCapture);
 
     // ui->btnBrightnessContrast->setEnabled(isPlay);
     // ui->btnStress->setEnabled(isPlay);
@@ -300,44 +315,44 @@ void MainWindow::EnablePreviewUI(bool isPlay)
 /////////////////////// preview
 void MainWindow::UpdatePreviewMousePosition(int x, int y, const QColor &color)
 {
-    if (ui->tabWidget->currentWidget() == ui->tabCamera)
-    {
-        QString text = QString("(x: %1, y: %2), (r: %3, g: %4, b: %5)")
-                           .arg(x)
-                           .arg(y)
-                           .arg(color.red())
-                           .arg(color.green())
-                           .arg(color.blue());
-        ui->lbCameraPixel->setText(text);  // Assume you have a QLabel named label in your .ui file
-    }
+    // if (ui->tabWidget->currentWidget() == ui->tabCamera)
+    // {
+    //     QString text = QString("(x: %1, y: %2), (r: %3, g: %4, b: %5)")
+    //                        .arg(x)
+    //                        .arg(y)
+    //                        .arg(color.red())
+    //                        .arg(color.green())
+    //                        .arg(color.blue());
+    //     ui->lbCameraPixel->setText(text);  // Assume you have a QLabel named label in your .ui file
+    // }
 }
 
 void MainWindow::UpdateVideoMousePosition(int x, int y, const QColor &color)
 {
-    if (ui->tabWidget->currentWidget() == ui->tabVideo)
-    {
-        QString text = QString("(x: %1, y: %2), (r: %3, g: %4, b: %5)")
-                           .arg(x)
-                           .arg(y)
-                           .arg(color.red())
-                           .arg(color.green())
-                           .arg(color.blue());
-        ui->lbVideoPixel->setText(text);  // Assume you have a QLabel named label in your .ui file
-    }
+    // if (ui->tabWidget->currentWidget() == ui->tabVideo)
+    // {
+    //     QString text = QString("(x: %1, y: %2), (r: %3, g: %4, b: %5)")
+    //                        .arg(x)
+    //                        .arg(y)
+    //                        .arg(color.red())
+    //                        .arg(color.green())
+    //                        .arg(color.blue());
+    //     ui->lbVideoPixel->setText(text);  // Assume you have a QLabel named label in your .ui file
+    // }
 }
 
 void MainWindow::UpdateFrameMousePosition(int x, int y, const QColor &color)
 {
-    if (ui->tabWidget->currentWidget() == ui->tabFrame)
-    {
-        QString text = QString("(x: %1, y: %2), (r: %3, g: %4, b: %5)")
-                           .arg(x)
-                           .arg(y)
-                           .arg(color.red())
-                           .arg(color.green())
-                           .arg(color.blue());
-        ui->lbFramePixel->setText(text);  // Assume you have a QLabel named label in your .ui file
-    }
+    // if (ui->tabWidget->currentWidget() == ui->tabFrame)
+    // {
+    //     QString text = QString("(x: %1, y: %2), (r: %3, g: %4, b: %5)")
+    //                        .arg(x)
+    //                        .arg(y)
+    //                        .arg(color.red())
+    //                        .arg(color.green())
+    //                        .arg(color.blue());
+    //     ui->lbFramePixel->setText(text);  // Assume you have a QLabel named label in your .ui file
+    // }
 }
 
 void MainWindow::cbResoution_SelectedIndexChanged(int index)
@@ -353,7 +368,7 @@ void MainWindow::cbResoution_SelectedIndexChanged(int index)
 
     Miicam_put_eSize(this->miiHcam, static_cast<unsigned>(resolutionIndex));
 
-    ui->btnPlayCamera->setEnabled(true);
+    //ui->btnPlayCamera->setEnabled(true);
 }
 
 void MainWindow::cbFormat_SelectedIndexChanged(int index)
@@ -397,7 +412,7 @@ void MainWindow::btnPlayCamera_Click()
         MainWindow::StartCamera();
         this->isCameraPlay = true;
 
-        ui->btnPlayCamera->setText(BTN_PAUSE);
+        // ui->btnPlayCamera->setText(BTN_PAUSE);
 
         MainWindow::EnablePreviewUI(true);
     }
@@ -409,13 +424,13 @@ void MainWindow::btnPlayCamera_Click()
         {
             // resume camera
             Miicam_Pause(this->miiHcam, 0);  /* 1 => pause, 0 => continue */
-            ui->btnPlayCamera->setText(BTN_PAUSE);
+            // ui->btnPlayCamera->setText(BTN_PAUSE);
         }
         else
         {
             // pause camera
             Miicam_Pause(this->miiHcam, 1);  /* 1 => pause, 0 => continue */
-            ui->btnPlayCamera->setText(BTN_PLAY);
+            // ui->btnPlayCamera->setText(BTN_PLAY);
         }
     }
 }
@@ -425,7 +440,7 @@ void MainWindow::btnStopCamera_Click()
     Miicam_Stop(this->miiHcam);
     this->isCameraRun = false;
 
-    ui->btnPlayCamera->setText(BTN_PLAY);
+    // ui->btnPlayCamera->setText(BTN_PLAY);
     MainWindow::EnablePreviewUI(false);
 }
 
@@ -433,7 +448,7 @@ void MainWindow::btnCaptureCamera_Click()
 {
     if (!this->resultPreview.isNull())
     {
-        QString pathDir = QCoreApplication::applicationDirPath() + DIR_CAPTURE_FRAME;
+        QString pathDir = QCoreApplication::applicationDirPath() + SimpConstPath::DIR_CAPTURE_FRAME;
 
         QDir dir(pathDir);
         if (!dir.exists())
@@ -442,8 +457,8 @@ void MainWindow::btnCaptureCamera_Click()
         }
 
         QDateTime currentDateTime = QDateTime::currentDateTime();
-        QString timestamp = currentDateTime.toString(FORMAT_DATE_TIME);
-        QString filePath = dir.absoluteFilePath(timestamp + EXTENSION_CAPTURE_IMAGE);
+        QString timestamp = currentDateTime.toString(SimpConstFormat::DATE_TIME);
+        QString filePath = dir.absoluteFilePath(timestamp + SimpConstPath::EXTENSION_CAPTURE_IMAGE);
 
         this->resultPreview.save(filePath);
     }
@@ -481,209 +496,209 @@ void MainWindow::btnRecordOption_Click()
 void MainWindow::sliderExposureTime_sliderMoved(int position)
 {
     // trackbar가 정수이므로 0.1을 곱한다.
-    double value = ui->sliderExposureTime->value() * 0.1;
+    // double value = ui->sliderExposureTime->value() * 0.1;
 
-    // time이 microsecond이고 range가 0.1-50000이기 때문에 0.01을 곱한다.
-    Miicam_put_ExpoTime(this->miiHcam, (unsigned int)(value * 100.0));
+    // // time이 microsecond이고 range가 0.1-50000이기 때문에 0.01을 곱한다.
+    // Miicam_put_ExpoTime(this->miiHcam, (unsigned int)(value * 100.0));
 
-    // label도 업데이트
-    ui->editExposureTime->setPlainText(QString::number(value, 'f', 1));
+    // // label도 업데이트
+    // ui->editExposureTime->setPlainText(QString::number(value, 'f', 1));
 }
 
 void MainWindow::editExposureTime_editingFinished()
 {
-    bool ok;
-    double value = ui->editExposureTime->toPlainText().toDouble(&ok);
+    // bool ok;
+    // double value = ui->editExposureTime->toPlainText().toDouble(&ok);
 
-    if (ok)
-    {
-        // trackbar에는 정수로 들어가야 하므로 10을 곱한다.
-        int valueInt = (int)(value * 10.0);
+    // if (ok)
+    // {
+    //     // trackbar에는 정수로 들어가야 하므로 10을 곱한다.
+    //     int valueInt = (int)(value * 10.0);
 
-        if (valueInt >= ui->sliderExposureTime->minimum() && valueInt <= ui->sliderExposureTime->maximum())
-        {
-            // time이 microsecond이고 range가 0.1-50000이기 때문에 0.01을 곱한다.
-            Miicam_put_ExpoTime(this->miiHcam, (unsigned int)(value * 100.0));
+    //     if (valueInt >= ui->sliderExposureTime->minimum() && valueInt <= ui->sliderExposureTime->maximum())
+    //     {
+    //         // time이 microsecond이고 range가 0.1-50000이기 때문에 0.01을 곱한다.
+    //         Miicam_put_ExpoTime(this->miiHcam, (unsigned int)(value * 100.0));
 
-            // slider에도 값 업데이트
-            ui->sliderExposureTime->setValue(valueInt);
-        }
-        else
-        {
-            QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_RANGE);
+    //         // slider에도 값 업데이트
+    //         ui->sliderExposureTime->setValue(valueInt);
+    //     }
+    //     else
+    //     {
+    //         QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_RANGE);
 
-            // 기존 값으로 되돌린다.
-            value = roundToDecimalPlaces(ui->sliderExposureTime->value() * 0.1, 1);
-            ui->editExposureTime->setPlainText(QString::number(value, 'f', 1));
-        }
-    }
-    else
-    {
-        QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_VALUE);
+    //         // 기존 값으로 되돌린다.
+    //         value = roundToDecimalPlaces(ui->sliderExposureTime->value() * 0.1, 1);
+    //         ui->editExposureTime->setPlainText(QString::number(value, 'f', 1));
+    //     }
+    // }
+    // else
+    // {
+    //     QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_VALUE);
 
-        // 기존 값으로 되돌린다.
-        value = roundToDecimalPlaces(ui->sliderExposureTime->value() * 0.1, 1);
-        ui->editExposureTime->setPlainText(QString::number(value, 'f', 1));
-    }
+    //     // 기존 값으로 되돌린다.
+    //     value = roundToDecimalPlaces(ui->sliderExposureTime->value() * 0.1, 1);
+    //     ui->editExposureTime->setPlainText(QString::number(value, 'f', 1));
+    // }
 }
 
 void MainWindow::sliderGain_sliderMoved(int position)
 {
-    int value = ui->sliderGain->value();
+    // int value = ui->sliderGain->value();
 
-    Miicam_put_ExpoAGain(this->miiHcam, (unsigned short)(value));
+    // Miicam_put_ExpoAGain(this->miiHcam, (unsigned short)(value));
 
-    // label도 업데이트
-    ui->editGain->setPlainText(QString::number(value));
+    // // label도 업데이트
+    // ui->editGain->setPlainText(QString::number(value));
 }
 
 void MainWindow::editGain_editingFinished()
 {
-    bool ok;
-    int value = ui->editGain->toPlainText().toInt(&ok);
+    // bool ok;
+    // int value = ui->editGain->toPlainText().toInt(&ok);
 
-    if (ok)
-    {
-        if (value >= ui->sliderGain->minimum() && value <= ui->sliderGain->maximum())
-        {
-            Miicam_put_ExpoAGain(this->miiHcam, (unsigned short)(value));
+    // if (ok)
+    // {
+    //     if (value >= ui->sliderGain->minimum() && value <= ui->sliderGain->maximum())
+    //     {
+    //         Miicam_put_ExpoAGain(this->miiHcam, (unsigned short)(value));
 
-            // slider에도 값 업데이트
-            ui->sliderGain->setValue(value);
-        }
-        else
-        {
-            QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_RANGE);
+    //         // slider에도 값 업데이트
+    //         ui->sliderGain->setValue(value);
+    //     }
+    //     else
+    //     {
+    //         QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_RANGE);
 
-            // 기존 값으로 되돌린다.
-            ui->editGain->setPlainText(QString::number(ui->sliderGain->value()));
-        }
-    }
-    else
-    {
-        QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_VALUE);
+    //         // 기존 값으로 되돌린다.
+    //         ui->editGain->setPlainText(QString::number(ui->sliderGain->value()));
+    //     }
+    // }
+    // else
+    // {
+    //     QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_VALUE);
 
-        // 기존 값으로 되돌린다.
-        ui->editGain->setPlainText(QString::number(ui->sliderGain->value()));
-    }
+    //     // 기존 값으로 되돌린다.
+    //     ui->editGain->setPlainText(QString::number(ui->sliderGain->value()));
+    // }
 }
 
 void MainWindow::sliderContrast_sliderMoved(int position)
 {
-    int value = ui->sliderContrast->value();
+    // int value = ui->sliderContrast->value();
 
-    Miicam_put_Contrast(this->miiHcam, value);
+    // Miicam_put_Contrast(this->miiHcam, value);
 
-    // label도 업데이트
-    ui->editContrast->setPlainText(QString::number(value));
+    // // label도 업데이트
+    // ui->editContrast->setPlainText(QString::number(value));
 }
 
 void MainWindow::editContrast_editingFinished()
 {
-    bool ok;
-    int value = ui->editContrast->toPlainText().toInt(&ok);
+    // bool ok;
+    // int value = ui->editContrast->toPlainText().toInt(&ok);
 
-    if (ok)
-    {
-        if (value >= ui->sliderContrast->minimum() && value <= ui->sliderContrast->maximum())
-        {
-            Miicam_put_Contrast(this->miiHcam, value);
+    // if (ok)
+    // {
+    //     if (value >= ui->sliderContrast->minimum() && value <= ui->sliderContrast->maximum())
+    //     {
+    //         Miicam_put_Contrast(this->miiHcam, value);
 
-            // slider에도 값 업데이트
-            ui->sliderContrast->setValue(value);
-        }
-        else
-        {
-            QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_RANGE);
+    //         // slider에도 값 업데이트
+    //         ui->sliderContrast->setValue(value);
+    //     }
+    //     else
+    //     {
+    //         QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_RANGE);
 
-            // 기존 값으로 되돌린다.
-            ui->editContrast->setPlainText(QString::number(ui->sliderContrast->value()));
-        }
-    }
-    else
-    {
-        QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_VALUE);
+    //         // 기존 값으로 되돌린다.
+    //         ui->editContrast->setPlainText(QString::number(ui->sliderContrast->value()));
+    //     }
+    // }
+    // else
+    // {
+    //     QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_VALUE);
 
-        // 기존 값으로 되돌린다.
-        ui->editContrast->setPlainText(QString::number(ui->sliderContrast->value()));
-    }
+    //     // 기존 값으로 되돌린다.
+    //     ui->editContrast->setPlainText(QString::number(ui->sliderContrast->value()));
+    // }
 }
 
 void MainWindow::sliderGamma_sliderMoved(int position)
 {
-    int value = ui->sliderGamma->value();
+    // int value = ui->sliderGamma->value();
 
-    Miicam_put_Gamma(this->miiHcam, value);
+    // Miicam_put_Gamma(this->miiHcam, value);
 
-    // label도 업데이트
-    ui->editGamma->setPlainText(QString::number(value));
+    // // label도 업데이트
+    // ui->editGamma->setPlainText(QString::number(value));
 }
 
 void MainWindow::editGamma_editingFinished()
 {
-    bool ok;
-    int value = ui->editGamma->toPlainText().toInt(&ok);
+    // bool ok;
+    // int value = ui->editGamma->toPlainText().toInt(&ok);
 
-    if (ok)
-    {
-        if (value >= ui->sliderGamma->minimum() && value <= ui->sliderGamma->maximum())
-        {
-            Miicam_put_Gamma(this->miiHcam, value);
+    // if (ok)
+    // {
+    //     if (value >= ui->sliderGamma->minimum() && value <= ui->sliderGamma->maximum())
+    //     {
+    //         Miicam_put_Gamma(this->miiHcam, value);
 
-            // slider에도 값 업데이트
-            ui->sliderGamma->setValue(value);
-        }
-        else
-        {
-            QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_RANGE);
+    //         // slider에도 값 업데이트
+    //         ui->sliderGamma->setValue(value);
+    //     }
+    //     else
+    //     {
+    //         QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_RANGE);
 
-            // 기존 값으로 되돌린다.
-            ui->editGamma->setPlainText(QString::number(ui->sliderGamma->value()));
-        }
-    }
-    else
-    {
-        QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_VALUE);
+    //         // 기존 값으로 되돌린다.
+    //         ui->editGamma->setPlainText(QString::number(ui->sliderGamma->value()));
+    //     }
+    // }
+    // else
+    // {
+    //     QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_VALUE);
 
-        // 기존 값으로 되돌린다.
-        ui->editGamma->setPlainText(QString::number(ui->sliderGamma->value()));
-    }
+    //     // 기존 값으로 되돌린다.
+    //     ui->editGamma->setPlainText(QString::number(ui->sliderGamma->value()));
+    //}
 }
 
 void MainWindow::btnCurveSetting_Click()
 {
-    dialog_contrast_curve dialog(this->presetsContrastCurve, ui->cbCurvePreset->currentIndex() - 1, this->isUpdateContrastCurve, this);
-    connect(&dialog, &dialog_contrast_curve::contrastCurveUpdated, this, &MainWindow::UpdateContrastCurvePoints);
+    // dialog_contrast_curve dialog(this->presetsContrastCurve, ui->cbCurvePreset->currentIndex() - 1, this->isUpdateContrastCurve, this);
+    // connect(&dialog, &dialog_contrast_curve::contrastCurveUpdated, this, &MainWindow::UpdateContrastCurvePoints);
 
-    if (dialog.exec() == QDialog::Accepted)
-    {
-        this->presetsContrastCurve = dialog.getPresets();
-        this->isUpdateContrastCurve = dialog.getEnable();
-        int index = this->isUpdateContrastCurve ? dialog.getSelectedIndex() + 1 : 0;
+    // if (dialog.exec() == QDialog::Accepted)
+    // {
+    //     this->presetsContrastCurve = dialog.getPresets();
+    //     this->isUpdateContrastCurve = dialog.getEnable();
+    //     int index = this->isUpdateContrastCurve ? dialog.getSelectedIndex() + 1 : 0;
 
-        QJsonArray jsonArray;
-        convertPresetsImageCurveToJsonArray(this->presetsContrastCurve, jsonArray);
+    //     QJsonArray jsonArray;
+    //     convertPresetsImageCurveToJsonArray(this->presetsContrastCurve, jsonArray);
 
-        QString pathPreset = QCoreApplication::applicationDirPath() + PATH_JSON_CONTRAST_CURVE;
-        saveJsonFile(pathPreset, jsonArray);
+    //     QString pathPreset = QCoreApplication::applicationDirPath() + PATH_JSON_CONTRAST_CURVE;
+    //     saveJsonFile(pathPreset, jsonArray);
 
-        MainWindow::UpdatePresetContrastCurve(this->presetsContrastCurve, index);
-    }
-    else
-    {
-        int index = ui->cbCurvePreset->currentIndex();
+    //     MainWindow::UpdatePresetContrastCurve(this->presetsContrastCurve, index);
+    // }
+    // else
+    // {
+    //     int index = ui->cbCurvePreset->currentIndex();
 
-        // 선택된 preset이 있었으면 그것으로 업데이트
-        if (index > 0)
-        {
-            MainWindow::UpdateContrastCurvePoints(this->presetsContrastCurve[index - 1].GetPoints());
-        }
-        // none이면 update 안 함.
-        else
-        {
-            this->isUpdateContrastCurve = false;
-        }
-    }
+    //     // 선택된 preset이 있었으면 그것으로 업데이트
+    //     if (index > 0)
+    //     {
+    //         MainWindow::UpdateContrastCurvePoints(this->presetsContrastCurve[index - 1].GetPoints());
+    //     }
+    //     // none이면 update 안 함.
+    //     else
+    //     {
+    //         this->isUpdateContrastCurve = false;
+    //     }
+    // }
 }
 
 void MainWindow::cbCurvePreset_SelectedIndexChanged(int index)
@@ -702,134 +717,134 @@ void MainWindow::cbCurvePreset_SelectedIndexChanged(int index)
 
 void MainWindow::chkDarkFieldCorrection_CheckedChanged(Qt::CheckState checkState)
 {
-    int option = ui->chkDarkFieldCorrection->isChecked() ? 1 : 0;
-    Miicam_put_Option(this->miiHcam, MIICAM_OPTION_DFC, option);
+    //int option = ui->chkDarkFieldCorrection->isChecked() ? 1 : 0;
+    // Miicam_put_Option(this->miiHcam, MIICAM_OPTION_DFC, option);
 }
 
 void MainWindow::btnDarkFieldCorrection_Click()
 {
-    bool ok;
-    int value = ui->editDarkFieldCorrectionQuantity->toPlainText().toInt(&ok);
+    // bool ok;
+    // int value = ui->editDarkFieldCorrectionQuantity->toPlainText().toInt(&ok);
 
-    if (ok)
-    {
-        if (value >= MIICAM_DARK_FIELD_QUANTITY_MIN && value <= MIICAM_DARK_FIELD_QUANTITY_MAX)
-        {
-            int optionValue = 0xff000000 | value;
-            Miicam_put_Option(this->miiHcam, MIICAM_OPTION_DFC, optionValue);
+    // if (ok)
+    // {
+    //     if (value >= MIICAM_DARK_FIELD_QUANTITY_MIN && value <= MIICAM_DARK_FIELD_QUANTITY_MAX)
+    //     {
+    //         int optionValue = 0xff000000 | value;
+    //         Miicam_put_Option(this->miiHcam, MIICAM_OPTION_DFC, optionValue);
 
-            // Dark Filed Correction 적용
-            Miicam_DfcOnce(this->miiHcam);
+    //         // Dark Filed Correction 적용
+    //         Miicam_DfcOnce(this->miiHcam);
 
-            this->isDarkFieldCorrectCapture = true;
-            ui->chkDarkFieldCorrection->setEnabled(this->isDarkFieldCorrectCapture);
-        }
-        else
-        {
-            QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_RANGE);
-            ui->editGamma->setPlainText(QString::number(MIICAM_DARK_FIELD_QUANTITY_DEFAULT));
-        }
-    }
-    else
-    {
-        QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_VALUE);
-        ui->editGamma->setPlainText(QString::number(MIICAM_DARK_FIELD_QUANTITY_DEFAULT));
-    }
+    //         this->isDarkFieldCorrectCapture = true;
+    //         ui->chkDarkFieldCorrection->setEnabled(this->isDarkFieldCorrectCapture);
+    //     }
+    //     else
+    //     {
+    //         QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_RANGE);
+    //         ui->editGamma->setPlainText(QString::number(MIICAM_DARK_FIELD_QUANTITY_DEFAULT));
+    //     }
+    // }
+    // else
+    // {
+    //     QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_VALUE);
+    //     ui->editGamma->setPlainText(QString::number(MIICAM_DARK_FIELD_QUANTITY_DEFAULT));
+    // }
 }
 
 void MainWindow::btnGroupCooling_Click(int id)
 {
-    bool enable = id == 1;
-    ui->sliderTemperature->setEnabled(enable);
-    ui->editTemperature->setEnabled(enable);
+    // bool enable = id == 1;
+    // ui->sliderTemperature->setEnabled(enable);
+    // ui->editTemperature->setEnabled(enable);
 }
 
 void MainWindow::sliderTemperature_sliderMoved(int position)
 {
-    // trackbar가 정수이므로 0.1을 곱한다.
-    double value = ui->sliderTemperature->value() * 0.1;
+    // // trackbar가 정수이므로 0.1을 곱한다.
+    // double value = ui->sliderTemperature->value() * 0.1;
 
-    // temperature는 3.2도를 32로 받기 때문에 10을 곱한다.
-    Miicam_put_Temperature(this->miiHcam, (short)(value * 10.0));
+    // // temperature는 3.2도를 32로 받기 때문에 10을 곱한다.
+    // Miicam_put_Temperature(this->miiHcam, (short)(value * 10.0));
 
-    // label도 업데이트
-    ui->editTemperature->setPlainText(QString::number(value, 'f', 1));
+    // // label도 업데이트
+    // ui->editTemperature->setPlainText(QString::number(value, 'f', 1));
 }
 
 void MainWindow::editTemperature_editingFinished()
 {
-    bool ok;
-    double value = ui->editTemperature->toPlainText().toDouble(&ok);
+    // bool ok;
+    // double value = ui->editTemperature->toPlainText().toDouble(&ok);
 
-    if (ok)
-    {
-        // trackbar에는 정수로 들어가야 하므로 10을 곱한다.
-        int valueInt = (int)(value * 10.0);
+    // if (ok)
+    // {
+    //     // trackbar에는 정수로 들어가야 하므로 10을 곱한다.
+    //     int valueInt = (int)(value * 10.0);
 
-        if (valueInt >= ui->sliderTemperature->minimum() && valueInt <= ui->sliderTemperature->maximum())
-        {
-            // temperature는 3.2도를 32로 받기 때문에 10을 곱한다.
-            Miicam_put_Temperature(this->miiHcam, (short)(value * 10.0));
+    //     if (valueInt >= ui->sliderTemperature->minimum() && valueInt <= ui->sliderTemperature->maximum())
+    //     {
+    //         // temperature는 3.2도를 32로 받기 때문에 10을 곱한다.
+    //         Miicam_put_Temperature(this->miiHcam, (short)(value * 10.0));
 
-            // slider에도 값 업데이트
-            ui->sliderTemperature->setValue(valueInt);
-        }
-        else
-        {
-            QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_RANGE);
+    //         // slider에도 값 업데이트
+    //         ui->sliderTemperature->setValue(valueInt);
+    //     }
+    //     else
+    //     {
+    //         QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_RANGE);
 
-            // 기존 값으로 되돌린다.
-            value = roundToDecimalPlaces(ui->sliderTemperature->value() * 0.1, 1);
-            ui->editTemperature->setPlainText(QString::number(value, 'f', 1));
-        }
-    }
-    else
-    {
-        QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_VALUE);
+    //         // 기존 값으로 되돌린다.
+    //         value = roundToDecimalPlaces(ui->sliderTemperature->value() * 0.1, 1);
+    //         ui->editTemperature->setPlainText(QString::number(value, 'f', 1));
+    //     }
+    // }
+    // else
+    // {
+    //     QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_VALUE);
 
-        // 기존 값으로 되돌린다.
-        value = roundToDecimalPlaces(ui->sliderTemperature->value() * 0.1, 1);
-        ui->editTemperature->setPlainText(QString::number(value, 'f', 1));
-    }
+    //     // 기존 값으로 되돌린다.
+    //     value = roundToDecimalPlaces(ui->sliderTemperature->value() * 0.1, 1);
+    //     ui->editTemperature->setPlainText(QString::number(value, 'f', 1));
+    // }
 }
 
 void MainWindow::btnZoomIn_Click()
 {
-    this->zoomFactor += ZOOM_VALUE;
+    // this->zoomFactor += ZOOM_VALUE;
 
-    if (this->zoomFactor > ZOOM_MAX)
-    {
-        this->zoomFactor = ZOOM_MAX;
-    }
+    // if (this->zoomFactor > ZOOM_MAX)
+    // {
+    //     this->zoomFactor = ZOOM_MAX;
+    // }
 
-    // 현재 창 크기 기준으로 zoom 조절. 실제 이미지 크기로 하면 창 크기를 넘어선다.
-    ui->gvCamera->fitInView();
-    ui->gvCamera->scale(this->zoomFactor, this->zoomFactor);
+    // // 현재 창 크기 기준으로 zoom 조절. 실제 이미지 크기로 하면 창 크기를 넘어선다.
+    // ui->gvCamera->fitInView();
+    // ui->gvCamera->scale(this->zoomFactor, this->zoomFactor);
 
-    ui->gvVideo->fitInView();
-    ui->gvVideo->scale(this->zoomFactor, this->zoomFactor);
+    // ui->gvVideo->fitInView();
+    // ui->gvVideo->scale(this->zoomFactor, this->zoomFactor);
 
-    ui->lbZoom->setText(QString("Zoom x%1").arg(this->zoomFactor, 0, 'f', 2));
+    // ui->lbZoom->setText(QString("Zoom x%1").arg(this->zoomFactor, 0, 'f', 2));
 
 }
 
 void MainWindow::btnZoomOut_Click()
 {
-    this->zoomFactor -= ZOOM_VALUE;
+    // this->zoomFactor -= ZOOM_VALUE;
 
-    if (this->zoomFactor < ZOOM_MIN)
-    {
-        this->zoomFactor = ZOOM_MIN;
-    }
+    // if (this->zoomFactor < ZOOM_MIN)
+    // {
+    //     this->zoomFactor = ZOOM_MIN;
+    // }
 
-    // 현재 창 크기 기준으로 zoom 조절. 실제 이미지 크기로 하면 창 크기를 넘어선다.
-    ui->gvCamera->fitInView();
-    ui->gvCamera->scale(this->zoomFactor, this->zoomFactor);
+    // // 현재 창 크기 기준으로 zoom 조절. 실제 이미지 크기로 하면 창 크기를 넘어선다.
+    // ui->gvCamera->fitInView();
+    // ui->gvCamera->scale(this->zoomFactor, this->zoomFactor);
 
-    ui->gvVideo->fitInView();
-    ui->gvVideo->scale(this->zoomFactor, this->zoomFactor);
+    // ui->gvVideo->fitInView();
+    // ui->gvVideo->scale(this->zoomFactor, this->zoomFactor);
 
-    ui->lbZoom->setText(QString("Zoom x%1").arg(this->zoomFactor, 0, 'f', 2));
+    // ui->lbZoom->setText(QString("Zoom x%1").arg(this->zoomFactor, 0, 'f', 2));
 }
 
 void MainWindow::btnBrightnessContrast_Click()
@@ -844,10 +859,10 @@ void MainWindow::btnBrightnessContrast_Click()
         this->isUpdateBrightnessContrast = dialog.getEnable();
 
         QJsonArray jsonArray;
-        convertBrightnessContrastPresetsToJsonArray(this->presetsBrightnessContrast, jsonArray);
+        SimpUtil::convertBrightnessContrastPresetsToJsonArray(this->presetsBrightnessContrast, jsonArray);
 
-        QString pathPreset = QCoreApplication::applicationDirPath() + PATH_JSON_BRIGHTNESS_CONTRAST;
-        saveJsonFile(pathPreset, jsonArray);
+        QString pathPreset = QCoreApplication::applicationDirPath() + SimpConstPath::PATH_JSON_BRIGHTNESS_CONTRAST;
+        SimpUtil::saveJsonFile(pathPreset, jsonArray);
     }
 }
 
@@ -865,10 +880,10 @@ void MainWindow::btnStress_Click()
         this->isUpdateStress = dialog.getEnable();
 
         QJsonArray jsonArray;
-        convertStressPrestesToJsonArray(this->presetsStress, jsonArray);
+        SimpUtil::convertStressPrestesToJsonArray(this->presetsStress, jsonArray);
 
-        QString pathPreset = QCoreApplication::applicationDirPath() + PATH_JSON_STRESS;
-        saveJsonFile(pathPreset, jsonArray);
+        QString pathPreset = QCoreApplication::applicationDirPath() + SimpConstPath::PATH_JSON_STRESS;
+        SimpUtil::saveJsonFile(pathPreset, jsonArray);
     }
 }
 
@@ -891,8 +906,8 @@ void MainWindow::btnLoadVideo_Click()
 
     if (!dir.isEmpty())
     {
-        ui->lvVideo->setRootIndex(this->filesystemVideo->setRootPath(dir));
-        ui->lbDirVideo->setText(dir);
+        // ui->lvVideo->setRootIndex(this->filesystemVideo->setRootPath(dir));
+        // ui->lbDirVideo->setText(dir);
     }
 }
 
@@ -930,19 +945,19 @@ void MainWindow::onVideoLoadingFinished(bool success, const std::vector<QImage>&
         this->videoTotalFrame = totalFrames;
         this->currentFrame = 0;
 
-        ui->sliderVideoFrame->setRange(0, this->videoTotalFrame - 1);
-        ui->sliderVideoFrame->setSingleStep(1);
-        ui->sliderVideoFrame->setPageStep(10);
-        ui->sliderVideoFrame->setValue(0);
+        // ui->sliderVideoFrame->setRange(0, this->videoTotalFrame - 1);
+        // ui->sliderVideoFrame->setSingleStep(1);
+        // ui->sliderVideoFrame->setPageStep(10);
+        // ui->sliderVideoFrame->setValue(0);
 
-        ui->lbVideoFrame->setText(QString("%1 / %2").arg(ui->sliderVideoFrame->value()).arg(this->videoTotalFrame));
+        // ui->lbVideoFrame->setText(QString("%1 / %2").arg(ui->sliderVideoFrame->value()).arg(this->videoTotalFrame));
 
-        ui->btnVideoPlay->setEnabled(true);
-        ui->btnVideoStop->setEnabled(true);
-        ui->sliderVideoFrame->setEnabled(true);
+        // ui->btnVideoPlay->setEnabled(true);
+        // ui->btnVideoStop->setEnabled(true);
+        // ui->sliderVideoFrame->setEnabled(true);
 
-        ui->btnVideoPlay->setText("Play");
-        this->isVideoPlay = false;  // 자동실행 안 함
+        // ui->btnVideoPlay->setText("Play");
+        // this->isVideoPlay = false;  // 자동실행 안 함
     }
     else
     {
@@ -953,7 +968,7 @@ void MainWindow::onVideoLoadingFinished(bool success, const std::vector<QImage>&
 void MainWindow::btnPlayVideo_Click()
 {
     this->isVideoPlay = !this->isVideoPlay;
-    ui->btnVideoPlay->setText(!this->isVideoPlay ? BTN_PLAY : BTN_PAUSE);
+    // ui->btnVideoPlay->setText(!this->isVideoPlay ? BTN_PLAY : BTN_PAUSE);
 }
 
 void MainWindow::btnStopVideo_Click()
@@ -985,8 +1000,8 @@ void MainWindow::btnLoadFrame_Click()
 
     if (!dir.isEmpty())
     {
-        ui->lvFrame->setRootIndex(this->filesystemFrame->setRootPath(dir));
-        ui->lbDirFrames->setText(dir);
+        // ui->lvFrame->setRootIndex(this->filesystemFrame->setRootPath(dir));
+        // ui->lbDirFrames->setText(dir);
     }
 }
 
@@ -994,8 +1009,8 @@ void MainWindow::lvFrame_Click(const QModelIndex &index)
 {
     QString filePath = this->filesystemFrame->filePath(index);
     QImage image(filePath);
-    ui->gvFrame->setImage(image);
-    ui->gvFrame->fitInView();
+    // ui->gvFrame->setImage(image);
+    // ui->gvFrame->fitInView();
 }
 
 
@@ -1032,7 +1047,7 @@ void MainWindow::UpdatePreview()
             QMetaObject::invokeMethod(this, "UpdatePreviewUI", Qt::QueuedConnection);
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(DELAY_CAMERA)); // Frame rate delay
+        std::this_thread::sleep_for(std::chrono::milliseconds(SimpConstValue::DELAY_CAMERA)); // Frame rate delay
     }
 }
 
@@ -1056,92 +1071,92 @@ void MainWindow::UpdateVideo()
             QMetaObject::invokeMethod(this, "UpdateVideoUI", Qt::QueuedConnection);
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(DELAY_VIDEO)); // Frame rate delay
+        std::this_thread::sleep_for(std::chrono::milliseconds(SimpConstValue::DELAY_VIDEO)); // Frame rate delay
     }
 }
 
 void MainWindow::UpdatePreviewUI()
 {
-    ui->gvCamera->setImage(this->resultPreview);
+    // ui->gvCamera->setImage(this->resultPreview);
 
-    if (std::abs(this->zoomFactor - 1.0f) <= std::numeric_limits<float>::epsilon())
-    {
-        ui->gvCamera->fitInView();
-    }
+    // if (std::abs(this->zoomFactor - 1.0f) <= std::numeric_limits<float>::epsilon())
+    // {
+    //     ui->gvCamera->fitInView();
+    // }
 
-    if (this->isRecordOn)
-    {
-        QTime currentTime = QTime::currentTime();
-        int elapsedSeconds = this->recordStartTime.secsTo(currentTime);
-        QTime elapsedTime(0, 0);
-        elapsedTime = elapsedTime.addSecs(elapsedSeconds);
+    // if (this->isRecordOn)
+    // {
+    //     QTime currentTime = QTime::currentTime();
+    //     int elapsedSeconds = this->recordStartTime.secsTo(currentTime);
+    //     QTime elapsedTime(0, 0);
+    //     elapsedTime = elapsedTime.addSecs(elapsedSeconds);
 
-        ui->lbRecordingTime->setText("Recoding Time: " + elapsedTime.toString("hh:mm:ss"));
+    //     ui->lbRecordingTime->setText("Recoding Time: " + elapsedTime.toString("hh:mm:ss"));
 
-        if (this->recordTimeLimit > 0 && elapsedTime.second() >= this->recordTimeLimit)
-        {
-            this->isRecordOn = false;
-            MainWindow::FinishRecord();
-        }
-    }
+    //     if (this->recordTimeLimit > 0 && elapsedTime.second() >= this->recordTimeLimit)
+    //     {
+    //         this->isRecordOn = false;
+    //         MainWindow::FinishRecord();
+    //     }
+    // }
 }
 
 void MainWindow::UpdateVideoUI()
 {
-    ui->gvVideo->setImage(this->resultVideo);
+    // ui->gvVideo->setImage(this->resultVideo);
 
-    if (std::abs(zoomFactor - 1.0f) <= std::numeric_limits<float>::epsilon())
-    {
-        ui->gvVideo->fitInView();
-    }
+    // if (std::abs(zoomFactor - 1.0f) <= std::numeric_limits<float>::epsilon())
+    // {
+    //     ui->gvVideo->fitInView();
+    // }
 
-    ui->lbVideoFrame->setText(QString("%1 / %2").arg(this->currentFrame + 1).arg(this->videoTotalFrame));
-    ui->sliderVideoFrame->setValue(this->currentFrame);
+    // ui->lbVideoFrame->setText(QString("%1 / %2").arg(this->currentFrame + 1).arg(this->videoTotalFrame));
+    // ui->sliderVideoFrame->setValue(this->currentFrame);
 
-    if (!this->isVideoPlay)
-    {
-        ui->btnVideoPlay->setText(BTN_PLAY);
-    }
+    // if (!this->isVideoPlay)
+    // {
+    //     ui->btnVideoPlay->setText(BTN_PLAY);
+    // }
 }
 
 void MainWindow::LoadPresets()
 {
     QJsonArray jsonArray;
 
-    if (loadJsonFile(QCoreApplication::applicationDirPath() + PATH_JSON_BRIGHTNESS_CONTRAST, jsonArray))
+    if (SimpUtil::loadJsonFile(QCoreApplication::applicationDirPath() + SimpConstPath::PATH_JSON_BRIGHTNESS_CONTRAST, jsonArray))
     {
-        this->presetsBrightnessContrast = convertJsonToBrightnessContrastPresets(jsonArray);
+        this->presetsBrightnessContrast = SimpUtil::convertJsonToBrightnessContrastPresets(jsonArray);
     }
 
-    if (loadJsonFile(QCoreApplication::applicationDirPath() + PATH_JSON_STRESS, jsonArray))
+    if (SimpUtil::loadJsonFile(QCoreApplication::applicationDirPath() + SimpConstPath::PATH_JSON_STRESS, jsonArray))
     {
-        this->presetsStress = convertJsonToStressPrestes(jsonArray);
+        this->presetsStress = SimpUtil::convertJsonToStressPrestes(jsonArray);
     }
 
-    if (loadJsonFile(QCoreApplication::applicationDirPath() + PATH_JSON_CONTRAST_CURVE, jsonArray))
+    if (SimpUtil::loadJsonFile(QCoreApplication::applicationDirPath() + SimpConstPath::PATH_JSON_CONTRAST_CURVE, jsonArray))
     {
-        this->presetsContrastCurve = convertJsonToPresetsImageCurve(jsonArray);
+        this->presetsContrastCurve = SimpUtil::convertJsonToPresetsImageCurve(jsonArray);
     }
 }
 
 void MainWindow::UpdatePresetContrastCurve(const std::vector<preset_contrast_curve>& presets, const int index)
 {
-    ui->cbCurvePreset->clear();
+    // ui->cbCurvePreset->clear();
 
-    ui->cbCurvePreset->addItem(KEY_NONE);
+    // ui->cbCurvePreset->addItem(KEY_NONE);
 
-    if (presets.size() > 0)
-    {
-        for (const preset_contrast_curve& preset : presets)
-        {
-            QString message = QString("index: %1, points: %2")
-                                  .arg(preset.GetIndex()) // 'f' for floating point, 2 decimal places
-                                  .arg(preset.GetPoints().size());
-            ui->cbCurvePreset->addItem(message);
-        }
-    }
+    // if (presets.size() > 0)
+    // {
+    //     for (const preset_contrast_curve& preset : presets)
+    //     {
+    //         QString message = QString("index: %1, points: %2")
+    //                               .arg(preset.GetIndex()) // 'f' for floating point, 2 decimal places
+    //                               .arg(preset.GetPoints().size());
+    //         ui->cbCurvePreset->addItem(message);
+    //     }
+    // }
 
-    ui->cbCurvePreset->setCurrentIndex(index);
+    // ui->cbCurvePreset->setCurrentIndex(index);
 }
 
 void MainWindow::InitGegl()
@@ -1181,8 +1196,8 @@ void MainWindow::FindCamera()
             this->miiDevice = arr[0];
 
             {
-                const QSignalBlocker blocker(ui->lbDeviceName);
-                ui->lbDeviceName->setText(QString::fromWCharArray(this->miiDevice.displayname));
+                // const QSignalBlocker blocker(ui->lbDeviceName);
+                // ui->lbDeviceName->setText(QString::fromWCharArray(this->miiDevice.displayname));
             }
 
             MainWindow::OpenCamera();
@@ -1209,22 +1224,22 @@ void MainWindow::OpenCamera()
 
         // open에 성공하면 resolution 업데이트
         {
-            const QSignalBlocker blocker(ui->cbResolution);
+            // const QSignalBlocker blocker(ui->cbResolution);
 
-            MainWindow::InitCameraResolution();
-            MainWindow::InitSensorTemperature();
+            // MainWindow::InitCameraResolution();
+            // MainWindow::InitSensorTemperature();
 
-            // open에 성공하면 true
-            ui->cbResolution->setEnabled(true);
-            ui->cbFormat->setEnabled(true);
-            ui->btnPlayCamera->setEnabled(true);
-            ui->rbCoolingOn->setEnabled(true);
-            ui->rbCoolingOff->setEnabled(true);
-            ui->sliderTemperature->setEnabled(true);
-            ui->editTemperature->setEnabled(true);
+            // // open에 성공하면 true
+            // ui->cbResolution->setEnabled(true);
+            // ui->cbFormat->setEnabled(true);
+            // ui->btnPlayCamera->setEnabled(true);
+            // ui->rbCoolingOn->setEnabled(true);
+            // ui->rbCoolingOff->setEnabled(true);
+            // ui->sliderTemperature->setEnabled(true);
+            // ui->editTemperature->setEnabled(true);
 
-            ui->btnPlayCamera->setText(BTN_PLAY);
-            ui->rbCoolingOn->setChecked(true);
+            // ui->btnPlayCamera->setText(BTN_PLAY);
+            // ui->rbCoolingOn->setChecked(true);
         }
 
     }
@@ -1232,8 +1247,8 @@ void MainWindow::OpenCamera()
 
 void MainWindow::CloseCamera()
 {
-    ui->btnPlayCamera->setEnabled(false);
-    ui->btnPlayCamera->setText(BTN_PLAY);
+    // ui->btnPlayCamera->setEnabled(false);
+    // ui->btnPlayCamera->setText(BTN_PLAY);
 
     if (this->miiHcam)
     {
@@ -1282,12 +1297,12 @@ void MainWindow::StartCamera()
 
 void MainWindow::InitCameraResolution()
 {
-    ui->cbResolution->clear();
-    for (unsigned i = 0; i < this->miiDevice.model->preview; ++i)
-    {
-        ui->cbResolution->addItem(QString::asprintf("%u x %u", this->miiDevice.model->res[i].width, this->miiDevice.model->res[i].height));
-    }
-    ui->cbResolution->setCurrentIndex(this->resolutionIndex);
+    // ui->cbResolution->clear();
+    // for (unsigned i = 0; i < this->miiDevice.model->preview; ++i)
+    // {
+    //     ui->cbResolution->addItem(QString::asprintf("%u x %u", this->miiDevice.model->res[i].width, this->miiDevice.model->res[i].height));
+    // }
+    // ui->cbResolution->setCurrentIndex(this->resolutionIndex);
 }
 
 void MainWindow::UpdateExposureTime()
@@ -1301,26 +1316,26 @@ void MainWindow::UpdateExposureTime()
     double def = nDef * 0.01;
     double value = nTime * 0.01;
 
-    if (min < MIICAM_EXPOSURE_TIME_MIN)
+    if (min < SimpConstValue::MIICAM_EXPOSURE_TIME_MIN)
     {
-        min = MIICAM_EXPOSURE_TIME_MIN;
+        min = SimpConstValue::MIICAM_EXPOSURE_TIME_MIN;
     }
 
-    if (max > MIICAM_EXPOSURE_TIME_MAX)
+    if (max > SimpConstValue::MIICAM_EXPOSURE_TIME_MAX)
     {
-        max = MIICAM_EXPOSURE_TIME_MAX;
+        max = SimpConstValue::MIICAM_EXPOSURE_TIME_MAX;
     }
 
-    ui->sliderExposureTime->setMinimum((int)(min * 10.0));
-    ui->sliderExposureTime->setMaximum((int)(max * 10.0));
-    ui->sliderExposureTime->setValue((int)(value * 10.0));
-    ui->editExposureTime->setPlainText(QString::number(value, 'f', 1));
+    // ui->sliderExposureTime->setMinimum((int)(min * 10.0));
+    // ui->sliderExposureTime->setMaximum((int)(max * 10.0));
+    // ui->sliderExposureTime->setValue((int)(value * 10.0));
+    // ui->editExposureTime->setPlainText(QString::number(value, 'f', 1));
 }
 
 void MainWindow::InitSensorTemperature()
 {
     // 강제로 -50도로 초기화
-    double value = MIICAM_TEMPERATURE_MIN * 10.0;
+    double value = SimpConstValue::MIICAM_TEMPERATURE_MIN * 10.0;
     Miicam_put_Temperature(this->miiHcam, (short)value);
 
     //short temperature;
@@ -1329,10 +1344,10 @@ void MainWindow::InitSensorTemperature()
     //// temperature는 3.2도를 32로 받기 때문에 0.1을 곱한다.
     //double value = temperature * 0.1;
 
-    ui->sliderTemperature->setMinimum((int)(MIICAM_TEMPERATURE_MIN * 10.0));
-    ui->sliderTemperature->setMaximum((int)(MIICAM_TEMPERATURE_MAX * 10.0));
-    ui->sliderTemperature->setValue((int)value);
-    ui->editTemperature->setPlainText(QString::number(value * 0.1, 'f', 1));
+    // ui->sliderTemperature->setMinimum((int)(MIICAM_TEMPERATURE_MIN * 10.0));
+    // ui->sliderTemperature->setMaximum((int)(MIICAM_TEMPERATURE_MAX * 10.0));
+    // ui->sliderTemperature->setValue((int)value);
+    // ui->editTemperature->setPlainText(QString::number(value * 0.1, 'f', 1));
 }
 
 void MainWindow::onTimerFpsCallback()
@@ -1341,7 +1356,7 @@ void MainWindow::onTimerFpsCallback()
 
     if (miiHcam && SUCCEEDED(Miicam_get_FrameRate(this->miiHcam, &nFrame, &nTime, &nTotalFrame)) && (nTime > 0))
     {
-        ui->lbCameraFPS->setText(QString::asprintf("%u, fps = %.1f", nTotalFrame, nFrame * 1000.0 / nTime));
+        // ui->lbCameraFPS->setText(QString::asprintf("%u, fps = %.1f", nTotalFrame, nFrame * 1000.0 / nTime));
     }
 }
 
@@ -1470,7 +1485,7 @@ void MainWindow::handleTempTintEvent()
 
 void MainWindow::StartRecord()
 {
-    ui->btnRecordOn->setText(BTN_RECORD_OFF);
+    // ui->btnRecordOn->setText(BTN_RECORD_OFF);
 
     this->recordFrames.clear();
     this->recordStartTime = QTime::currentTime();
@@ -1487,9 +1502,9 @@ void MainWindow::FinishRecord()
             dir.mkpath(recordDir);
         }
 
-        QString timestamp = QDateTime::currentDateTime().toString(FORMAT_DATE_TIME);
-        QString filePath = dir.absoluteFilePath(timestamp + getVideoExtension(this->recordFormat));
-        int fourcc = getVideoFourcc(this->recordFormat);
+        QString timestamp = QDateTime::currentDateTime().toString(SimpConstFormat::DATE_TIME);
+        QString filePath = dir.absoluteFilePath(timestamp + SimpUtil::getVideoExtension(this->recordFormat));
+        int fourcc = SimpUtil::getVideoFourcc(this->recordFormat);
 
         try
         {
@@ -1513,13 +1528,13 @@ void MainWindow::FinishRecord()
         }
         catch (cv::Exception ex)
         {
-            QMessageBox::critical(this, TITLE_ERROR, QString::fromStdString(ex.msg));
+            QMessageBox::critical(this, SimpConstMenu::TITLE_ERROR, QString::fromStdString(ex.msg));
         }
 
         this->recordFrames.clear();
     }
 
-    ui->btnRecordOn->setText(BTN_RECORD_ON);
+    // ui->btnRecordOn->setText(BTN_RECORD_ON);
 }
 
 void MainWindow::UpdateGegl(QImage& source)
@@ -1618,7 +1633,7 @@ void MainWindow::UpdateContrastCurvePoints(const QVector<QPointF>& points)
         this->gegl_contrast_curve_points = nullptr;
     }
 
-    this->gegl_contrast_curve_points = gegl_curve_new(GEGL_CONTRAST_CURVE_VALUE_MIN, GEGL_CONTRAST_CURVE_VALUE_MAX);
+    this->gegl_contrast_curve_points = gegl_curve_new(SimpConstValue::GEGL_CONTRAST_CURVE_VALUE_MIN, SimpConstValue::GEGL_CONTRAST_CURVE_VALUE_MAX);
 
     for (const QPointF& point : points)
     {

@@ -1,7 +1,8 @@
 #include "dialog_brightness_contrast.h"
 #include "ui_dialog_brightness_contrast.h"
-#include "constants.h"
-#include "utils.h"
+#include "simp_util.h"
+#include "simp_const_value.h"
+#include "simp_const_menu.h"
 
 #include <QMessageBox>
 #include <QJsonObject>
@@ -37,13 +38,13 @@ dialog_brightness_contrast::dialog_brightness_contrast(std::vector<preset_bright
 
     // set min-max
     // 10을 곱한다.
-    ui->sliderBrightness->setMinimum((int)(GEGL_BRIGHTNESS_MIN * 10.0));
-    ui->sliderBrightness->setMaximum((int)(GEGL_BRIGHTNESS_MAX * 10.0));
+    ui->sliderBrightness->setMinimum((int)(SimpConstValue::GEGL_BRIGHTNESS_MIN * 10.0));
+    ui->sliderBrightness->setMaximum((int)(SimpConstValue::GEGL_BRIGHTNESS_MAX * 10.0));
     ui->sliderBrightness->setValue((int)(brightness * 10.0));
     ui->editBrightness->setPlainText(QString::number(brightness, 'f', 1));
 
-    ui->sliderContrast->setMinimum((int)(GEGL_CONTRAST_MIN * 10.0));
-    ui->sliderContrast->setMaximum((int)(GEGL_CONTRAST_MAX * 10.0));
+    ui->sliderContrast->setMinimum((int)(SimpConstValue::GEGL_CONTRAST_MIN * 10.0));
+    ui->sliderContrast->setMaximum((int)(SimpConstValue::GEGL_CONTRAST_MAX * 10.0));
     ui->sliderContrast->setValue((int)(contrast * 10.0));
     ui->editContrast->setPlainText(QString::number(contrast, 'f', 1));
 
@@ -88,8 +89,8 @@ void dialog_brightness_contrast::chkBrightnessContrast_CheckedChanged(Qt::CheckS
 void dialog_brightness_contrast::cbPreset_SelectedIndexChanged(int index)
 {
     // combobox가 -1일 때는 default 값으로 띄운다.
-    double brightness = GEGL_BRIGHTNESS_DEFAULT;
-    double contrast = GEGL_CONTRAST_DEFAULT;
+    double brightness = SimpConstValue::GEGL_BRIGHTNESS_DEFAULT;
+    double contrast = SimpConstValue::GEGL_CONTRAST_DEFAULT;
 
     if (index > -1)
     {
@@ -156,19 +157,19 @@ void dialog_brightness_contrast::editBrightness_editingFinished()
         }
         else
         {
-            QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_RANGE);
+            QMessageBox::warning(this, SimpConstMenu::TITLE_ERROR, SimpConstMenu::MSG_INVALID_RANGE);
 
             // 기존 값으로 되돌린다.
-            value = roundToDecimalPlaces(ui->sliderBrightness->value() * 0.1, 1);
+            value = SimpUtil::roundToDecimalPlaces(ui->sliderBrightness->value() * 0.1, 1);
             ui->editBrightness->setPlainText(QString::number(value, 'f', 1));
         }
     }
     else
     {
-        QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_VALUE);
+        QMessageBox::warning(this, SimpConstMenu::TITLE_ERROR, SimpConstMenu::MSG_INVALID_VALUE);
 
         // 기존 값으로 되돌린다.
-        value = roundToDecimalPlaces(ui->sliderBrightness->value() * 0.1, 1);
+        value = SimpUtil::roundToDecimalPlaces(ui->sliderBrightness->value() * 0.1, 1);
         ui->editBrightness->setPlainText(QString::number(value, 'f', 1));
     }
 }
@@ -197,19 +198,19 @@ void dialog_brightness_contrast::editContrast_editingFinished()
         }
         else
         {
-            QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_RANGE);
+            QMessageBox::warning(this, SimpConstMenu::TITLE_ERROR, SimpConstMenu::MSG_INVALID_RANGE);
 
             // 기존 값으로 되돌린다.
-            value = roundToDecimalPlaces(ui->sliderContrast->value() * 0.1, 1);
+            value = SimpUtil::roundToDecimalPlaces(ui->sliderContrast->value() * 0.1, 1);
             ui->editContrast->setPlainText(QString::number(value, 'f', 1));
         }
     }
     else
     {
-        QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_VALUE);
+        QMessageBox::warning(this, SimpConstMenu::TITLE_ERROR, SimpConstMenu::MSG_INVALID_VALUE);
 
         // 기존 값으로 되돌린다.
-        value = roundToDecimalPlaces(ui->sliderContrast->value() * 0.1, 1);
+        value = SimpUtil::roundToDecimalPlaces(ui->sliderContrast->value() * 0.1, 1);
         ui->editContrast->setPlainText(QString::number(value, 'f', 1));
     }
 }

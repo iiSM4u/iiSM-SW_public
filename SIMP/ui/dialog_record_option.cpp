@@ -1,7 +1,9 @@
 #include "dialog_record_option.h"
 #include "ui_dialog_record_option.h"
+#include "simp_const_path.h"
+#include "simp_const_value.h"
+#include "simp_const_menu.h"
 
-#include "constants.h"
 #include <QFileDialog>
 #include <QMessageBox>
 
@@ -23,7 +25,7 @@ dialog_record_option::dialog_record_option(const QString& dir, const VideoFormat
     connect(ui->sliderFrameRate, &QSlider::sliderMoved, this, &dialog_record_option::sliderFrameRate_sliderMoved);
     connect(ui->editFrameRate, &CustomPlainTextEdit::editingFinished, this, &dialog_record_option::editFrameRate_editingFinished);
 
-    ui->lbDir->setText(QCoreApplication::applicationDirPath() + DIR_RECORD_VIDEO);
+    ui->lbDir->setText(QCoreApplication::applicationDirPath() + SimpConstPath::DIR_RECORD_VIDEO);
 
     ui->cbVideoFormat->clear();
     for (const auto& format : {VideoFormatType::MJPEG, VideoFormatType::XVID, VideoFormatType::MP4V, VideoFormatType::NONE })
@@ -38,8 +40,8 @@ dialog_record_option::dialog_record_option(const QString& dir, const VideoFormat
     ui->editTimeLimit->setPlainText(QString::number(timeLimit));
     ui->editTimeLimit->setEnabled(timeLimit > 0);
 
-    ui->sliderFrameRate->setMinimum(RECORD_FRAME_RATE_MIN);
-    ui->sliderFrameRate->setMaximum(RECORD_FRAME_RATE_MAX);
+    ui->sliderFrameRate->setMinimum(SimpConstValue::RECORD_FRAME_RATE_MIN);
+    ui->sliderFrameRate->setMaximum(SimpConstValue::RECORD_FRAME_RATE_MAX);
     ui->sliderFrameRate->setValue(frameRate);
     ui->editFrameRate->setPlainText(QString::number(frameRate));
 }
@@ -115,7 +117,7 @@ void dialog_record_option::editFrameRate_editingFinished()
         }
         else
         {
-            QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_RANGE);
+            QMessageBox::warning(this, SimpConstMenu::TITLE_ERROR, SimpConstMenu::MSG_INVALID_RANGE);
 
             // 기존 값으로 되돌린다.
             ui->editFrameRate->setPlainText(QString::number(ui->sliderFrameRate->value()));
@@ -123,7 +125,7 @@ void dialog_record_option::editFrameRate_editingFinished()
     }
     else
     {
-        QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_VALUE);
+        QMessageBox::warning(this, SimpConstMenu::TITLE_ERROR, SimpConstMenu::MSG_INVALID_VALUE);
 
         // 기존 값으로 되돌린다.
         ui->editFrameRate->setPlainText(QString::number(ui->sliderFrameRate->value()));

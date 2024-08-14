@@ -1,17 +1,17 @@
-#include "utils.h"
-#include "constants.h"
+#include "simp_util.h"
+#include "simp_const_key.h"
 
 #include <QPointF>
 #include <QJsonDocument>
 #include <QDir>
 #include <opencv2/opencv.hpp>
 
-double roundToDecimalPlaces(double value, int decimalPlaces) {
+double SimpUtil::roundToDecimalPlaces(double value, int decimalPlaces) {
     double factor = std::pow(10.0, decimalPlaces);
     return std::round(value * factor) / factor;
 }
 
-bool loadJsonFile(const QString& filePath, QJsonArray& jsonArray)
+bool SimpUtil::loadJsonFile(const QString& filePath, QJsonArray& jsonArray)
 {
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -30,7 +30,7 @@ bool loadJsonFile(const QString& filePath, QJsonArray& jsonArray)
     return true;
 }
 
-bool saveJsonFile(const QString& filePath, const QJsonArray& jsonArray)
+bool SimpUtil::saveJsonFile(const QString& filePath, const QJsonArray& jsonArray)
 {
     // 파일 경로에서 디렉토리를 추출
     QFileInfo fileInfo(filePath);
@@ -57,7 +57,7 @@ bool saveJsonFile(const QString& filePath, const QJsonArray& jsonArray)
     return true;
 }
 
-QString getVideoExtension(VideoFormatType type)
+QString SimpUtil::getVideoExtension(VideoFormatType type)
 {
     switch (type)
     {
@@ -70,7 +70,7 @@ QString getVideoExtension(VideoFormatType type)
 }
 
 
-int getVideoFourcc(VideoFormatType type)
+int SimpUtil::getVideoFourcc(VideoFormatType type)
 {
     switch (type)
     {
@@ -82,76 +82,76 @@ int getVideoFourcc(VideoFormatType type)
     }
 }
 
-std::vector<preset_brightness_contrast> convertJsonToBrightnessContrastPresets(const QJsonArray& jsonArray)
+std::vector<preset_brightness_contrast> SimpUtil::convertJsonToBrightnessContrastPresets(const QJsonArray& jsonArray)
 {
     std::vector<preset_brightness_contrast> presets;
     for (const QJsonValue& value : jsonArray)
     {
         QJsonObject obj = value.toObject();
-        int index = obj[KEY_INDEX].toInt();
-        double brightness = obj[KEY_BRIGHTNESS].toDouble();
-        double contrast = obj[KEY_CONTRAST].toDouble();
+        int index = obj[SimpConstKey::INDEX].toInt();
+        double brightness = obj[SimpConstKey::BRIGHTNESS].toDouble();
+        double contrast = obj[SimpConstKey::CONTRAST].toDouble();
         presets.emplace_back(index, brightness, contrast);
     }
     return presets;
 }
 
-void convertBrightnessContrastPresetsToJsonArray(const std::vector<preset_brightness_contrast>& presets, QJsonArray& jsonArray)
+void SimpUtil::convertBrightnessContrastPresetsToJsonArray(const std::vector<preset_brightness_contrast>& presets, QJsonArray& jsonArray)
 {
     for (const preset_brightness_contrast& preset : presets)
     {
         QJsonObject jsonObject;
-        jsonObject[KEY_INDEX] = preset.GetIndex();
-        jsonObject[KEY_BRIGHTNESS] = preset.GetBrightness();
-        jsonObject[KEY_CONTRAST] = preset.GetContrast();
+        jsonObject[SimpConstKey::INDEX] = preset.GetIndex();
+        jsonObject[SimpConstKey::BRIGHTNESS] = preset.GetBrightness();
+        jsonObject[SimpConstKey::CONTRAST] = preset.GetContrast();
         jsonArray.append(jsonObject);
     }
 }
 
-std::vector<preset_stress> convertJsonToStressPrestes(const QJsonArray& jsonArray)
+std::vector<preset_stress> SimpUtil::convertJsonToStressPrestes(const QJsonArray& jsonArray)
 {
     std::vector<preset_stress> presets;
     for (const QJsonValue& value : jsonArray)
     {
         QJsonObject obj = value.toObject();
-        int index = obj[KEY_INDEX].toInt();
-        int radius = obj[KEY_RADIUS].toInt();
-        int samples = obj[KEY_SAMPLES].toInt();
-        int iterations = obj[KEY_ITERATIONS].toInt();
-        bool enhanceShadows = obj[KEY_ENHANCE_SHADOWS].toBool();
+        int index = obj[SimpConstKey::INDEX].toInt();
+        int radius = obj[SimpConstKey::RADIUS].toInt();
+        int samples = obj[SimpConstKey::SAMPLES].toInt();
+        int iterations = obj[SimpConstKey::ITERATIONS].toInt();
+        bool enhanceShadows = obj[SimpConstKey::ENHANCE_SHADOWS].toBool();
         presets.emplace_back(index, radius, samples, iterations, enhanceShadows);
     }
     return presets;
 }
 
-void convertStressPrestesToJsonArray(const std::vector<preset_stress>& presets, QJsonArray& jsonArray)
+void SimpUtil::convertStressPrestesToJsonArray(const std::vector<preset_stress>& presets, QJsonArray& jsonArray)
 {
     for (const preset_stress& preset : presets)
     {
         QJsonObject jsonObject;
-        jsonObject[KEY_INDEX] = preset.GetIndex();
-        jsonObject[KEY_RADIUS] = preset.GetRadius();
-        jsonObject[KEY_SAMPLES] = preset.GetSamples();
-        jsonObject[KEY_ITERATIONS] = preset.GetIterations();
-        jsonObject[KEY_ENHANCE_SHADOWS] = preset.GetEnhanceShadows();
+        jsonObject[SimpConstKey::INDEX] = preset.GetIndex();
+        jsonObject[SimpConstKey::RADIUS] = preset.GetRadius();
+        jsonObject[SimpConstKey::SAMPLES] = preset.GetSamples();
+        jsonObject[SimpConstKey::ITERATIONS] = preset.GetIterations();
+        jsonObject[SimpConstKey::ENHANCE_SHADOWS] = preset.GetEnhanceShadows();
         jsonArray.append(jsonObject);
     }
 }
 
-std::vector<preset_contrast_curve> convertJsonToPresetsImageCurve(const QJsonArray& jsonArray)
+std::vector<preset_contrast_curve> SimpUtil::convertJsonToPresetsImageCurve(const QJsonArray& jsonArray)
 {
     std::vector<preset_contrast_curve> presets;
     for (const QJsonValue& value : jsonArray)
     {
         QJsonObject obj = value.toObject();
-        int index = obj[KEY_INDEX].toInt();
+        int index = obj[SimpConstKey::INDEX].toInt();
 
         QVector<QPointF> points;
-        for (const QJsonValue& pointValue : obj[KEY_POINTS].toArray())
+        for (const QJsonValue& pointValue : obj[SimpConstKey::POINTS].toArray())
         {
             QJsonObject point = pointValue.toObject();
-            double x = point[KEY_POS_X].toDouble();
-            double y = point[KEY_POS_Y].toDouble();
+            double x = point[SimpConstKey::POS_X].toDouble();
+            double y = point[SimpConstKey::POS_Y].toDouble();
 
             points.emplace_back(x, y);
         }
@@ -161,7 +161,7 @@ std::vector<preset_contrast_curve> convertJsonToPresetsImageCurve(const QJsonArr
     return presets;
 }
 
-void convertPresetsImageCurveToJsonArray(const std::vector<preset_contrast_curve>& presets, QJsonArray& jsonArray)
+void SimpUtil::convertPresetsImageCurveToJsonArray(const std::vector<preset_contrast_curve>& presets, QJsonArray& jsonArray)
 {
     for (const preset_contrast_curve& preset : presets)
     {
@@ -170,15 +170,15 @@ void convertPresetsImageCurveToJsonArray(const std::vector<preset_contrast_curve
         for (const QPointF& point : preset.GetPoints())
         {
             QJsonObject pointObj;
-            pointObj[KEY_POS_X] = point.x();
-            pointObj[KEY_POS_Y] = point.y();
+            pointObj[SimpConstKey::POS_X] = point.x();
+            pointObj[SimpConstKey::POS_Y] = point.y();
 
             pointsArray.append(pointObj);
         }
 
         QJsonObject jsonObject;
-        jsonObject[KEY_INDEX] = preset.GetIndex();
-        jsonObject[KEY_POINTS] = pointsArray;
+        jsonObject[SimpConstKey::INDEX] = preset.GetIndex();
+        jsonObject[SimpConstKey::POINTS] = pointsArray;
 
         jsonArray.append(jsonObject);
     }

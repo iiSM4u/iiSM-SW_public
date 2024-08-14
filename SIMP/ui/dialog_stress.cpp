@@ -1,6 +1,7 @@
 #include "dialog_stress.h"
 #include "ui_dialog_stress.h"
-#include "constants.h"
+#include "simp_const_value.h"
+#include "simp_const_menu.h"
 
 #include <QMessageBox>
 #include <QJsonObject>
@@ -37,18 +38,18 @@ dialog_stress::dialog_stress(const std::vector<preset_stress>& presets, const in
     dialog_stress::UpdatePresetUI(this->presets);
 
     // set min-max
-    ui->sliderRadius->setMinimum(GEGL_STRESS_RADIUS_MIN);
-    ui->sliderRadius->setMaximum(GEGL_STRESS_RADIUS_MAX);
+    ui->sliderRadius->setMinimum(SimpConstValue::GEGL_STRESS_RADIUS_MIN);
+    ui->sliderRadius->setMaximum(SimpConstValue::GEGL_STRESS_RADIUS_MAX);
     ui->sliderRadius->setValue(radius);
     ui->editRadius->setPlainText(QString::number(radius));
 
-    ui->sliderSamples->setMinimum(GEGL_STRESS_SAMPLES_MIN);
-    ui->sliderSamples->setMaximum(GEGL_STRESS_SAMPLES_MAX);
+    ui->sliderSamples->setMinimum(SimpConstValue::GEGL_STRESS_SAMPLES_MIN);
+    ui->sliderSamples->setMaximum(SimpConstValue::GEGL_STRESS_SAMPLES_MAX);
     ui->sliderSamples->setValue(samples);
     ui->editSamples->setPlainText(QString::number(samples));
 
-    ui->sliderIterations->setMinimum(GEGL_STRESS_ITERATIONS_MIN);
-    ui->sliderIterations->setMaximum(GEGL_STRESS_ITERATIONS_MAX);
+    ui->sliderIterations->setMinimum(SimpConstValue::GEGL_STRESS_ITERATIONS_MIN);
+    ui->sliderIterations->setMaximum(SimpConstValue::GEGL_STRESS_ITERATIONS_MAX);
     ui->sliderIterations->setValue(iterations);
     ui->editIterations->setPlainText(QString::number(iterations));
 
@@ -100,9 +101,9 @@ void dialog_stress::chkStress_CheckedChanged(Qt::CheckState checkState)
 
 void dialog_stress::cbPreset_SelectedIndexChanged(int index)
 {
-    int radius = GEGL_STRESS_RADIUS_DEFAULT;
-    int samples = GEGL_STRESS_SAMPLES_DEFAULT;
-    int iterations = GEGL_STRESS_ITERATIONS_DEFAULT;
+    int radius = SimpConstValue::GEGL_STRESS_RADIUS_DEFAULT;
+    int samples = SimpConstValue::GEGL_STRESS_SAMPLES_DEFAULT;
+    int iterations = SimpConstValue::GEGL_STRESS_ITERATIONS_DEFAULT;
     bool enhanceShadows = false;
 
     if (index > -1)
@@ -176,7 +177,7 @@ void dialog_stress::editRadius_editingFinished()
         }
         else
         {
-            QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_RANGE);
+            QMessageBox::warning(this, SimpConstMenu::TITLE_ERROR, SimpConstMenu::MSG_INVALID_RANGE);
 
             // 기존 값으로 되돌린다.
             ui->editRadius->setPlainText(QString::number(ui->sliderRadius->value()));
@@ -184,7 +185,7 @@ void dialog_stress::editRadius_editingFinished()
     }
     else
     {
-        QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_VALUE);
+        QMessageBox::warning(this, SimpConstMenu::TITLE_ERROR, SimpConstMenu::MSG_INVALID_VALUE);
 
         // 기존 값으로 되돌린다.
         ui->editRadius->setPlainText(QString::number(ui->sliderRadius->value()));
@@ -211,7 +212,7 @@ void dialog_stress::editSamples_editingFinished()
         }
         else
         {
-            QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_RANGE);
+            QMessageBox::warning(this, SimpConstMenu::TITLE_ERROR, SimpConstMenu::MSG_INVALID_RANGE);
 
             // 기존 값으로 되돌린다.
             ui->editSamples->setPlainText(QString::number(ui->sliderSamples->value()));
@@ -219,7 +220,7 @@ void dialog_stress::editSamples_editingFinished()
     }
     else
     {
-        QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_VALUE);
+        QMessageBox::warning(this, SimpConstMenu::TITLE_ERROR, SimpConstMenu::MSG_INVALID_VALUE);
 
         // 기존 값으로 되돌린다.
         ui->editSamples->setPlainText(QString::number(ui->sliderSamples->value()));
@@ -247,7 +248,7 @@ void dialog_stress::editIterations_editingFinished()
         }
         else
         {
-            QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_RANGE);
+            QMessageBox::warning(this, SimpConstMenu::TITLE_ERROR, SimpConstMenu::MSG_INVALID_RANGE);
 
             // 기존 값으로 되돌린다.
             ui->editIterations->setPlainText(QString::number(ui->sliderIterations->value()));
@@ -255,7 +256,7 @@ void dialog_stress::editIterations_editingFinished()
     }
     else
     {
-        QMessageBox::warning(this, TITLE_ERROR, MSG_INVALID_VALUE);
+        QMessageBox::warning(this, SimpConstMenu::TITLE_ERROR, SimpConstMenu::MSG_INVALID_VALUE);
 
         // 기존 값으로 되돌린다.
         ui->editIterations->setPlainText(QString::number(ui->sliderIterations->value()));
