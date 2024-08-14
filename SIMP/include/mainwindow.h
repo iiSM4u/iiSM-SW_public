@@ -127,6 +127,10 @@ private slots:
     void lvFrame_Click(const QModelIndex& index);
 
 
+    void btnVideoProcessing_Click();
+    void btnFrameProcessing_Click();
+
+
 private:
     Ui::MainWindow *ui;
     QProgressDialog *progressDialog;

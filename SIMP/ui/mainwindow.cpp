@@ -6,6 +6,7 @@
 #include "dialog_stretch_contrast.h"
 #include "dialog_stress.h"
 #include "dialog_contrast_curve.h"
+#include "dialog_image_processing.h"
 #include "videoloader.h"
 
 #include <QFile>
@@ -180,6 +181,10 @@ void MainWindow::ConnectUI()
     ///////////////////////////////// frame
     connect(ui->btnLoadFrame, &QPushButton::clicked, this, &MainWindow::btnLoadFrame_Click);
     connect(ui->lvFrame, &QListView::clicked, this, &MainWindow::lvFrame_Click);
+
+
+    connect(ui->btnVideoProcessing, &QPushButton::clicked, this, &MainWindow::btnVideoProcessing_Click);
+    connect(ui->btnFrameProcessing, &QPushButton::clicked, this, &MainWindow::btnFrameProcessing_Click);
 }
 
 void MainWindow::InitUI()
@@ -1634,6 +1639,24 @@ void MainWindow::logMessage(const QString &message)
 }
 
 
+void MainWindow::btnVideoProcessing_Click()
+{
+    dialog_image_processing dialog(this);
+
+    if (dialog.exec() == QDialog::Accepted)
+    {
+    }
+}
+
+
+void MainWindow::btnFrameProcessing_Click()
+{
+    dialog_image_processing dialog(this);
+
+    if (dialog.exec() == QDialog::Accepted)
+    {
+    }
+}
 
 
 
