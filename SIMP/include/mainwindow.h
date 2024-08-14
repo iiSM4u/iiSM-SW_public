@@ -43,193 +43,193 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-protected:
-    void closeEvent(QCloseEvent*) override;
-    void resizeEvent(QResizeEvent *event) override;
+// protected:
+//     void closeEvent(QCloseEvent*) override;
+//     void resizeEvent(QResizeEvent *event) override;
 
-signals:
-    void evtCallback(unsigned nEvent);
+// signals:
+//     void evtCallback(unsigned nEvent);
 
-private slots:
-    void ConnectUI();
-    void InitUI();
-    void EnablePreviewUI(bool isPlay);
-    void UpdatePresetContrastCurve(const std::vector<preset_contrast_curve>& presets, const int index = 0);
+// private slots:
+//     void ConnectUI();
+//     void InitUI();
+//     void EnablePreviewUI(bool isPlay);
+//     void UpdatePresetContrastCurve(const std::vector<PresetContrastCurve>& presets, const int index = 0);
 
-    /////////////////////// preview
-    // thread
-    void UpdatePreviewUI();
-    void UpdateVideoUI();
-
-
-    // custom
-    void UpdatePreviewMousePosition(int x, int y, const QColor& color);
-    void UpdateVideoMousePosition(int x, int y, const QColor& color);
-    void UpdateFrameMousePosition(int x, int y, const QColor& color);
-
-    void cbResoution_SelectedIndexChanged(int index);
-    void cbFormat_SelectedIndexChanged(int index);
-
-    void btnPlayCamera_Click();
-    void btnStopCamera_Click();
-    void btnCaptureCamera_Click();
-
-    void btnRecordOn_Click();
-    void btnRecordOption_Click();
-
-    void sliderExposureTime_sliderMoved(int position);
-    void editExposureTime_editingFinished();
-
-    void sliderGain_sliderMoved(int position);
-    void editGain_editingFinished();
-
-    void sliderContrast_sliderMoved(int position);
-    void editContrast_editingFinished();
-
-    void sliderGamma_sliderMoved(int position);
-    void editGamma_editingFinished();
-
-    void btnCurveSetting_Click();
-    void cbCurvePreset_SelectedIndexChanged(int index);
-
-    void chkDarkFieldCorrection_CheckedChanged(Qt::CheckState checkState);
-    void btnDarkFieldCorrection_Click();
-
-    void btnGroupCooling_Click(int id);
-
-    void sliderTemperature_sliderMoved(int position);
-    void editTemperature_editingFinished();
+//     /////////////////////// preview
+//     // thread
+//     void UpdatePreviewUI();
+//     void UpdateVideoUI();
 
 
-    void btnZoomIn_Click();
-    void btnZoomOut_Click();
+//     // custom
+//     void UpdatePreviewMousePosition(int x, int y, const QColor& color);
+//     void UpdateVideoMousePosition(int x, int y, const QColor& color);
+//     void UpdateFrameMousePosition(int x, int y, const QColor& color);
 
-    void btnBrightnessContrast_Click();
-    void btnStress_Click();
-    void btnStretchContrast_Click();
+//     void cbResoution_SelectedIndexChanged(int index);
+//     void cbFormat_SelectedIndexChanged(int index);
+
+//     void btnPlayCamera_Click();
+//     void btnStopCamera_Click();
+//     void btnCaptureCamera_Click();
+
+//     void btnRecordOn_Click();
+//     void btnRecordOption_Click();
+
+//     void sliderExposureTime_sliderMoved(int position);
+//     void editExposureTime_editingFinished();
+
+//     void sliderGain_sliderMoved(int position);
+//     void editGain_editingFinished();
+
+//     void sliderContrast_sliderMoved(int position);
+//     void editContrast_editingFinished();
+
+//     void sliderGamma_sliderMoved(int position);
+//     void editGamma_editingFinished();
+
+//     void btnCurveSetting_Click();
+//     void cbCurvePreset_SelectedIndexChanged(int index);
+
+//     void chkDarkFieldCorrection_CheckedChanged(Qt::CheckState checkState);
+//     void btnDarkFieldCorrection_Click();
+
+//     void btnGroupCooling_Click(int id);
+
+//     void sliderTemperature_sliderMoved(int position);
+//     void editTemperature_editingFinished();
 
 
-    /////////////////////// video
-    void btnLoadVideo_Click();
-    void btnPlayVideo_Click();
-    void btnStopVideo_Click();
-    void lvVideo_Click(const QModelIndex& index);
+//     void btnZoomIn_Click();
+//     void btnZoomOut_Click();
 
-    void sliderVideo_sliderMoved(int position);
-
-    void onVideoLoadingProgress(int value);
-    void onVideoLoadingFinished(bool success, const std::vector<QImage>& frames, double frameRate, int totalFrames);
+//     void btnBrightnessContrast_Click();
+//     void btnStress_Click();
+//     void btnStretchContrast_Click();
 
 
-    /////////////////////// frame
-    void btnLoadFrame_Click();
-    void lvFrame_Click(const QModelIndex& index);
+//     /////////////////////// video
+//     void btnLoadVideo_Click();
+//     void btnPlayVideo_Click();
+//     void btnStopVideo_Click();
+//     void lvVideo_Click(const QModelIndex& index);
+
+//     void sliderVideo_sliderMoved(int position);
+
+//     void onVideoLoadingProgress(int value);
+//     void onVideoLoadingFinished(bool success, const std::vector<QImage>& frames, double frameRate, int totalFrames);
 
 
-    void btnVideoProcessing_Click();
-    void btnFrameProcessing_Click();
+//     /////////////////////// frame
+//     void btnLoadFrame_Click();
+//     void lvFrame_Click(const QModelIndex& index);
+
+
+//     void btnVideoProcessing_Click();
+//     void btnFrameProcessing_Click();
 
 
 private:
     Ui::MainWindow *ui;
-    QProgressDialog *progressDialog;
+//     QProgressDialog *progressDialog;
 
-    QButtonGroup *btnGroupCooling;
+//     QButtonGroup *btnGroupCooling;
 
-    //QMediaPlayer *mediaVideo;
-    QFileSystemModel *filesystemVideo, *filesystemFrame;
-    QTimer *timerFPS, *timerVideoRecord;
+//     //QMediaPlayer *mediaVideo;
+//     QFileSystemModel *filesystemVideo, *filesystemFrame;
+//     QTimer *timerFPS, *timerVideoRecord;
 
-    MiicamDeviceV2 miiDevice;
-    HMiicam miiHcam = nullptr;
+//     MiicamDeviceV2 miiDevice;
+//     HMiicam miiHcam = nullptr;
 
-    uchar *rawCameraData = nullptr;
-    QImage resultPreview, resultVideo;
-    std::vector<cv::Mat> recordFrames;
-    QImage::Format imageFormat = QImage::Format_RGB888;
+//     uchar *rawCameraData = nullptr;
+//     QImage resultPreview, resultVideo;
+//     std::vector<cv::Mat> recordFrames;
+//     QImage::Format imageFormat = QImage::Format_RGB888;
 
-    unsigned int imageWidth = 0;
-    unsigned int imageHeight = 0;
-    unsigned int rawCameraWidth = 0;
-    unsigned int rawCameraHeight = 0;
+//     unsigned int imageWidth = 0;
+//     unsigned int imageHeight = 0;
+//     unsigned int rawCameraWidth = 0;
+//     unsigned int rawCameraHeight = 0;
 
-    float zoomFactor = 1.0f;
+//     float zoomFactor = 1.0f;
 
-    int resolutionIndex = 0;
+//     int resolutionIndex = 0;
 
-    QTime recordStartTime;
-    VideoFormatType recordFormat = VideoFormatType::MJPEG;
-    double recordFrameRate = SimpConstValue::RECORD_FRAME_RATE_DEFAULT;
-    int recordQuality = SimpConstValue::RECORD_QUALITY_DEFAULT;
-    int recordTimeLimit = 0;
-    QString recordDir, captureDir; // 생성자에서 초기화 함
+//     QTime recordStartTime;
+//     VideoFormatType recordFormat = VideoFormatType::MJPEG;
+//     double recordFrameRate = SimpConstValue::RECORD_FRAME_RATE_DEFAULT;
+//     int recordQuality = SimpConstValue::RECORD_QUALITY_DEFAULT;
+//     int recordTimeLimit = 0;
+//     QString recordDir, captureDir; // 생성자에서 초기화 함
 
-    int videoTotalFrame;
-    double videoFrameRates;
-    int currentFrame;
-    std::vector<QImage> videoFrames;
+//     int videoTotalFrame;
+//     double videoFrameRates;
+//     int currentFrame;
+//     std::vector<QImage> videoFrames;
 
-    //void resizeEvent(QResizeEvent* event) override;
-    bool isOn = false;
-    bool isCameraRun = false;
-    bool isCameraPlay = false;
-    bool isVideoPlay = false;
-    bool isRecordOn = false;
-    bool isDarkFieldCorrectCapture = false;
+//     //void resizeEvent(QResizeEvent* event) override;
+//     bool isOn = false;
+//     bool isCameraRun = false;
+//     bool isCameraPlay = false;
+//     bool isVideoPlay = false;
+//     bool isRecordOn = false;
+//     bool isDarkFieldCorrectCapture = false;
 
-    bool isUpdateBrightnessContrast = false;
-    bool isUpdateStress = false;
-    bool isUpdateStretchContrast = false;
-    bool isUpdateContrastCurve = false;
+//     bool isUpdateBrightnessContrast = false;
+//     bool isUpdateStress = false;
+//     bool isUpdateStretchContrast = false;
+//     bool isUpdateContrastCurve = false;
 
-    double gegl_brightness = SimpConstValue::GEGL_BRIGHTNESS_DEFAULT, gegl_contrast = SimpConstValue::GEGL_CONTRAST_DEFAULT;
-    int gegl_stress_radius = SimpConstValue::GEGL_STRESS_RADIUS_DEFAULT, gegl_stress_samples = SimpConstValue::GEGL_STRESS_SAMPLES_DEFAULT, gegl_stress_iterations = SimpConstValue::GEGL_STRESS_ITERATIONS_DEFAULT;
-    bool gegl_stress_enhance_shadows = SimpConstValue::GEGL_STRESS_ENHANCE_SHADOWS_DEFAULT;
-    bool gegl_stretch_contrast_keep_colors = SimpConstValue::GEGL_STRETCH_CONTRAST_KEEP_COLORS_DEFAULT, gegl_stretch_contrast_perceptual = SimpConstValue::GEGL_STRETCH_CONTRAST_PERCEPTUAL_DEFAULT;
-    int gegl_contrast_curve_sampling_points = SimpConstValue::GEGL_CONTRAST_CURVE_SAMPLING_POINTS_DEFAULT;
-    GeglCurve *gegl_contrast_curve_points = nullptr;
+//     double gegl_brightness = SimpConstValue::GEGL_BRIGHTNESS_DEFAULT, gegl_contrast = SimpConstValue::GEGL_CONTRAST_DEFAULT;
+//     int gegl_stress_radius = SimpConstValue::GEGL_STRESS_RADIUS_DEFAULT, gegl_stress_samples = SimpConstValue::GEGL_STRESS_SAMPLES_DEFAULT, gegl_stress_iterations = SimpConstValue::GEGL_STRESS_ITERATIONS_DEFAULT;
+//     bool gegl_stress_enhance_shadows = SimpConstValue::GEGL_STRESS_ENHANCE_SHADOWS_DEFAULT;
+//     bool gegl_stretch_contrast_keep_colors = SimpConstValue::GEGL_STRETCH_CONTRAST_KEEP_COLORS_DEFAULT, gegl_stretch_contrast_perceptual = SimpConstValue::GEGL_STRETCH_CONTRAST_PERCEPTUAL_DEFAULT;
+//     int gegl_contrast_curve_sampling_points = SimpConstValue::GEGL_CONTRAST_CURVE_SAMPLING_POINTS_DEFAULT;
+//     GeglCurve *gegl_contrast_curve_points = nullptr;
 
-    std::vector<preset_brightness_contrast> presetsBrightnessContrast;
-    std::vector<preset_stress> presetsStress;
-    std::vector<preset_contrast_curve> presetsContrastCurve;
+//     std::vector<PresetBrightnessContrast> presetsBrightnessContrast;
+//     std::vector<PresetStress> presetsStress;
+//     std::vector<PresetContrastCurve> presetsContrastCurve;
 
-    QMutex imageMutex, contrastCurvesMutex;
+//     QMutex imageMutex, contrastCurvesMutex;
 
-    void onTimerFpsCallback();
+//     void onTimerFpsCallback();
 
-    //CustomPlainTextEdit* ChangeQPlainTextEditToCustom(QPlainTextEdit* source);
+//     //CustomPlainTextEdit* ChangeQPlainTextEditToCustom(QPlainTextEdit* source);
 
-    // mii camera
-    void FindCamera();
-    void OpenCamera();
-    void CloseCamera();
-    void StartCamera();
+//     // mii camera
+//     void FindCamera();
+//     void OpenCamera();
+//     void CloseCamera();
+//     void StartCamera();
 
-    void InitCameraResolution();
-    void UpdateExposureTime();
-    void InitSensorTemperature();
+//     void InitCameraResolution();
+//     void UpdateExposureTime();
+//     void InitSensorTemperature();
 
-    void onMiiCameraCallback(unsigned nEvent);
-    void handleImageEvent();
-    void handleExpoEvent();
-    void handleTempTintEvent();
-    void handleStillImageEvent();
-    static void __stdcall eventCallBack(unsigned nEvent, void* pCallbackCtx);
+//     void onMiiCameraCallback(unsigned nEvent);
+//     void handleImageEvent();
+//     void handleExpoEvent();
+//     void handleTempTintEvent();
+//     void handleStillImageEvent();
+//     static void __stdcall eventCallBack(unsigned nEvent, void* pCallbackCtx);
 
-    // gegl
-    void InitGegl();
-    void CloseGegl();
-    void UpdateGegl(QImage& source);
-    void UpdateContrastCurvePoints(const QVector<QPointF>& points);
+//     // gegl
+//     void InitGegl();
+//     void CloseGegl();
+//     void UpdateGegl(QImage& source);
+//     void UpdateContrastCurvePoints(const QVector<QPointF>& points);
 
-    // custom
-    void UpdatePreview();
-    void UpdateVideo();
-    void StartRecord();
-    void FinishRecord();
+//     // custom
+//     void UpdatePreview();
+//     void UpdateVideo();
+//     void StartRecord();
+//     void FinishRecord();
 
-    void LoadPresets();
-    void logMessage(const QString &message);
+//     void LoadPresets();
+//     void logMessage(const QString &message);
 
-    std::thread threadPreview, threadVideo;
+//     std::thread threadPreview, threadVideo;
 };

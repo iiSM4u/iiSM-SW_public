@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>dialog_stress</class>
- <widget class="QDialog" name="dialog_stress">
+ <class>DialogStress</class>
+ <widget class="QDialog" name="DialogStress">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -226,7 +226,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>dialog_stress</receiver>
+   <receiver>DialogStress</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -242,7 +242,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>dialog_stress</receiver>
+   <receiver>DialogStress</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

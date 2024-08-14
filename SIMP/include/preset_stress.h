@@ -1,10 +1,10 @@
 #pragma once
 
-class preset_stress
+class PresetStress
 {
 public:
-    preset_stress() = default;
-    preset_stress(const int index, const int radius, const int samples, const int iterations, const bool enhanceShadows)
+    PresetStress() = default;
+    PresetStress(const int index, const int radius, const int samples, const int iterations, const bool enhanceShadows)
         : index(index)
         , radius(radius)
         , samples(samples)

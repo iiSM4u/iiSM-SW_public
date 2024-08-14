@@ -3,42 +3,42 @@
 #include "simp_const_menu.h"
 #include "QMessageBox"
 
-dialog_curve_point::dialog_curve_point(QWidget *parent)
+DialogCurvePoint::DialogCurvePoint(QWidget *parent)
     : QDialog(parent)
-    , ui(new Ui::dialog_curve_point)
+    , ui(new Ui::DialogCurvePoint)
 {
     ui->setupUi(this);
 }
 
-dialog_curve_point::dialog_curve_point(const QVector<QPointF>& qpoints, const int x, const int y, QWidget *parent)
+DialogCurvePoint::DialogCurvePoint(const QVector<QPointF>& qpoints, const int x, const int y, QWidget *parent)
     : QDialog(parent)
-    , ui(new Ui::dialog_curve_point)
+    , ui(new Ui::DialogCurvePoint)
     , qpoints(qpoints)
 {
     ui->setupUi(this);
 
-    connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &dialog_curve_point::onOkClicked);
+    connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &DialogCurvePoint::onOkClicked);
 
     ui->spinInput->setValue(x);
     ui->spinOutput->setValue(y);
 }
 
-dialog_curve_point::~dialog_curve_point()
+DialogCurvePoint::~DialogCurvePoint()
 {
     delete ui;
 }
 
-int dialog_curve_point::getInputValue() const
+int DialogCurvePoint::getInputValue() const
 {
     return ui->spinInput->value();
 }
 
-int dialog_curve_point::getOutputValue() const
+int DialogCurvePoint::getOutputValue() const
 {
     return ui->spinOutput->value();
 }
 
-void dialog_curve_point::onOkClicked()
+void DialogCurvePoint::onOkClicked()
 {
     int x = ui->spinInput->value();
     int y = ui->spinOutput->value();

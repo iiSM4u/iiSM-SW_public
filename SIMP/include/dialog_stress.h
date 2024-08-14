@@ -4,19 +4,19 @@
 #include "preset_stress.h"
 
 namespace Ui {
-class dialog_stress;
+class DialogStress;
 }
 
-class dialog_stress : public QDialog
+class DialogStress : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit dialog_stress(QWidget *parent = nullptr);
-    dialog_stress(const std::vector<preset_stress>& presets, const int radius, const int samples, int const iterations, bool const enhaceShadows, const bool enable, QWidget *parent = nullptr);
-    ~dialog_stress();
+    explicit DialogStress(QWidget *parent = nullptr);
+    DialogStress(const std::vector<PresetStress>& presets, const int radius, const int samples, int const iterations, bool const enhaceShadows, const bool enable, QWidget *parent = nullptr);
+    ~DialogStress();
 
-    std::vector<preset_stress> getPresets() const;
+    std::vector<PresetStress> getPresets() const;
     int getRadius() const;
     int getSamples() const;
     int getIterations() const;
@@ -41,10 +41,10 @@ private slots:
     void editIterations_editingFinished();
 
     void EnableUI(bool enable);
-    void UpdatePresetUI(const std::vector<preset_stress>& presets, const int index = -1);
+    void UpdatePresetUI(const std::vector<PresetStress>& presets, const int index = -1);
 
 private:
-    Ui::dialog_stress *ui;
+    Ui::DialogStress *ui;
 
-    std::vector<preset_stress> presets;
+    std::vector<PresetStress> presets;
 };

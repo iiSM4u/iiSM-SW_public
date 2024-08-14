@@ -3,11 +3,11 @@
 #include "QVector"
 #include "QPointF"
 
-class preset_contrast_curve
+class PresetContrastCurve
 {
 public:
-    preset_contrast_curve() = default;
-    preset_contrast_curve(const int index, QVector<QPointF>& points)
+    PresetContrastCurve() = default;
+    PresetContrastCurve(const int index, QVector<QPointF>& points)
         : index(index)
         , points(points)
     {}

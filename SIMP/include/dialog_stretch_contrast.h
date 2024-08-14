@@ -3,17 +3,17 @@
 #include <QDialog>
 
 namespace Ui {
-class dialog_stretch_contrast;
+class DialogStretchContrast;
 }
 
-class dialog_stretch_contrast : public QDialog
+class DialogStretchContrast : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit dialog_stretch_contrast(QWidget *parent = nullptr);
-    dialog_stretch_contrast(const bool keepColors, const bool nonLinearComponents, const bool enable, QWidget *parent = nullptr);
-    ~dialog_stretch_contrast();
+    explicit DialogStretchContrast(QWidget *parent = nullptr);
+    DialogStretchContrast(const bool keepColors, const bool nonLinearComponents, const bool enable, QWidget *parent = nullptr);
+    ~DialogStretchContrast();
 
     bool getKeepColors() const;
     bool getNonLinearComponents() const;
@@ -25,5 +25,5 @@ private slots:
     void EnableUI(bool enable);
 
 private:
-    Ui::dialog_stretch_contrast *ui;
+    Ui::DialogStretchContrast *ui;
 };

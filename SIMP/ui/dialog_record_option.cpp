@@ -7,23 +7,23 @@
 #include <QFileDialog>
 #include <QMessageBox>
 
-dialog_record_option::dialog_record_option(QWidget *parent)
+DialogRecordOption::DialogRecordOption(QWidget *parent)
     : QDialog(parent)
-    , ui(new Ui::dialog_record_option)
+    , ui(new Ui::DialogRecordOption)
 {
     ui->setupUi(this);
 }
 
-dialog_record_option::dialog_record_option(const QString& dir, const VideoFormatType format, const int frameRate, const int quality, const int timeLimit, QWidget *parent)
+DialogRecordOption::DialogRecordOption(const QString& dir, const VideoFormatType format, const int frameRate, const int quality, const int timeLimit, QWidget *parent)
     : QDialog(parent)
-    , ui(new Ui::dialog_record_option)
+    , ui(new Ui::DialogRecordOption)
 {
     ui->setupUi(this);
 
-    connect(ui->btnDir, &QPushButton::clicked, this, &dialog_record_option::btnDir_Click);
-    connect(ui->chkTimeLimit, &QCheckBox::checkStateChanged, this, &dialog_record_option::chkTimeLimit_CheckedChanged);
-    connect(ui->sliderFrameRate, &QSlider::sliderMoved, this, &dialog_record_option::sliderFrameRate_sliderMoved);
-    connect(ui->editFrameRate, &CustomPlainTextEdit::editingFinished, this, &dialog_record_option::editFrameRate_editingFinished);
+    connect(ui->btnDir, &QPushButton::clicked, this, &DialogRecordOption::btnDir_Click);
+    connect(ui->chkTimeLimit, &QCheckBox::checkStateChanged, this, &DialogRecordOption::chkTimeLimit_CheckedChanged);
+    connect(ui->sliderFrameRate, &QSlider::sliderMoved, this, &DialogRecordOption::sliderFrameRate_sliderMoved);
+    connect(ui->editFrameRate, &CustomPlainTextEdit::editingFinished, this, &DialogRecordOption::editFrameRate_editingFinished);
 
     ui->lbDir->setText(QCoreApplication::applicationDirPath() + SimpConstPath::DIR_RECORD_VIDEO);
 
@@ -46,28 +46,28 @@ dialog_record_option::dialog_record_option(const QString& dir, const VideoFormat
     ui->editFrameRate->setPlainText(QString::number(frameRate));
 }
 
-dialog_record_option::~dialog_record_option()
+DialogRecordOption::~DialogRecordOption()
 {
     delete ui;
 }
 
-VideoFormatType dialog_record_option::getVideoFormat() const
+VideoFormatType DialogRecordOption::getVideoFormat() const
 {
     return static_cast<VideoFormatType>(ui->cbVideoFormat->currentIndex());
 }
 
-QString dialog_record_option::getVideoDirectory() const
+QString DialogRecordOption::getVideoDirectory() const
 {
     return ui->lbDir->text();
 }
 
-int dialog_record_option::getQuality() const
+int DialogRecordOption::getQuality() const
 {
     bool ok;
     return ui->editQuality->toPlainText().toInt(&ok);
 }
 
-int dialog_record_option::getTimeLimit() const
+int DialogRecordOption::getTimeLimit() const
 {
     if (ui->chkTimeLimit->isChecked())
     {
@@ -77,12 +77,12 @@ int dialog_record_option::getTimeLimit() const
     return 0;
 }
 
-int dialog_record_option::getFrameRate() const
+int DialogRecordOption::getFrameRate() const
 {
     return ui->sliderFrameRate->value();
 }
 
-void dialog_record_option::btnDir_Click()
+void DialogRecordOption::btnDir_Click()
 {
     QString dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"), "", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
 
@@ -92,18 +92,18 @@ void dialog_record_option::btnDir_Click()
     }
 }
 
-void dialog_record_option::chkTimeLimit_CheckedChanged(Qt::CheckState checkState)
+void DialogRecordOption::chkTimeLimit_CheckedChanged(Qt::CheckState checkState)
 {
     ui->editTimeLimit->setEnabled(ui->chkTimeLimit->isChecked());
 }
 
-void dialog_record_option::sliderFrameRate_sliderMoved(int position)
+void DialogRecordOption::sliderFrameRate_sliderMoved(int position)
 {
     int value = ui->sliderFrameRate->value();
     ui->editFrameRate->setPlainText(QString::number(value));
 }
 
-void dialog_record_option::editFrameRate_editingFinished()
+void DialogRecordOption::editFrameRate_editingFinished()
 {
     bool ok;
     int value = ui->editFrameRate->toPlainText().toInt(&ok);

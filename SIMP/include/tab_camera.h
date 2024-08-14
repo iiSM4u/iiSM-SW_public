@@ -11,6 +11,7 @@
 
 #include "simp_const_value.h"
 #include "video_format_type.h"
+#include "preset_contrast_curve.h"
 
 namespace Ui {
 class TabCamera;
@@ -24,8 +25,41 @@ public:
     explicit TabCamera(QWidget *parent = nullptr);
     ~TabCamera();
 
+protected:
+    void closeEvent(QCloseEvent*) override;
+
 signals:
     void evtCallback(unsigned nEvent);
+
+private slots:
+    void cbResoution_SelectedIndexChanged(int index);
+    void cbFormat_SelectedIndexChanged(int index);
+    void btnPlayCamera_Click();
+    void btnStopCamera_Click();
+    void btnCaptureCamera_Click();
+    void btnRecordOn_Click();
+    void btnRecordOption_Click();
+    void sliderExposureTime_sliderMoved(int position);
+    void editExposureTime_editingFinished();
+    void sliderGain_sliderMoved(int position);
+    void editGain_editingFinished();
+    void sliderContrast_sliderMoved(int position);
+    void editContrast_editingFinished();
+    void sliderGamma_sliderMoved(int position);
+    void editGamma_editingFinished();
+    void btnCurveSetting_Click();
+    void cbCurvePreset_SelectedIndexChanged(int index);
+    void chkDarkFieldCorrection_CheckedChanged(Qt::CheckState checkState);
+    void btnDarkFieldCorrection_Click();
+    void btnGroupCooling_Click(int id);
+    void sliderTemperature_sliderMoved(int position);
+    void editTemperature_editingFinished();
+    void btnZoomIn_Click();
+    void btnZoomOut_Click();
+
+    void UpdatePreviewUI();
+    void UpdateMousePosition(int x, int y, const QColor &color);
+    void EnableUI(bool isPlay);
 
 private:
     Ui::TabCamera *ui;
@@ -34,7 +68,7 @@ private:
     HMiicam miiHcam = nullptr;
 
     QMutex imageMutex, contrastCurvesMutex;
-    QThread threadCamera;
+    std::thread threadCamera;
 
     QButtonGroup *btnGroupCooling;
     QTimer *timerFPS, *timerVideoRecord;
@@ -61,8 +95,19 @@ private:
 
     bool isCameraOn = false, isCameraRun = false, isCameraPlay = false, isRecordOn = false, isDarkFieldCorrectCapture = false;
 
+    bool isUpdateContrastCurve = false;
+    std::vector<PresetContrastCurve> presetsContrastCurve;
+    QVector<QPointF> contrastCurvePoints;
+
+    void ConnectUI();
+    void InitUI();
+    void UpdatePreview();
     void StartRecord();
     void FinishRecord();
+
+    void LoadPresets();
+    void UpdatePresetContrastCurve(const std::vector<PresetContrastCurve>& presets, const int index = 0);
+    void UpdateContrastCurvePoints(const QVector<QPointF>& points);
 
     // mii camera
     void FindCamera();

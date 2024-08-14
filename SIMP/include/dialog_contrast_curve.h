@@ -10,19 +10,19 @@
 #include "preset_contrast_curve.h"
 
 namespace Ui {
-class dialog_contrast_curve;
+class DialogContrastCurve;
 }
 
-class dialog_contrast_curve : public QDialog
+class DialogContrastCurve : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit dialog_contrast_curve(QWidget *parent = nullptr);
-    dialog_contrast_curve(std::vector<preset_contrast_curve>& presets, const int presetIndex, const bool enable, QWidget *parent = nullptr);
-    ~dialog_contrast_curve();
+    explicit DialogContrastCurve(QWidget *parent = nullptr);
+    DialogContrastCurve(std::vector<PresetContrastCurve>& presets, const int presetIndex, const bool enable, QWidget *parent = nullptr);
+    ~DialogContrastCurve();
 
-    std::vector<preset_contrast_curve> getPresets() const;
+    std::vector<PresetContrastCurve> getPresets() const;
     int getSelectedIndex() const;
     bool getEnable() const;
 
@@ -43,7 +43,7 @@ private slots:
     void spinOutput_ValueChanged(int value);
 
     void EnableUI(bool enable);
-    void UpdatePresetUI(const std::vector<preset_contrast_curve>& presets, const int index = -1);
+    void UpdatePresetUI(const std::vector<PresetContrastCurve>& presets, const int index = -1);
     void UpdateSpinUI(int x, int y, bool enable);
 
     void handleChartClicked(const QPointF &point);
@@ -52,14 +52,14 @@ private slots:
 
 
 private:
-    Ui::dialog_contrast_curve *ui;
+    Ui::DialogContrastCurve *ui;
 
     QChart *chart;
     QSplineSeries *splineSeries;
     QScatterSeries *scatterSeries, *highlightSeries;
     QVector<QPointF> qpoints;
 
-    std::vector<preset_contrast_curve> presets;
+    std::vector<PresetContrastCurve> presets;
     int highlightPointIndex = -1;
     bool isPresetChanged = false;
 

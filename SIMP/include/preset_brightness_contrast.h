@@ -1,10 +1,10 @@
 #pragma once
 
-class preset_brightness_contrast
+class PresetBrightnessContrast
 {
 public:
-    preset_brightness_contrast() = default;
-    preset_brightness_contrast(const int index, const double brightness, const double contrast)
+    PresetBrightnessContrast() = default;
+    PresetBrightnessContrast(const int index, const double brightness, const double contrast)
         : index(index)
         , brightenss(brightness)
         , contrast(contrast)

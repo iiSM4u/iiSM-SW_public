@@ -20,12 +20,12 @@ public:
     static QString getVideoExtension(VideoFormatType type);
     static int getVideoFourcc(VideoFormatType type);
 
-    static std::vector<preset_brightness_contrast> convertJsonToBrightnessContrastPresets(const QJsonArray& jsonArray);
-    static void convertBrightnessContrastPresetsToJsonArray(const std::vector<preset_brightness_contrast>& presets, QJsonArray& jsonArray);
+    static std::vector<PresetBrightnessContrast> convertJsonToBrightnessContrastPresets(const QJsonArray& jsonArray);
+    static void convertBrightnessContrastPresetsToJsonArray(const std::vector<PresetBrightnessContrast>& presets, QJsonArray& jsonArray);
 
-    static std::vector<preset_stress> convertJsonToStressPrestes(const QJsonArray& jsonArray);
-    static void convertStressPrestesToJsonArray(const std::vector<preset_stress>& presets, QJsonArray& jsonArray);
+    static std::vector<PresetStress> convertJsonToStressPrestes(const QJsonArray& jsonArray);
+    static void convertStressPrestesToJsonArray(const std::vector<PresetStress>& presets, QJsonArray& jsonArray);
 
-    static std::vector<preset_contrast_curve> convertJsonToPresetsImageCurve(const QJsonArray& jsonArray);
-    static void convertPresetsImageCurveToJsonArray(const std::vector<preset_contrast_curve>& presets, QJsonArray& jsonArray);
+    static std::vector<PresetContrastCurve> convertJsonToPresetsImageCurve(const QJsonArray& jsonArray);
+    static void convertPresetsImageCurveToJsonArray(const std::vector<PresetContrastCurve>& presets, QJsonArray& jsonArray);
 };

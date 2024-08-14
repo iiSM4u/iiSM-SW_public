@@ -1,14 +1,14 @@
 #include "dialog_image_processing.h"
 #include "ui_dialog_image_processing.h"
 
-dialog_image_processing::dialog_image_processing(QWidget *parent)
+DialogImageProcessing::DialogImageProcessing(QWidget *parent)
     : QDialog(parent)
-    , ui(new Ui::dialog_image_processing)
+    , ui(new Ui::DialogImageProcessing)
 {
     ui->setupUi(this);
 }
 
-dialog_image_processing::~dialog_image_processing()
+DialogImageProcessing::~DialogImageProcessing()
 {
     delete ui;
 }

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>dialog_record_option</class>
- <widget class="QDialog" name="dialog_record_option">
+ <class>DialogRecordOption</class>
+ <widget class="QDialog" name="DialogRecordOption">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -225,7 +225,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>dialog_record_option</receiver>
+   <receiver>DialogRecordOption</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -241,7 +241,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>dialog_record_option</receiver>
+   <receiver>DialogRecordOption</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

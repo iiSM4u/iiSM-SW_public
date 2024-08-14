@@ -4,19 +4,19 @@
 #include <QDialog>
 
 namespace Ui {
-class dialog_image_processing;
+class DialogImageProcessing;
 }
 
-class dialog_image_processing : public QDialog
+class DialogImageProcessing : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit dialog_image_processing(QWidget *parent = nullptr);
-    ~dialog_image_processing();
+    explicit DialogImageProcessing(QWidget *parent = nullptr);
+    ~DialogImageProcessing();
 
 private:
-    Ui::dialog_image_processing *ui;
+    Ui::DialogImageProcessing *ui;
 };
 
 #endif // DIALOG_IMAGE_PROCESSING_H

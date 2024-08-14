@@ -4,17 +4,17 @@
 #include "video_format_type.h"
 
 namespace Ui {
-class dialog_record_option;
+class DialogRecordOption;
 }
 
-class dialog_record_option : public QDialog
+class DialogRecordOption : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit dialog_record_option(QWidget *parent = nullptr);
-    dialog_record_option(const QString& dir, const VideoFormatType format, const int frameRate, const int quality, const int timeLimit, QWidget *parent = nullptr);
-    ~dialog_record_option();
+    explicit DialogRecordOption(QWidget *parent = nullptr);
+    DialogRecordOption(const QString& dir, const VideoFormatType format, const int frameRate, const int quality, const int timeLimit, QWidget *parent = nullptr);
+    ~DialogRecordOption();
 
     QString getVideoDirectory() const;
     VideoFormatType getVideoFormat() const;
@@ -29,5 +29,5 @@ private slots:
     void editFrameRate_editingFinished();
 
 private:
-    Ui::dialog_record_option *ui;
+    Ui::DialogRecordOption *ui;
 };

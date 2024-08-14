@@ -82,9 +82,9 @@ int SimpUtil::getVideoFourcc(VideoFormatType type)
     }
 }
 
-std::vector<preset_brightness_contrast> SimpUtil::convertJsonToBrightnessContrastPresets(const QJsonArray& jsonArray)
+std::vector<PresetBrightnessContrast> SimpUtil::convertJsonToBrightnessContrastPresets(const QJsonArray& jsonArray)
 {
-    std::vector<preset_brightness_contrast> presets;
+    std::vector<PresetBrightnessContrast> presets;
     for (const QJsonValue& value : jsonArray)
     {
         QJsonObject obj = value.toObject();
@@ -96,9 +96,9 @@ std::vector<preset_brightness_contrast> SimpUtil::convertJsonToBrightnessContras
     return presets;
 }
 
-void SimpUtil::convertBrightnessContrastPresetsToJsonArray(const std::vector<preset_brightness_contrast>& presets, QJsonArray& jsonArray)
+void SimpUtil::convertBrightnessContrastPresetsToJsonArray(const std::vector<PresetBrightnessContrast>& presets, QJsonArray& jsonArray)
 {
-    for (const preset_brightness_contrast& preset : presets)
+    for (const PresetBrightnessContrast& preset : presets)
     {
         QJsonObject jsonObject;
         jsonObject[SimpConstKey::INDEX] = preset.GetIndex();
@@ -108,9 +108,9 @@ void SimpUtil::convertBrightnessContrastPresetsToJsonArray(const std::vector<pre
     }
 }
 
-std::vector<preset_stress> SimpUtil::convertJsonToStressPrestes(const QJsonArray& jsonArray)
+std::vector<PresetStress> SimpUtil::convertJsonToStressPrestes(const QJsonArray& jsonArray)
 {
-    std::vector<preset_stress> presets;
+    std::vector<PresetStress> presets;
     for (const QJsonValue& value : jsonArray)
     {
         QJsonObject obj = value.toObject();
@@ -124,9 +124,9 @@ std::vector<preset_stress> SimpUtil::convertJsonToStressPrestes(const QJsonArray
     return presets;
 }
 
-void SimpUtil::convertStressPrestesToJsonArray(const std::vector<preset_stress>& presets, QJsonArray& jsonArray)
+void SimpUtil::convertStressPrestesToJsonArray(const std::vector<PresetStress>& presets, QJsonArray& jsonArray)
 {
-    for (const preset_stress& preset : presets)
+    for (const PresetStress& preset : presets)
     {
         QJsonObject jsonObject;
         jsonObject[SimpConstKey::INDEX] = preset.GetIndex();
@@ -138,9 +138,9 @@ void SimpUtil::convertStressPrestesToJsonArray(const std::vector<preset_stress>&
     }
 }
 
-std::vector<preset_contrast_curve> SimpUtil::convertJsonToPresetsImageCurve(const QJsonArray& jsonArray)
+std::vector<PresetContrastCurve> SimpUtil::convertJsonToPresetsImageCurve(const QJsonArray& jsonArray)
 {
-    std::vector<preset_contrast_curve> presets;
+    std::vector<PresetContrastCurve> presets;
     for (const QJsonValue& value : jsonArray)
     {
         QJsonObject obj = value.toObject();
@@ -161,9 +161,9 @@ std::vector<preset_contrast_curve> SimpUtil::convertJsonToPresetsImageCurve(cons
     return presets;
 }
 
-void SimpUtil::convertPresetsImageCurveToJsonArray(const std::vector<preset_contrast_curve>& presets, QJsonArray& jsonArray)
+void SimpUtil::convertPresetsImageCurveToJsonArray(const std::vector<PresetContrastCurve>& presets, QJsonArray& jsonArray)
 {
-    for (const preset_contrast_curve& preset : presets)
+    for (const PresetContrastCurve& preset : presets)
     {
         QJsonArray pointsArray;
 
