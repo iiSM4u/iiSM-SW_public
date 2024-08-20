@@ -26,13 +26,14 @@ private slots:
     void btnOpenDir_Click();
     void btnZoomIn_Click();
     void btnZoomOut_Click();
-    void btnImageProcessing_Click();
+    void btnFrameProcessing_Click();
+    void btnFrameSave_Click();
 
 private:
     Ui::TabFrame *ui;
 
     QProgressDialog *progressDialog;
-    QFileSystemModel *filesystemFrame;
+    QFileSystemModel *filesystemModel;
     QString captureDir; // 생성자에서 초기화 함
 
     float zoomFactor = 1.0f;

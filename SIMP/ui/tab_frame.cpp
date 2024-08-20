@@ -11,7 +11,7 @@ TabFrame::TabFrame(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::TabFrame)
     , progressDialog(new QProgressDialog(this))
-    , filesystemFrame(new QFileSystemModel(this))
+    , filesystemModel(new QFileSystemModel(this))
     , captureDir(QCoreApplication::applicationDirPath() + SimpConstPath::DIR_CAPTURE_FRAME)
 {
     ui->setupUi(this);
@@ -33,7 +33,6 @@ void TabFrame::resizeEvent(QResizeEvent *event)
     }
 }
 
-
 ///////////////////////////////////////////////// ui
 void TabFrame::ConnectUI()
 {
@@ -43,7 +42,8 @@ void TabFrame::ConnectUI()
     connect(ui->btnOpenDir, &QPushButton::clicked, this, &TabFrame::btnOpenDir_Click);
     connect(ui->btnZoomIn, &QPushButton::clicked, this, &TabFrame::btnZoomIn_Click);
     connect(ui->btnZoomOut, &QPushButton::clicked, this, &TabFrame::btnZoomOut_Click);
-    connect(ui->btnImageProcessing, &QPushButton::clicked, this, &TabFrame::btnImageProcessing_Click);
+    connect(ui->btnFrameProcessing, &QPushButton::clicked, this, &TabFrame::btnFrameProcessing_Click);
+    connect(ui->btnFrameSave, &QPushButton::clicked, this, &TabFrame::btnFrameSave_Click);
 }
 
 void TabFrame::InitUI()
@@ -54,12 +54,12 @@ void TabFrame::InitUI()
     }
 
     // Set model properties
-    this->filesystemFrame->setRootPath(this->captureDir);
-    this->filesystemFrame->setNameFilters(QStringList() << "*.png" << "*.jpg" << "*.jpeg" << "*.bmp" << "*.gif");
-    this->filesystemFrame->setNameFilterDisables(false);
+    this->filesystemModel->setRootPath(this->captureDir);
+    this->filesystemModel->setNameFilters(QStringList() << "*.png" << "*.jpg" << "*.jpeg" << "*.bmp" << "*.gif");
+    this->filesystemModel->setNameFilterDisables(false);
 
-    ui->lvFrame->setModel(this->filesystemFrame);
-    ui->lvFrame->setRootIndex(this->filesystemFrame->index(this->captureDir)); // Set the root index
+    ui->lvFrame->setModel(this->filesystemModel);
+    ui->lvFrame->setRootIndex(this->filesystemModel->index(this->captureDir)); // Set the root index
     ui->lbDirFrames->setText(this->captureDir);
 
     this->progressDialog->setLabelText("Loading video...");
@@ -82,7 +82,7 @@ void TabFrame::UpdateMousePosition(int x, int y, const QColor &color)
 
 void TabFrame::lvFrame_Click(const QModelIndex &index)
 {
-    QString filePath = this->filesystemFrame->filePath(index);
+    QString filePath = this->filesystemModel->filePath(index);
     QImage image(filePath);
     ui->gvFrame->setImage(image);
     ui->gvFrame->fitInView();
@@ -94,7 +94,7 @@ void TabFrame::btnOpenDir_Click()
 
     if (!dir.isEmpty())
     {
-        ui->lvFrame->setRootIndex(this->filesystemFrame->setRootPath(dir));
+        ui->lvFrame->setRootIndex(this->filesystemModel->setRootPath(dir));
         ui->lbDirFrames->setText(dir);
     }
 }
@@ -132,12 +132,16 @@ void TabFrame::btnZoomOut_Click()
     ui->lbZoom->setText(QString("Zoom x%1").arg(this->zoomFactor, 0, 'f', 2));
 }
 
-void TabFrame::btnImageProcessing_Click()
+void TabFrame::btnFrameProcessing_Click()
 {
     DialogImageProcessing dialog(this);
 
     if (dialog.exec() == QDialog::Accepted)
     {
     }
+}
+
+void TabFrame::btnFrameSave_Click()
+{
 }
 

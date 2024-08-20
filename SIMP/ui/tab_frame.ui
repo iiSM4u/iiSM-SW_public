@@ -154,7 +154,7 @@
           </spacer>
          </item>
          <item>
-          <widget class="QPushButton" name="btnImageProcessing">
+          <widget class="QPushButton" name="btnFrameProcessing">
            <property name="minimumSize">
             <size>
              <width>120</width>
