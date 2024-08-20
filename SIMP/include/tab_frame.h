@@ -37,6 +37,7 @@ private:
     QString captureDir; // 생성자에서 초기화 함
 
     float zoomFactor = 1.0f;
+    int lastPresetIndex = -1;
 
     void ConnectUI();
     void InitUI();

@@ -8,6 +8,7 @@
 #include "preset_brightness_contrast.h"
 #include "preset_stress.h"
 #include "preset_contrast_curve.h"
+#include "preset_image_processing.h"
 
 
 class SimpUtil
@@ -28,4 +29,7 @@ public:
 
     static std::vector<PresetContrastCurve> convertJsonToPresetsImageCurve(const QJsonArray& jsonArray);
     static void convertPresetsImageCurveToJsonArray(const std::vector<PresetContrastCurve>& presets, QJsonArray& jsonArray);
+
+    static std::vector<PresetImageProcessing> convertJsonToPresetsImageProcessing(const QJsonArray& jsonArray);
+    static void convertPresetsImageProcessingToJsonArray(const std::vector<PresetImageProcessing>& presets, QJsonArray& jsonArray);
 };

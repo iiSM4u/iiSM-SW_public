@@ -171,10 +171,11 @@ void TabVideo::btnZoomOut_Click()
 
 void TabVideo::btnVideoProcessing_Click()
 {
-    DialogImageProcessing dialog(this);
+    DialogImageProcessing dialog(this->lastPresetIndex, this);
 
     if (dialog.exec() == QDialog::Accepted)
     {
+        this->lastPresetIndex = dialog.getPresetIndex();
     }
 }
 

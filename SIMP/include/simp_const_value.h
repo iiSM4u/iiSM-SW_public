@@ -37,9 +37,6 @@ public:
     static constexpr double GEGL_BRIGHTNESS_MIN = -3.00;
     static constexpr double GEGL_BRIGHTNESS_MAX = 3.00;
 
-    static constexpr bool GEGL_STRETCH_CONTRAST_KEEP_COLORS_DEFAULT = true;
-    static constexpr bool GEGL_STRETCH_CONTRAST_PERCEPTUAL_DEFAULT = false;
-
     static constexpr int GEGL_STRESS_RADIUS_DEFAULT = 300;
     static constexpr int GEGL_STRESS_RADIUS_MIN = 2;
     static constexpr int GEGL_STRESS_RADIUS_MAX = 6000;
@@ -53,6 +50,9 @@ public:
     static constexpr int GEGL_STRESS_ITERATIONS_MAX = 1000;
 
     static constexpr bool GEGL_STRESS_ENHANCE_SHADOWS_DEFAULT = false;
+
+    static constexpr bool GEGL_STRETCH_CONTRAST_KEEP_COLORS_DEFAULT = true;
+    static constexpr bool GEGL_STRETCH_CONTRAST_PERCEPTUAL_DEFAULT = false;
 
     static constexpr int GEGL_CONTRAST_CURVE_SAMPLING_POINTS_DEFAULT = 0;
     static constexpr int GEGL_CONTRAST_CURVE_SAMPLING_POINTS_MIN = 0;
