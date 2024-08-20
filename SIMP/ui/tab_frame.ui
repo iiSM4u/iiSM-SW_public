@@ -68,7 +68,7 @@
           </spacer>
          </item>
          <item>
-          <widget class="QPushButton" name="btnLoadFrame">
+          <widget class="QPushButton" name="btnOpenDir">
            <property name="minimumSize">
             <size>
              <width>0</width>
@@ -115,7 +115,7 @@
        <widget class="QWidget" name="groupFrameHeader" native="true">
         <layout class="QHBoxLayout" name="horizontalLayout_2">
          <item>
-          <widget class="QLabel" name="lbFrameZoom">
+          <widget class="QLabel" name="lbZoom">
            <property name="font">
             <font>
              <bold>true</bold>
@@ -127,14 +127,14 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="btnFrameZoomIn">
+          <widget class="QPushButton" name="btnZoomIn">
            <property name="text">
             <string>+</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="btnFrameZoomOut">
+          <widget class="QPushButton" name="btnZoomOut">
            <property name="text">
             <string>-</string>
            </property>
@@ -154,7 +154,7 @@
           </spacer>
          </item>
          <item>
-          <widget class="QPushButton" name="btnFrameProcessing">
+          <widget class="QPushButton" name="btnImageProcessing">
            <property name="minimumSize">
             <size>
              <width>120</width>

@@ -109,6 +109,35 @@ void TabCamera::ConnectUI()
     connect(ui->btnZoomOut, &QPushButton::clicked, this, &TabCamera::btnZoomOut_Click);
 }
 
+void TabCamera::InitUI()
+{
+    ui->cbFormat->clear();
+    for (const auto& format : {PixelFormatType::RGB24, PixelFormatType::Raw})
+    //for (const auto& format : {PixelFormatType::RGB24, PixelFormatType::RGB32, PixelFormatType::Raw})
+    {
+        ui->cbFormat->addItem(toString(format));
+    }
+    ui->cbFormat->setCurrentIndex(0);
+
+    // init gain, contrast, gamma
+    ui->sliderGain->setMinimum(MIICAM_EXPOGAIN_MIN);
+    ui->sliderGain->setMaximum(SimpConstValue::MIICAM_EXPOGAIN_MAX);
+    ui->sliderGain->setValue(MIICAM_EXPOGAIN_DEF);
+    ui->editGain->setPlainText(QString::number(MIICAM_EXPOGAIN_DEF));
+
+    ui->sliderContrast->setMinimum(MIICAM_CONTRAST_MIN);
+    ui->sliderContrast->setMaximum(MIICAM_CONTRAST_MAX);
+    ui->sliderContrast->setValue(MIICAM_CONTRAST_DEF);
+    ui->editContrast->setPlainText(QString::number(MIICAM_CONTRAST_DEF));
+
+    ui->sliderGamma->setMinimum(MIICAM_GAMMA_MIN);
+    ui->sliderGamma->setMaximum(MIICAM_GAMMA_MAX);
+    ui->sliderGamma->setValue(MIICAM_GAMMA_DEF);
+    ui->editGamma->setPlainText(QString::number(MIICAM_GAMMA_DEF));
+
+    ui->editDarkFieldCorrectionQuantity->setPlainText(QString::number(SimpConstValue::MIICAM_DARK_FIELD_QUANTITY_DEFAULT));
+}
+
 void TabCamera::EnableUI(bool isPlay)
 {
     ui->cbResolution->setEnabled(!isPlay);
@@ -752,35 +781,6 @@ void TabCamera::FinishRecord()
     }
 
     ui->btnRecordOn->setText(SimpConstMenu::BTN_RECORD_ON);
-}
-
-void TabCamera::InitUI()
-{
-    ui->cbFormat->clear();
-    for (const auto& format : {PixelFormatType::RGB24, PixelFormatType::Raw})
-        //for (const auto& format : {PixelFormatType::RGB24, PixelFormatType::RGB32, PixelFormatType::Raw})
-    {
-        ui->cbFormat->addItem(toString(format));
-    }
-    ui->cbFormat->setCurrentIndex(0);
-
-    // init gain, contrast, gamma
-    ui->sliderGain->setMinimum(MIICAM_EXPOGAIN_MIN);
-    ui->sliderGain->setMaximum(SimpConstValue::MIICAM_EXPOGAIN_MAX);
-    ui->sliderGain->setValue(MIICAM_EXPOGAIN_DEF);
-    ui->editGain->setPlainText(QString::number(MIICAM_EXPOGAIN_DEF));
-
-    ui->sliderContrast->setMinimum(MIICAM_CONTRAST_MIN);
-    ui->sliderContrast->setMaximum(MIICAM_CONTRAST_MAX);
-    ui->sliderContrast->setValue(MIICAM_CONTRAST_DEF);
-    ui->editContrast->setPlainText(QString::number(MIICAM_CONTRAST_DEF));
-
-    ui->sliderGamma->setMinimum(MIICAM_GAMMA_MIN);
-    ui->sliderGamma->setMaximum(MIICAM_GAMMA_MAX);
-    ui->sliderGamma->setValue(MIICAM_GAMMA_DEF);
-    ui->editGamma->setPlainText(QString::number(MIICAM_GAMMA_DEF));
-
-    ui->editDarkFieldCorrectionQuantity->setPlainText(QString::number(SimpConstValue::MIICAM_DARK_FIELD_QUANTITY_DEFAULT));
 }
 
 void TabCamera::UpdatePresetContrastCurve(const std::vector<PresetContrastCurve>& presets, const int index)
