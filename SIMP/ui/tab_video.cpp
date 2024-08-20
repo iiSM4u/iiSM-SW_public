@@ -85,15 +85,26 @@ void TabVideo::InitUI()
     ui->lvVideo->setRootIndex(this->filesystemModel->index(this->recordDir)); // Set the root index
     ui->lbDirVideo->setText(this->recordDir);
 
-    ui->btnVideoPlay->setEnabled(false);
-    ui->btnVideoStop->setEnabled(false);
-    ui->sliderVideoFrame->setEnabled(false);
-
     this->progressDialog->setLabelText("Loading video...");
     this->progressDialog->setCancelButton(nullptr);
     this->progressDialog->setRange(0, 100);
     this->progressDialog->setModal(true);
     this->progressDialog->reset();
+
+    // default는 false
+    TabVideo::EnableUI(false);
+}
+
+void TabVideo::EnableUI(bool enable)
+{
+    ui->btnZoomIn->setEnabled(enable);
+    ui->btnZoomOut->setEnabled(enable);
+    ui->btnVideoProcessing->setEnabled(enable);
+    ui->btnVideoSave->setEnabled(enable);
+
+    ui->btnVideoPlay->setEnabled(enable);
+    ui->btnVideoStop->setEnabled(enable);
+    ui->sliderVideoFrame->setEnabled(enable);
 }
 
 void TabVideo::UpdateMousePosition(int x, int y, const QColor &color)
@@ -123,6 +134,9 @@ void TabVideo::lvVideo_Click(const QModelIndex &index)
     connect(loader, &VideoLoader::finished, loader, &QObject::deleteLater);
 
     loader->start();
+
+    // listview에서 항목을 선택했으면 true
+    TabVideo::EnableUI(true);
 }
 
 void TabVideo::btnOpenDir_Click()

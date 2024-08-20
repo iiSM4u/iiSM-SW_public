@@ -167,6 +167,9 @@ void TabCamera::EnableUI(bool isPlay)
     ui->editDarkFieldCorrectionQuantity->setEnabled(isPlay);
     ui->btnDarkFieldCorrection->setEnabled(isPlay);
     ui->chkDarkFieldCorrection->setEnabled(isPlay && this->isDarkFieldCorrectCapture);
+
+    ui->btnZoomIn->setEnabled(isPlay);
+    ui->btnZoomOut->setEnabled(isPlay);
 }
 
 void TabCamera::cbResoution_SelectedIndexChanged(int index)

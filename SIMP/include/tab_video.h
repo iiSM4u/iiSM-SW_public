@@ -24,6 +24,7 @@ protected:
 private slots:
     void UpdateMousePosition(int x, int y, const QColor& color);
     void UpdateVideoUI();
+    void EnableUI(bool enable);
 
     void lvVideo_Click(const QModelIndex& index);
     void btnOpenDir_Click();

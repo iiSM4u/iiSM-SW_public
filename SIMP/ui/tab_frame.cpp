@@ -67,6 +67,17 @@ void TabFrame::InitUI()
     this->progressDialog->setRange(0, 100);
     this->progressDialog->setModal(true);
     this->progressDialog->reset();
+
+    // default는 false
+    TabFrame::EnableUI(false);
+}
+
+void TabFrame::EnableUI(bool enable)
+{
+    ui->btnZoomIn->setEnabled(enable);
+    ui->btnZoomOut->setEnabled(enable);
+    ui->btnFrameProcessing->setEnabled(enable);
+    ui->btnFrameSave->setEnabled(enable);
 }
 
 void TabFrame::UpdateMousePosition(int x, int y, const QColor &color)
@@ -86,6 +97,9 @@ void TabFrame::lvFrame_Click(const QModelIndex &index)
     QImage image(filePath);
     ui->gvFrame->setImage(image);
     ui->gvFrame->fitInView();
+
+    // listview에서 항목을 선택했으면 true
+    TabFrame::EnableUI(true);
 }
 
 void TabFrame::btnOpenDir_Click()
