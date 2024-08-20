@@ -31,14 +31,18 @@ private slots:
     void btnZoomIn_Click();
     void btnZoomOut_Click();
     void btnVideoProcessing_Click();
+    void btnVideoSave_Click();
 
     void btnPlayVideo_Click();
     void btnStopVideo_Click();
 
     void sliderVideo_sliderMoved(int position);
 
-    void onVideoLoadingProgress(int value);
+    void onVideoLoadingProgress(int current, int total);
     void onVideoLoadingFinished(bool success, const std::vector<QImage>& frames, double frameRate, int totalFrames);
+
+    void onVideoConvertingProgress(int current, int total);
+    void onVideoConvertingFinished(bool success, const std::vector<QImage>& frames);
 
 private:
     Ui::TabVideo *ui;
@@ -47,16 +51,17 @@ private:
 
     QProgressDialog *progressDialog;
     QFileSystemModel *filesystemModel;
-    QString recordDir; // 생성자에서 초기화 함
+    QModelIndex currentVideoIndex;
+    QString recordDir;
 
     float zoomFactor = 1.0f;
     int lastPresetIndex = -1;
     bool isOn = false, isVideoPlay = false;
 
-    int videoTotalFrame, currentFrame;
+    int videoTotalFrame, currentFrameIndex;
     double videoFrameRates;
 
-    QImage resultVideo;
+    QImage currentFrame;
     std::vector<QImage> videoFrames;
 
     void ConnectUI();

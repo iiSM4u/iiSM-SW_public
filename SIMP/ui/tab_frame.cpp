@@ -3,6 +3,7 @@
 #include "simp_const_value.h"
 #include "simp_const_path.h"
 #include "dialog_image_processing.h"
+#include "simp_gegl.h"
 
 #include <QCoreApplication>
 #include <QFileDialog>
@@ -10,7 +11,6 @@
 TabFrame::TabFrame(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::TabFrame)
-    , progressDialog(new QProgressDialog(this))
     , filesystemModel(new QFileSystemModel(this))
     , captureDir(QCoreApplication::applicationDirPath() + SimpConstPath::DIR_CAPTURE_FRAME)
 {
@@ -62,12 +62,6 @@ void TabFrame::InitUI()
     ui->lvFrame->setRootIndex(this->filesystemModel->index(this->captureDir)); // Set the root index
     ui->lbDirFrames->setText(this->captureDir);
 
-    this->progressDialog->setLabelText("Loading video...");
-    this->progressDialog->setCancelButton(nullptr);
-    this->progressDialog->setRange(0, 100);
-    this->progressDialog->setModal(true);
-    this->progressDialog->reset();
-
     // default는 false
     TabFrame::EnableUI(false);
 }
@@ -93,9 +87,11 @@ void TabFrame::UpdateMousePosition(int x, int y, const QColor &color)
 
 void TabFrame::lvFrame_Click(const QModelIndex &index)
 {
-    QString filePath = this->filesystemModel->filePath(index);
-    QImage image(filePath);
-    ui->gvFrame->setImage(image);
+    this->currentFrameIndex = index;
+    QString filePath = this->filesystemModel->filePath(this->currentFrameIndex);
+    this->currentFrame.load(filePath);
+
+    ui->gvFrame->setImage(this->currentFrame);
     ui->gvFrame->fitInView();
 
     // listview에서 항목을 선택했으면 true
@@ -153,10 +149,42 @@ void TabFrame::btnFrameProcessing_Click()
     if (dialog.exec() == QDialog::Accepted)
     {
         this->lastPresetIndex = dialog.getPresetIndex();
+
+        // gegl에 넣기 위해 RGBA8888로 변경
+        QImage source = this->currentFrame.convertToFormat(QImage::Format_RGBA8888);
+
+        SimpGEGL::UpdateImageProcessing(
+            /*source*/source
+            , /*isUpdateBrightnessContrast*/dialog.getBrightnessContrastEnable()
+            , /*isUpdateStress*/dialog.getStressEnable()
+            , /*isUpdateStretchContrast*/dialog.getStretchContrastEnable()
+            , /*brightness*/dialog.getBrightness()
+            , /*contrast*/dialog.getContrast()
+            , /*stress_radius*/dialog.getStressRadius()
+            , /*stress_samples*/dialog.getStressSamples()
+            , /*stress_iterations*/dialog.getStressIterations()
+            , /*stress_enhance_shadows*/dialog.getStressEnhanceShadows()
+            , /*stretch_contrast_keep_colors*/dialog.getStretchContrastKeepColors()
+            , /*stretch_contrast_perceptual*/dialog.getStretchContrastNonLinearComponents()
+        );
+
+        // 업데이트된 이미지를 UI에 업데이트. UI에 띄우기 위해 다시 RGB888로 변경
+        ui->gvFrame->setImage(source.convertToFormat(QImage::Format_RGB888));
     }
 }
 
 void TabFrame::btnFrameSave_Click()
 {
+    QFileInfo fileInfo = this->filesystemModel->fileInfo(this->currentFrameIndex);
+
+    QString dir = fileInfo.absolutePath();
+    QString baseName = fileInfo.completeBaseName();
+    QString extension = fileInfo.suffix();
+    QString filePath = QString("%1/%2_SIMP.%3").arg(dir).arg(baseName).arg(extension);
+
+    this->currentFrame.save(filePath);
+
+    // list 업데이트. 같은 파일 이름이 덮어씌워진 경우 list를 클릭해도 이미지가 안 바뀔 수 있음
+    ui->lvFrame->setRootIndex(this->filesystemModel->setRootPath(dir));
 }
 

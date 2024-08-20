@@ -4,7 +4,9 @@
 #include "simp_const_path.h"
 #include "simp_const_value.h"
 #include "simp_const_menu.h"
+#include "simp_util.h"
 #include "video_loader.h"
+#include "video_converter.h"
 
 #include <QCoreApplication>
 #include <QFileDialog>
@@ -61,6 +63,7 @@ void TabVideo::ConnectUI()
     connect(ui->btnZoomIn, &QPushButton::clicked, this, &TabVideo::btnZoomIn_Click);
     connect(ui->btnZoomOut, &QPushButton::clicked, this, &TabVideo::btnZoomOut_Click);
     connect(ui->btnVideoProcessing, &QPushButton::clicked, this, &TabVideo::btnVideoProcessing_Click);
+    connect(ui->btnVideoSave, &QPushButton::clicked, this, &TabVideo::btnVideoSave_Click);
 
     connect(ui->btnVideoPlay, &QPushButton::clicked, this, &TabVideo::btnPlayVideo_Click);
     connect(ui->btnVideoStop, &QPushButton::clicked, this, &TabVideo::btnStopVideo_Click);
@@ -85,7 +88,6 @@ void TabVideo::InitUI()
     ui->lvVideo->setRootIndex(this->filesystemModel->index(this->recordDir)); // Set the root index
     ui->lbDirVideo->setText(this->recordDir);
 
-    this->progressDialog->setLabelText("Loading video...");
     this->progressDialog->setCancelButton(nullptr);
     this->progressDialog->setRange(0, 100);
     this->progressDialog->setModal(true);
@@ -120,18 +122,21 @@ void TabVideo::UpdateMousePosition(int x, int y, const QColor &color)
 
 void TabVideo::lvVideo_Click(const QModelIndex &index)
 {
+    this->currentVideoIndex = index;
+
     // 일단 update를 중지시킨다.
     this->isVideoPlay = false;
 
-    QString filePath = this->filesystemModel->filePath(index);
-
+    this->progressDialog->setLabelText("Loading video...");
     this->progressDialog->reset();
     this->progressDialog->show();
+
+    QString filePath = this->filesystemModel->filePath(index);
 
     VideoLoader *loader = new VideoLoader(filePath);
     connect(loader, &VideoLoader::progress, this, &TabVideo::onVideoLoadingProgress);
     connect(loader, &VideoLoader::finished, this, &TabVideo::onVideoLoadingFinished);
-    connect(loader, &VideoLoader::finished, loader, &QObject::deleteLater);
+    connect(loader, &VideoLoader::finished, loader, &QObject::deleteLater);  // QObject::deleteLater가 thread를 제거함
 
     loader->start();
 
@@ -190,11 +195,89 @@ void TabVideo::btnVideoProcessing_Click()
     if (dialog.exec() == QDialog::Accepted)
     {
         this->lastPresetIndex = dialog.getPresetIndex();
+
+        // 일단 update를 중지시킨다.
+        this->isVideoPlay = false;
+
+        this->progressDialog->setLabelText("convert video...");
+        this->progressDialog->reset();
+        this->progressDialog->show();
+
+        VideoConverter *converter = new VideoConverter(
+            this->videoFrames
+            , /*isUpdateBrightnessContrast*/dialog.getBrightnessContrastEnable()
+            , /*isUpdateStress*/dialog.getStressEnable()
+            , /*isUpdateStretchContrast*/dialog.getStretchContrastEnable()
+            , /*brightness*/dialog.getBrightness()
+            , /*contrast*/dialog.getContrast()
+            , /*stress_radius*/dialog.getStressRadius()
+            , /*stress_samples*/dialog.getStressSamples()
+            , /*stress_iterations*/dialog.getStressIterations()
+            , /*stress_enhance_shadows*/dialog.getStressEnhanceShadows()
+            , /*stretch_contrast_keep_colors*/dialog.getStretchContrastKeepColors()
+            , /*stretch_contrast_perceptual*/dialog.getStretchContrastNonLinearComponents()
+        );
+
+        connect(converter, &VideoConverter::progress, this, &TabVideo::onVideoConvertingProgress);
+        connect(converter, &VideoConverter::finished, this, &TabVideo::onVideoConvertingFinished);
+        connect(converter, &VideoConverter::finished, converter, &QObject::deleteLater);  // QObject::deleteLater가 thread를 제거함
+
+        converter->start();
     }
 }
 
-void TabVideo::onVideoLoadingProgress(int value)
+void TabVideo::btnVideoSave_Click()
 {
+    QFileInfo fileInfo = this->filesystemModel->fileInfo(this->currentVideoIndex);
+
+    QString dir = fileInfo.absolutePath();
+    QString baseName = fileInfo.completeBaseName();
+    QString extension = fileInfo.suffix();
+    QString filePath = QString("%1/%2_SIMP.%3").arg(dir).arg(baseName).arg(extension);
+
+    SimpUtil::WriteVideo(
+        this->videoFrames
+        , SimpUtil::getVideoFormat(extension)
+        , this->videoFrameRates
+        , SimpConstValue::RECORD_QUALITY_DEFAULT
+        , filePath
+    );
+
+    // list 업데이트. 같은 파일 이름이 덮어씌워진 경우 list를 클릭해도 이미지가 안 바뀔 수 있음
+    ui->lvVideo->setRootIndex(this->filesystemModel->setRootPath(dir));
+}
+
+void TabVideo::btnPlayVideo_Click()
+{
+    this->isVideoPlay = !this->isVideoPlay;
+    ui->btnVideoPlay->setText(!this->isVideoPlay ? SimpConstMenu::BTN_PLAY : SimpConstMenu::BTN_PAUSE);
+}
+
+void TabVideo::btnStopVideo_Click()
+{
+    this->isVideoPlay = false;
+    this->currentFrameIndex = 0;
+
+    // play를 중지시켰으므로 직접 업데이트 한다.
+    this->currentFrame = this->videoFrames[this->currentFrameIndex];
+    TabVideo::UpdateVideoUI();
+}
+
+void TabVideo::sliderVideo_sliderMoved(int position)
+{
+    this->currentFrameIndex = position;
+
+    // play 중이 아니면 직접 업데이트한다.
+    if (!this->isVideoPlay)
+    {
+        this->currentFrame = this->videoFrames[this->currentFrameIndex];
+        TabVideo::UpdateVideoUI();
+    }
+}
+
+void TabVideo::onVideoLoadingProgress(int current, int total)
+{
+    int value = ((current + 1) * 100) / total;
     this->progressDialog->setValue(value);
 }
 
@@ -207,7 +290,7 @@ void TabVideo::onVideoLoadingFinished(bool success, const std::vector<QImage>& f
         this->videoFrames = frames;
         this->videoFrameRates = frameRate;
         this->videoTotalFrame = totalFrames;
-        this->currentFrame = 0;
+        this->currentFrameIndex = 0;
 
         ui->sliderVideoFrame->setRange(0, this->videoTotalFrame - 1);
         ui->sliderVideoFrame->setSingleStep(1);
@@ -223,8 +306,8 @@ void TabVideo::onVideoLoadingFinished(bool success, const std::vector<QImage>& f
         ui->btnVideoPlay->setText("Play");
         this->isVideoPlay = false;  // 자동실행 안 함
 
-        // 첫 프레임을 띄운다.
-        this->resultVideo = this->videoFrames[this->currentFrame];
+        // 첫 프레임을 UI에 띄운다.
+        this->currentFrame = this->videoFrames[this->currentFrameIndex];
         TabVideo::UpdateVideoUI();
     }
     else
@@ -233,45 +316,51 @@ void TabVideo::onVideoLoadingFinished(bool success, const std::vector<QImage>& f
     }
 }
 
-void TabVideo::btnPlayVideo_Click()
+void TabVideo::onVideoConvertingProgress(int current, int total)
 {
-    this->isVideoPlay = !this->isVideoPlay;
-    ui->btnVideoPlay->setText(!this->isVideoPlay ? SimpConstMenu::BTN_PLAY : SimpConstMenu::BTN_PAUSE);
+    int value = ((current + 1) * 100) / total;
+    this->progressDialog->setValue(value);
 }
 
-void TabVideo::btnStopVideo_Click()
+void TabVideo::onVideoConvertingFinished(bool success, const std::vector<QImage>& frames)
 {
-    this->isVideoPlay = false;
-    this->currentFrame = 0;
+    this->progressDialog->hide(); // Hide the progress dialog
 
-    // play를 중지시켰으므로 직접 업데이트 한다.
-    this->resultVideo = this->videoFrames[this->currentFrame];
-    TabVideo::UpdateVideoUI();
-}
-
-void TabVideo::sliderVideo_sliderMoved(int position)
-{
-    this->currentFrame = position;
-
-    // play 중이 아니면 직접 업데이트한다.
-    if (!this->isVideoPlay)
+    if (success)
     {
-        this->resultVideo = this->videoFrames[this->currentFrame];
+        this->videoFrames = frames;
+        this->currentFrameIndex = 0;
+
+        ui->sliderVideoFrame->setValue(0);
+
+        ui->btnVideoPlay->setEnabled(true);
+        ui->btnVideoStop->setEnabled(true);
+        ui->sliderVideoFrame->setEnabled(true);
+
+        ui->btnVideoPlay->setText("Play");
+        this->isVideoPlay = false;  // 자동실행 안 함
+
+        // 첫 프레임을 UI에 띄운다.
+        this->currentFrame = this->videoFrames[this->currentFrameIndex];
         TabVideo::UpdateVideoUI();
+    }
+    else
+    {
+        QMessageBox::warning(this, "Error", "Could not open the video file.");
     }
 }
 
 void TabVideo::UpdateVideoUI()
 {
-    ui->gvVideo->setImage(this->resultVideo);
+    ui->gvVideo->setImage(this->currentFrame);
 
     if (std::abs(zoomFactor - 1.0f) <= std::numeric_limits<float>::epsilon())
     {
         ui->gvVideo->fitInView();
     }
 
-    ui->lbVideoFrame->setText(QString("%1 / %2").arg(this->currentFrame + 1).arg(this->videoTotalFrame));
-    ui->sliderVideoFrame->setValue(this->currentFrame);
+    ui->lbVideoFrame->setText(QString("%1 / %2").arg(this->currentFrameIndex + 1).arg(this->videoTotalFrame));
+    ui->sliderVideoFrame->setValue(this->currentFrameIndex);
 
     if (!this->isVideoPlay)
     {
@@ -285,14 +374,14 @@ void TabVideo::UpdateVideo()
     {
         if (this->isVideoPlay)
         {
-            if (this->currentFrame < this->videoTotalFrame)
+            if (this->currentFrameIndex < this->videoTotalFrame)
             {
-                this->resultVideo = this->videoFrames[this->currentFrame++];
+                this->currentFrame = this->videoFrames[this->currentFrameIndex++];
             }
             else
             {
-                this->currentFrame = 0;
-                this->resultVideo = this->videoFrames[this->currentFrame];
+                this->currentFrameIndex = 0;
+                this->currentFrame = this->videoFrames[this->currentFrameIndex];
                 this->isVideoPlay = false;
             }
 

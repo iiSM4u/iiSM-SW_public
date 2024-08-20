@@ -3,6 +3,9 @@
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QImage>
+
+#include <opencv2/opencv.hpp>
 
 #include "video_format_type.h"
 #include "preset_brightness_contrast.h"
@@ -19,7 +22,11 @@ public:
     static bool saveJsonFile(const QString& filePath, const QJsonArray& jsonArray);
 
     static QString getVideoExtension(VideoFormatType type);
+    static VideoFormatType getVideoFormat(QString extension);
+
     static int getVideoFourcc(VideoFormatType type);
+    static void WriteVideo(const std::vector<cv::Mat>& frames, const VideoFormatType format, const double frameRate, const int quality, const QString filePath);
+    static void WriteVideo(const std::vector<QImage>& frames, const VideoFormatType format, const double frameRate, const int quality, const QString filePath);
 
     static std::vector<PresetBrightnessContrast> convertJsonToBrightnessContrastPresets(const QJsonArray& jsonArray);
     static void convertBrightnessContrastPresetsToJsonArray(const std::vector<PresetBrightnessContrast>& presets, QJsonArray& jsonArray);

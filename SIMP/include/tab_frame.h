@@ -33,12 +33,13 @@ private slots:
 private:
     Ui::TabFrame *ui;
 
-    QProgressDialog *progressDialog;
     QFileSystemModel *filesystemModel;
-    QString captureDir; // 생성자에서 초기화 함
+    QString captureDir;
+    QImage currentFrame;
+    QModelIndex currentFrameIndex;
 
-    float zoomFactor = 1.0f;
     int lastPresetIndex = -1;
+    float zoomFactor = 1.0f;
 
     void ConnectUI();
     void InitUI();

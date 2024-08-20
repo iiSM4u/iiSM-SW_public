@@ -29,7 +29,7 @@ void VideoLoader::run()
             QImage img(frame.data, frame.cols, frame.rows, frame.step, QImage::Format_RGB888);
             frames.emplace_back(img.rgbSwapped()); // Convert BGR to RGB
         }
-        emit progress(((i + 1) * 100) / totalFrames); // Ensure progress goes up to 100%
+        emit progress(i, totalFrames); // Ensure progress goes up to 100%
     }
 
     emit finished(true, frames, frameRate, totalFrames);

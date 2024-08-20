@@ -753,27 +753,10 @@ void TabCamera::FinishRecord()
 
         QString timestamp = QDateTime::currentDateTime().toString(SimpConstFormat::DATE_TIME);
         QString filePath = dir.absoluteFilePath(timestamp + SimpUtil::getVideoExtension(this->recordFormat));
-        int fourcc = SimpUtil::getVideoFourcc(this->recordFormat);
 
         try
         {
-            // Create VideoWriter object
-            cv::VideoWriter writer(filePath.toStdString(), fourcc, this->recordFrameRate, cv::Size(this->recordFrames[0].cols, this->recordFrames[0].rows));
-
-            // quality는 특정 format에만 적용된다.
-            if (this->recordFormat == VideoFormatType::MJPEG)
-            {
-                writer.set(cv::VIDEOWRITER_PROP_QUALITY, this->recordQuality);
-            }
-
-            // Write frames to video file
-            for (const cv::Mat& mat : this->recordFrames)
-            {
-                writer.write(mat);
-            }
-
-            // Release the VideoWriter
-            writer.release();
+            SimpUtil::WriteVideo(this->recordFrames, this->recordFormat, this->recordFrameRate, this->recordQuality, filePath);
         }
         catch (cv::Exception ex)
         {

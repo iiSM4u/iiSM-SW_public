@@ -11,7 +11,7 @@ public:
     void run() override;
 
 signals:
-    void progress(int value);
+    void progress(int current, int total);
     void finished(bool success, const std::vector<QImage>& frames, double frameRate, int totalFrames);
 
 private:
