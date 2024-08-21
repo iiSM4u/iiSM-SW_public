@@ -4,6 +4,7 @@
 #include <QThread>
 #include <QFileSystemModel>
 #include <QProgressDialog>
+#include "simp_const_value.h"
 
 namespace Ui {
 class TabVideo;
@@ -56,6 +57,7 @@ private:
     QModelIndex currentVideoIndex;
     QString recordDir;
 
+    int videoDelay = SimpConstValue::DELAY_CAMERA;
     float zoomFactor = 1.0f;
     int lastPresetIndex = -1;
     bool isOn = false, isVideoPlay = false;

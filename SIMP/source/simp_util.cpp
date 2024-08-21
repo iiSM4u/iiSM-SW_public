@@ -102,7 +102,7 @@ int SimpUtil::getVideoFourcc(VideoFormatType type)
 void SimpUtil::WriteVideo(
     const std::vector<cv::Mat>& frames
     , const VideoFormatType format
-    , const double frameRate
+    , const int recordSecond
     , const int quality
     , const QString filePath
 )
@@ -116,7 +116,8 @@ void SimpUtil::WriteVideo(
         throw std::invalid_argument("filePath is empty!!");
     }
 
-    int fourcc = SimpUtil::getVideoFourcc(format);
+    int fourcc = SimpUtil::getVideoFourcc(format);    
+    double frameRate = frames.size() / recordSecond;
 
     // Create VideoWriter object
     cv::VideoWriter writer(filePath.toStdString(), fourcc, frameRate, cv::Size(frames[0].cols, frames[0].rows));
@@ -140,7 +141,7 @@ void SimpUtil::WriteVideo(
 void SimpUtil::WriteVideo(
     const std::vector<QImage>& frames
     , const VideoFormatType format
-    , const double frameRate
+    , const int recordSecond
     , const int quality
     , const QString filePath
 )
@@ -155,6 +156,7 @@ void SimpUtil::WriteVideo(
     }
 
     int fourcc = SimpUtil::getVideoFourcc(format);
+    double frameRate = frames.size() / recordSecond;
 
     // Create VideoWriter object
     cv::VideoWriter writer(filePath.toStdString(), fourcc, frameRate, cv::Size(frames[0].width(), frames[0].height()));

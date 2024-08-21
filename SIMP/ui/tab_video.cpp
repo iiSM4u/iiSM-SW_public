@@ -328,6 +328,7 @@ void TabVideo::onVideoLoadingFinished(bool success, const std::vector<QImage>& f
         this->videoFrameRates = frameRate;
         this->videoTotalFrame = totalFrames;
         this->currentFrameIndex = 0;
+        this->videoDelay = SimpConstValue::SECOND / this->videoFrameRates;
 
         ui->sliderVideoFrame->setRange(0, this->videoTotalFrame - 1);
         ui->sliderVideoFrame->setSingleStep(1);
@@ -427,6 +428,6 @@ void TabVideo::UpdateVideo()
             QMetaObject::invokeMethod(this, "UpdateVideoUI", Qt::QueuedConnection);
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(SimpConstValue::DELAY_VIDEO)); // Frame rate delay
+        std::this_thread::sleep_for(std::chrono::milliseconds(this->videoDelay)); // Frame rate delay
     }
 }

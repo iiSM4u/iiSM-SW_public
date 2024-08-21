@@ -309,6 +309,8 @@ void TabCamera::btnRecordOption_Click()
         this->recordFrameRate = dialog.getFrameRate();
         this->recordQuality = dialog.getQuality();
         this->recordTimeLimit = dialog.getTimeLimit();
+
+        this->cameraDelay = SimpConstValue::SECOND / this->recordFrameRate;
     }
 }
 
@@ -704,7 +706,7 @@ void TabCamera::UpdatePreview()
             QMetaObject::invokeMethod(this, "UpdatePreviewUI", Qt::QueuedConnection);
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(SimpConstValue::DELAY_CAMERA)); // Frame rate delay
+        std::this_thread::sleep_for(std::chrono::milliseconds(this->cameraDelay)); // Frame rate delay
     }
 }
 
@@ -754,11 +756,14 @@ void TabCamera::FinishRecord()
         }
 
         QString timestamp = QDateTime::currentDateTime().toString(SimpConstFormat::DATE_TIME);
-        QString filePath = dir.absoluteFilePath(timestamp + SimpUtil::getVideoExtension(this->recordFormat));
+        QString filePath = dir.absoluteFilePath(timestamp + SimpUtil::getVideoExtension(this->recordFormat));        
+
+        QTime currentTime = QTime::currentTime();
+        int elapsedSeconds = this->recordStartTime.secsTo(currentTime);
 
         try
         {
-            SimpUtil::WriteVideo(this->recordFrames, this->recordFormat, this->recordFrameRate, this->recordQuality, filePath);
+            SimpUtil::WriteVideo(this->recordFrames, this->recordFormat, elapsedSeconds, this->recordQuality, filePath);
         }
         catch (cv::Exception ex)
         {

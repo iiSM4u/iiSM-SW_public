@@ -85,6 +85,7 @@ private:
 
     float zoomFactor = 1.0f;
     int resolutionIndex = 0;
+    int cameraDelay = SimpConstValue::DELAY_CAMERA;
 
     QTime recordStartTime;
     VideoFormatType recordFormat = VideoFormatType::MJPEG;

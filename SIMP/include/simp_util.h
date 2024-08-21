@@ -25,8 +25,8 @@ public:
     static VideoFormatType getVideoFormat(QString extension);
 
     static int getVideoFourcc(VideoFormatType type);
-    static void WriteVideo(const std::vector<cv::Mat>& frames, const VideoFormatType format, const double frameRate, const int quality, const QString filePath);
-    static void WriteVideo(const std::vector<QImage>& frames, const VideoFormatType format, const double frameRate, const int quality, const QString filePath);
+    static void WriteVideo(const std::vector<cv::Mat>& frames, const VideoFormatType format, const int recordSecond, const int quality, const QString filePath);
+    static void WriteVideo(const std::vector<QImage>& frames, const VideoFormatType format, const int recordSecond, const int quality, const QString filePath);
 
     static std::vector<PresetBrightnessContrast> convertJsonToBrightnessContrastPresets(const QJsonArray& jsonArray);
     static void convertBrightnessContrastPresetsToJsonArray(const std::vector<PresetBrightnessContrast>& presets, QJsonArray& jsonArray);

@@ -3,17 +3,19 @@
 class SimpConstValue
 {
 public:
+    static constexpr int SECOND = 1000;
+
     static constexpr float ZOOM_VALUE = 0.25f;
     static constexpr float ZOOM_MAX = 3.0f;
     static constexpr float ZOOM_MIN = 0.25f;
-
-    static constexpr int DELAY_CAMERA = 30;
-    static constexpr int DELAY_VIDEO = 30;
 
     static constexpr int RECORD_FRAME_RATE_DEFAULT = 30;
     static constexpr int RECORD_FRAME_RATE_MIN = 1;
     static constexpr int RECORD_FRAME_RATE_MAX = 60;
     static constexpr int RECORD_QUALITY_DEFAULT = 75;
+
+    static constexpr int DELAY_CAMERA = SECOND / RECORD_FRAME_RATE_DEFAULT;
+    static constexpr int DELAY_VIDEO = SECOND / RECORD_FRAME_RATE_DEFAULT;
 
     static constexpr int MARGIN_CHART_CLICK = 20;
 
