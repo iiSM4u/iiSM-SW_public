@@ -134,7 +134,7 @@ void TabVideo::lvVideo_Click(const QModelIndex &index)
     this->progressDialog->reset();
     this->progressDialog->show();
 
-    QString filePath = this->filesystemModel->filePath(index);
+    QString filePath = this->filesystemModel->filePath(this->currentVideoIndex);
 
     VideoLoader *loader = new VideoLoader(filePath);
     connect(loader, &VideoLoader::progress, this, &TabVideo::onVideoLoadingProgress);
@@ -206,8 +206,10 @@ void TabVideo::btnVideoProcessing_Click()
         this->progressDialog->reset();
         this->progressDialog->show();
 
+        QString filePath = this->filesystemModel->filePath(this->currentVideoIndex);
+
         VideoConverter *converter = new VideoConverter(
-            this->videoFrames
+            filePath
             , /*isUpdateBrightnessContrast*/dialog.getBrightnessContrastEnable()
             , /*isUpdateStress*/dialog.getStressEnable()
             , /*isUpdateStretchContrast*/dialog.getStretchContrastEnable()

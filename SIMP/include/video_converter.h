@@ -8,7 +8,7 @@ class VideoConverter : public QThread
 
 public:
     VideoConverter(
-        const std::vector<QImage>& videoFrames
+        const QString& filePath
         , bool isUpdateBrightnessContrast
         , bool isUpdateStress
         , bool isUpdateStretchContrast
@@ -30,7 +30,8 @@ signals:
     void finished(bool success, const std::vector<QImage>& frames);
 
 private:
-    std::vector<QImage> sources, results;
+    std::vector<QImage> results;
+    QString filePath;
     bool isUpdateBrightnessContrast, isUpdateStress, isUpdateStretchContrast,
         stress_enhance_shadows, stretch_contrast_keep_colors, stretch_contrast_perceptual;
     int stress_radius, stress_samples, stress_iterations;

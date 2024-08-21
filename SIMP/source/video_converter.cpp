@@ -2,9 +2,10 @@
 #include "simp_gegl.h"
 
 #include <QImage>
+#include <opencv2/opencv.hpp>
 
 VideoConverter::VideoConverter(
-    const std::vector<QImage>& videoFrames
+    const QString& filePath
    , bool isUpdateBrightnessContrast
    , bool isUpdateStress
    , bool isUpdateStretchContrast
@@ -19,6 +20,7 @@ VideoConverter::VideoConverter(
    , QObject *parent
 )
     : QThread(parent)
+    , filePath(filePath)
     , isUpdateBrightnessContrast(isUpdateBrightnessContrast)
     , isUpdateStress(isUpdateStress)
     , isUpdateStretchContrast(isUpdateStretchContrast)
@@ -30,40 +32,52 @@ VideoConverter::VideoConverter(
     , stress_enhance_shadows(stress_enhance_shadows)
     , stretch_contrast_keep_colors(stretch_contrast_keep_colors)
     , stretch_contrast_perceptual(stretch_contrast_perceptual)
-{
-    this->sources = videoFrames;
-}
+{ }
 
 void VideoConverter::run()
 {
     this->results.clear();
 
-    int total = this->sources.size();
-
-    for (int i = 0; i < total; i++)
+    cv::VideoCapture video(filePath.toStdString());
+    if (!video.isOpened())
     {
-        // gegl에 넣기 위해 rgba8888로 변경
-        QImage source = this->sources[i].convertToFormat(QImage::Format_RGBA8888);
+        emit finished(false, this->results);
+        return;
+    }
 
-        SimpGEGL::UpdateImageProcessing(
-            source
-            , /*isUpdateBrightnessContrast*/this->isUpdateBrightnessContrast
-            , /*isUpdateStress*/this->isUpdateStress
-            , /*isUpdateStretchContrast*/this->isUpdateStretchContrast
-            , /*brightness*/this->brightness
-            , /*contrast*/this->contrast
-            , /*stress_radius*/this->stress_radius
-            , /*stress_samples*/this->stress_samples
-            , /*stress_iterations*/this->stress_iterations
-            , /*stress_enhance_shadows*/this->stress_enhance_shadows
-            , /*stretch_contrast_keep_colors*/this->stretch_contrast_keep_colors
-            , /*stretch_contrast_perceptual*/this->stretch_contrast_perceptual
-        );
+    int totalFrames = static_cast<int>(video.get(cv::CAP_PROP_FRAME_COUNT));
+    this->results.reserve(totalFrames);
 
-        // ui에 띄우기 위해 다시 rgb888로 돌림
-        this->results.emplace_back(source.convertToFormat(QImage::Format_RGB888));
+    for (int i = 0; i < totalFrames; i++)
+    {
+        cv::Mat frame;
+        if (video.read(frame))
+        {
+            QImage img(frame.data, frame.cols, frame.rows, frame.step, QImage::Format_RGB888);
 
-        emit progress(i, total);
+            // gegl에 넣기 위해 rgba8888로 변경
+            QImage source = img.rgbSwapped().convertToFormat(QImage::Format_RGBA8888);
+
+            SimpGEGL::UpdateImageProcessing(
+                source
+                , /*isUpdateBrightnessContrast*/this->isUpdateBrightnessContrast
+                , /*isUpdateStress*/this->isUpdateStress
+                , /*isUpdateStretchContrast*/this->isUpdateStretchContrast
+                , /*brightness*/this->brightness
+                , /*contrast*/this->contrast
+                , /*stress_radius*/this->stress_radius
+                , /*stress_samples*/this->stress_samples
+                , /*stress_iterations*/this->stress_iterations
+                , /*stress_enhance_shadows*/this->stress_enhance_shadows
+                , /*stretch_contrast_keep_colors*/this->stretch_contrast_keep_colors
+                , /*stretch_contrast_perceptual*/this->stretch_contrast_perceptual
+                );
+
+            // ui에 띄우기 위해 다시 rgb888로 돌림
+            this->results.emplace_back(source.convertToFormat(QImage::Format_RGB888));
+        }
+
+        emit progress(i, totalFrames);
     }
 
     emit finished(true, this->results);
