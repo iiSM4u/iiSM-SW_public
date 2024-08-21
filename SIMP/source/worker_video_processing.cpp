@@ -1,10 +1,10 @@
-#include "video_converter.h"
+#include "worker_video_processing.h"
 #include "simp_gegl.h"
 
 #include <QImage>
 #include <opencv2/opencv.hpp>
 
-VideoConverter::VideoConverter(
+WorkerVideoProcessing::WorkerVideoProcessing(
     const QString& filePath
    , bool isUpdateBrightnessContrast
    , bool isUpdateStress
@@ -34,7 +34,7 @@ VideoConverter::VideoConverter(
     , stretch_contrast_perceptual(stretch_contrast_perceptual)
 { }
 
-void VideoConverter::run()
+void WorkerVideoProcessing::run()
 {
     this->results.clear();
 
@@ -46,7 +46,13 @@ void VideoConverter::run()
     }
 
     int totalFrames = static_cast<int>(video.get(cv::CAP_PROP_FRAME_COUNT));
-    this->results.reserve(totalFrames);
+    this->results.reserve(totalFrames);    
+
+    // 긴 작업이 시작되기 전에 스레드가 중단 요청을 받았는지 확인
+    if (QThread::currentThread()->isInterruptionRequested()) {
+        emit cancelled();
+        return;
+    }
 
     for (int i = 0; i < totalFrames; i++)
     {
@@ -75,6 +81,11 @@ void VideoConverter::run()
 
             // ui에 띄우기 위해 다시 rgb888로 돌림
             this->results.emplace_back(source.convertToFormat(QImage::Format_RGB888));
+        }
+
+        if (QThread::currentThread()->isInterruptionRequested()) {
+            emit cancelled();
+            return;
         }
 
         emit progress(i, totalFrames);

@@ -3,14 +3,16 @@
 #include "simp_const_value.h"
 #include "simp_const_path.h"
 #include "dialog_image_processing.h"
-#include "simp_gegl.h"
+#include "worker_frame_processing.h"
 
 #include <QCoreApplication>
 #include <QFileDialog>
+#include <QMessageBox>
 
 TabFrame::TabFrame(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::TabFrame)
+    , progressDialog(new QProgressDialog(this))
     , filesystemModel(new QFileSystemModel(this))
     , captureDir(QCoreApplication::applicationDirPath() + SimpConstPath::DIR_CAPTURE_FRAME)
 {
@@ -53,6 +55,12 @@ void TabFrame::InitUI()
         dirFrame.mkpath(this->captureDir);
     }
 
+    this->progressDialog->setLabelText("processing image...");
+    //this->progressDialog->setCancelButton(nullptr);
+    this->progressDialog->setModal(true);
+    this->progressDialog->reset();
+    this->progressDialog->hide();
+
     // Set model properties
     this->filesystemModel->setRootPath(this->captureDir);
     this->filesystemModel->setNameFilters(QStringList() << "*.png" << "*.jpg" << "*.jpeg" << "*.bmp" << "*.gif");
@@ -64,10 +72,13 @@ void TabFrame::InitUI()
 
     // default는 false
     TabFrame::EnableUI(false);
+    ui->lvFrame->setEnabled(true);
 }
 
 void TabFrame::EnableUI(bool enable)
 {
+    ui->lvFrame->setEnabled(enable);
+
     ui->btnZoomIn->setEnabled(enable);
     ui->btnZoomOut->setEnabled(enable);
     ui->btnFrameProcessing->setEnabled(enable);
@@ -153,14 +164,13 @@ void TabFrame::btnFrameProcessing_Click()
 
         this->lastPresetIndex = dialog.getPresetIndex();
 
-        // 현재 ui에 있는 이미지가 아니라 file을 새로 load해서 적용한다. gegl이 반영된 이미지에 다시 설정 적용하는게 의미 없기 때문.
-        QImage source;
-        source.load(this->filesystemModel->filePath(this->currentFrameIndex));
-        this->filesystemModel->filePath(this->currentFrameIndex);
-        source = source.convertToFormat(QImage::Format_RGBA8888);
+        this->progressDialog->reset();
+        this->progressDialog->show();
 
-        SimpGEGL::UpdateImageProcessing(
-            /*source*/source
+        QString filePath = this->filesystemModel->filePath(this->currentFrameIndex);
+
+        WorkerFrameProcessing *converter = new WorkerFrameProcessing(
+            filePath
             , /*isUpdateBrightnessContrast*/dialog.getBrightnessContrastEnable()
             , /*isUpdateStress*/dialog.getStressEnable()
             , /*isUpdateStretchContrast*/dialog.getStretchContrastEnable()
@@ -172,13 +182,43 @@ void TabFrame::btnFrameProcessing_Click()
             , /*stress_enhance_shadows*/dialog.getStressEnhanceShadows()
             , /*stretch_contrast_keep_colors*/dialog.getStretchContrastKeepColors()
             , /*stretch_contrast_perceptual*/dialog.getStretchContrastNonLinearComponents()
-        );
+            );
 
-        // 업데이트된 이미지를 UI에 업데이트. UI에 띄우기 위해 다시 RGB888로 변경
-        this->currentFrame = source.convertToFormat(QImage::Format_RGB888);
+        connect(converter, &WorkerFrameProcessing::cancelled, this, &TabFrame::onFrameConvertingCanceled);
+        connect(converter, &WorkerFrameProcessing::finished, this, &TabFrame::onFrameConvertingFinished);
+        connect(converter, &WorkerFrameProcessing::finished, converter, &QObject::deleteLater);  // QObject::deleteLater가 thread를 제거함
+
+        // dialog 취소 버튼 클릭하면 converting 중지
+        connect(this->progressDialog, &QProgressDialog::canceled, this, [=]() {
+            converter->requestInterruption();
+        });
+
+        converter->start();
+    }
+}
+
+void TabFrame::onFrameConvertingCanceled()
+{
+    this->progressDialog->hide(); // Hide the progress dialog
+    QMessageBox::information(this, "Cancel", "Canceled Image Converting.");
+
+    TabFrame::EnableUI(true);
+}
+
+void TabFrame::onFrameConvertingFinished(bool success, const QImage& frame)
+{
+    this->progressDialog->hide(); // Hide the progress dialog
+
+    if (success)
+    {
+        this->currentFrame = frame;
         ui->gvFrame->setImage(this->currentFrame);
 
         TabFrame::EnableUI(true);
+    }
+    else
+    {
+        QMessageBox::warning(this, "Error", "Could not open the video file.");
     }
 }
 
@@ -189,7 +229,7 @@ void TabFrame::btnFrameSave_Click()
     QString dir = fileInfo.absolutePath();
     QString baseName = fileInfo.completeBaseName();
     QString extension = fileInfo.suffix();
-    QString filePath = QString("%1/%2_SIMP.%3").arg(dir).arg(baseName).arg(extension);
+    QString filePath = QString("%1/%2_SIMP.%3").arg(dir, baseName, extension);
 
     // 저장할 때는 현재 gegl이 적용된 이미지를 저장함
     this->currentFrame.save(filePath);

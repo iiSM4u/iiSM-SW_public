@@ -30,9 +30,13 @@ private slots:
     void btnFrameProcessing_Click();
     void btnFrameSave_Click();
 
+    void onFrameConvertingCanceled();
+    void onFrameConvertingFinished(bool success, const QImage& frame);
+
 private:
     Ui::TabFrame *ui;
 
+    QProgressDialog *progressDialog;
     QFileSystemModel *filesystemModel;
     QString captureDir;
     QImage currentFrame;

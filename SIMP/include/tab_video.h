@@ -39,9 +39,11 @@ private slots:
     void sliderVideo_sliderMoved(int position);
 
     void onVideoLoadingProgress(int current, int total);
+    void onVideoLoadingCanceled();
     void onVideoLoadingFinished(bool success, const std::vector<QImage>& frames, double frameRate, int totalFrames);
 
     void onVideoConvertingProgress(int current, int total);
+    void onVideoConvertingCanceled();
     void onVideoConvertingFinished(bool success, const std::vector<QImage>& frames);
 
 private:
@@ -49,7 +51,7 @@ private:
 
     std::thread threadVideo;
 
-    QProgressDialog *progressDialog;
+    QProgressDialog *loadingDialog, *processingDialog;
     QFileSystemModel *filesystemModel;
     QModelIndex currentVideoIndex;
     QString recordDir;

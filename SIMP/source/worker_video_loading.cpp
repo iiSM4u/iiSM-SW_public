@@ -1,13 +1,13 @@
-#include "video_loader.h"
+#include "worker_video_loading.h"
 #include <QImage>
 #include <opencv2/opencv.hpp>
 
-VideoLoader::VideoLoader(const QString& filePath, QObject *parent)
+WorkerVideoLoading::WorkerVideoLoading(const QString& filePath, QObject *parent)
     : QThread(parent), filePath(filePath)
 {
 }
 
-void VideoLoader::run()
+void WorkerVideoLoading::run()
 {
     cv::VideoCapture video(filePath.toStdString());
     if (!video.isOpened())
@@ -19,7 +19,13 @@ void VideoLoader::run()
     double frameRate = video.get(cv::CAP_PROP_FPS);
     int totalFrames = static_cast<int>(video.get(cv::CAP_PROP_FRAME_COUNT));
     std::vector<QImage> frames;
-    frames.reserve(totalFrames);
+    frames.reserve(totalFrames);    
+
+    // 긴 작업이 시작되기 전에 스레드가 중단 요청을 받았는지 확인
+    if (QThread::currentThread()->isInterruptionRequested()) {
+        emit cancelled();
+        return;
+    }
 
     for (int i = 0; i < totalFrames; ++i)
     {
@@ -29,6 +35,12 @@ void VideoLoader::run()
             QImage img(frame.data, frame.cols, frame.rows, frame.step, QImage::Format_RGB888);
             frames.emplace_back(img.rgbSwapped()); // Convert BGR to RGB
         }
+
+        if (QThread::currentThread()->isInterruptionRequested()) {
+            emit cancelled();
+            return;
+        }
+
         emit progress(i, totalFrames); // Ensure progress goes up to 100%
     }
 
