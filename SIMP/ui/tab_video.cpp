@@ -127,6 +127,9 @@ void TabVideo::lvVideo_Click(const QModelIndex &index)
     // 일단 update를 중지시킨다.
     this->isVideoPlay = false;
 
+    // 처리가 되는 동안 disable
+    TabVideo::EnableUI(false);
+
     this->progressDialog->setLabelText("Loading video...");
     this->progressDialog->reset();
     this->progressDialog->show();
@@ -139,9 +142,6 @@ void TabVideo::lvVideo_Click(const QModelIndex &index)
     connect(loader, &VideoLoader::finished, loader, &QObject::deleteLater);  // QObject::deleteLater가 thread를 제거함
 
     loader->start();
-
-    // listview에서 항목을 선택했으면 true
-    TabVideo::EnableUI(true);
 }
 
 void TabVideo::btnOpenDir_Click()
@@ -194,6 +194,9 @@ void TabVideo::btnVideoProcessing_Click()
 
     if (dialog.exec() == QDialog::Accepted)
     {
+        // 처리가 되는 동안 disable
+        TabVideo::EnableUI(false);
+
         this->lastPresetIndex = dialog.getPresetIndex();
 
         // 일단 update를 중지시킨다.
@@ -228,6 +231,9 @@ void TabVideo::btnVideoProcessing_Click()
 
 void TabVideo::btnVideoSave_Click()
 {
+    // 처리가 되는 동안 disable
+    TabVideo::EnableUI(false);
+
     QFileInfo fileInfo = this->filesystemModel->fileInfo(this->currentVideoIndex);
 
     QString dir = fileInfo.absolutePath();
@@ -242,6 +248,8 @@ void TabVideo::btnVideoSave_Click()
         , SimpConstValue::RECORD_QUALITY_DEFAULT
         , filePath
     );
+
+    TabVideo::EnableUI(true);
 }
 
 void TabVideo::btnPlayVideo_Click()
@@ -306,6 +314,9 @@ void TabVideo::onVideoLoadingFinished(bool success, const std::vector<QImage>& f
         // 첫 프레임을 UI에 띄운다.
         this->currentFrame = this->videoFrames[this->currentFrameIndex];
         TabVideo::UpdateVideoUI();
+
+        // 처리가 완료 되었으므로 enable
+        TabVideo::EnableUI(true);
     }
     else
     {
@@ -340,6 +351,9 @@ void TabVideo::onVideoConvertingFinished(bool success, const std::vector<QImage>
         // 첫 프레임을 UI에 띄운다.
         this->currentFrame = this->videoFrames[this->currentFrameIndex];
         TabVideo::UpdateVideoUI();
+
+        // 처리가 완료 되었으므로 enable
+        TabVideo::EnableUI(true);
     }
     else
     {

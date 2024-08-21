@@ -148,6 +148,9 @@ void TabFrame::btnFrameProcessing_Click()
 
     if (dialog.exec() == QDialog::Accepted)
     {
+        // 처리가 되는 동안 disable
+        TabFrame::EnableUI(false);
+
         this->lastPresetIndex = dialog.getPresetIndex();
 
         // 현재 ui에 있는 이미지가 아니라 file을 새로 load해서 적용한다. gegl이 반영된 이미지에 다시 설정 적용하는게 의미 없기 때문.
@@ -174,6 +177,8 @@ void TabFrame::btnFrameProcessing_Click()
         // 업데이트된 이미지를 UI에 업데이트. UI에 띄우기 위해 다시 RGB888로 변경
         this->currentFrame = source.convertToFormat(QImage::Format_RGB888);
         ui->gvFrame->setImage(this->currentFrame);
+
+        TabFrame::EnableUI(true);
     }
 }
 
