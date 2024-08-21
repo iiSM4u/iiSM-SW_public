@@ -242,9 +242,6 @@ void TabVideo::btnVideoSave_Click()
         , SimpConstValue::RECORD_QUALITY_DEFAULT
         , filePath
     );
-
-    // list 업데이트. 같은 파일 이름이 덮어씌워진 경우 list를 클릭해도 이미지가 안 바뀔 수 있음
-    ui->lvVideo->setRootIndex(this->filesystemModel->setRootPath(dir));
 }
 
 void TabVideo::btnPlayVideo_Click()

@@ -150,8 +150,11 @@ void TabFrame::btnFrameProcessing_Click()
     {
         this->lastPresetIndex = dialog.getPresetIndex();
 
-        // gegl에 넣기 위해 RGBA8888로 변경
-        QImage source = this->currentFrame.convertToFormat(QImage::Format_RGBA8888);
+        // 현재 ui에 있는 이미지가 아니라 file을 새로 load해서 적용한다. gegl이 반영된 이미지에 다시 설정 적용하는게 의미 없기 때문.
+        QImage source;
+        source.load(this->filesystemModel->filePath(this->currentFrameIndex));
+        this->filesystemModel->filePath(this->currentFrameIndex);
+        source = source.convertToFormat(QImage::Format_RGBA8888);
 
         SimpGEGL::UpdateImageProcessing(
             /*source*/source
@@ -183,9 +186,7 @@ void TabFrame::btnFrameSave_Click()
     QString extension = fileInfo.suffix();
     QString filePath = QString("%1/%2_SIMP.%3").arg(dir).arg(baseName).arg(extension);
 
+    // 저장할 때는 현재 gegl이 적용된 이미지를 저장함
     this->currentFrame.save(filePath);
-
-    // list 업데이트. 같은 파일 이름이 덮어씌워진 경우 list를 클릭해도 이미지가 안 바뀔 수 있음
-    ui->lvFrame->setRootIndex(this->filesystemModel->setRootPath(dir));
 }
 

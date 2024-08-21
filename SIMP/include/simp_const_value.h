@@ -29,13 +29,13 @@ public:
     static constexpr int MIICAM_DARK_FIELD_QUANTITY_MAX = 100;
     static constexpr int MIICAM_DARK_FIELD_QUANTITY_DEFAULT = 5;
 
-    static constexpr double GEGL_CONTRAST_DEFAULT = 1.00;
-    static constexpr double GEGL_CONTRAST_MIN = -5.00;
-    static constexpr double GEGL_CONTRAST_MAX = 5.00;
-
     static constexpr double GEGL_BRIGHTNESS_DEFAULT = 0.00;
-    static constexpr double GEGL_BRIGHTNESS_MIN = -3.00;
-    static constexpr double GEGL_BRIGHTNESS_MAX = 3.00;
+    static constexpr double GEGL_BRIGHTNESS_MIN = -1.00;  // ui기준으로 변경. 원래 minimum은 -3.00
+    static constexpr double GEGL_BRIGHTNESS_MAX = 1.00;  // ui기준으로 변경. 원래 maximum은 3.00
+
+    static constexpr double GEGL_CONTRAST_DEFAULT = 1.00;
+    static constexpr double GEGL_CONTRAST_MIN = 0.00;  // ui기준으로 변경. 원래 minimum은 -5.00
+    static constexpr double GEGL_CONTRAST_MAX = 2.00;  // ui기준으로 변경. 원래 maximum은 5.00
 
     static constexpr int GEGL_STRESS_RADIUS_DEFAULT = 300;
     static constexpr int GEGL_STRESS_RADIUS_MIN = 2;
