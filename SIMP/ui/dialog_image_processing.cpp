@@ -19,6 +19,8 @@ DialogImageProcessing::DialogImageProcessing(const int selectedIndex, QWidget *p
     , ui(new Ui::DialogImageProcessing)
 {
     ui->setupUi(this);
+    this->applyButton = new QPushButton(tr("Apply"), this);
+    ui->buttonBox->addButton(this->applyButton, QDialogButtonBox::ApplyRole);
 
     // ui를 초기화하기 위해 preset부터 load한다.
     QJsonArray jsonArray;
@@ -110,6 +112,7 @@ bool DialogImageProcessing::getStretchContrastNonLinearComponents() const
 void DialogImageProcessing::ConnectUI()
 {
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &DialogImageProcessing::onOkClicked);
+    connect(this->applyButton, &QPushButton::clicked, this, &DialogImageProcessing::applyClicked);
 
     connect(ui->cbPresets, &QComboBox::currentIndexChanged, this, &DialogImageProcessing::cbPreset_SelectedIndexChanged);
 

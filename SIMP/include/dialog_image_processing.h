@@ -32,6 +32,9 @@ public:
     bool getStretchContrastKeepColors() const;
     bool getStretchContrastNonLinearComponents() const;
 
+signals:
+    void applyClicked();  // Apply 버튼 클릭 시 시그널 발생
+
 private slots:
     void onOkClicked();
 
@@ -81,6 +84,7 @@ private slots:
 
 private:
     Ui::DialogImageProcessing *ui;
+    QPushButton *applyButton;  // Apply 버튼
 
     bool isPresetChanged = false;
     std::vector<PresetImageProcessing> presets;

@@ -155,46 +155,44 @@ void TabFrame::btnZoomOut_Click()
 
 void TabFrame::btnFrameProcessing_Click()
 {
-    DialogImageProcessing dialog(this->lastPresetIndex, this);
+    DialogImageProcessing *dialog = new DialogImageProcessing(this->lastPresetIndex, this);
 
-    if (dialog.exec() == QDialog::Accepted)
+    connect(dialog, &DialogImageProcessing::applyClicked, this, [=]() {
+        TabFrame::ProcessingFrame(
+            /*presetIndex*/dialog->getPresetIndex()
+            , /*isUpdateBrightnessContrast*/dialog->getBrightnessContrastEnable()
+            , /*isUpdateStress*/dialog->getStressEnable()
+            , /*isUpdateStretchContrast*/dialog->getStretchContrastEnable()
+            , /*brightness*/dialog->getBrightness()
+            , /*contrast*/dialog->getContrast()
+            , /*stress_radius*/dialog->getStressRadius()
+            , /*stress_samples*/dialog->getStressSamples()
+            , /*stress_iterations*/dialog->getStressIterations()
+            , /*stress_enhance_shadows*/dialog->getStressEnhanceShadows()
+            , /*stretch_contrast_keep_colors*/dialog->getStretchContrastKeepColors()
+            , /*stretch_contrast_perceptual*/dialog->getStretchContrastNonLinearComponents()
+        );
+    });
+
+    if (dialog->exec() == QDialog::Accepted)
     {
-        // 처리가 되는 동안 disable
-        TabFrame::EnableUI(false);
-
-        this->lastPresetIndex = dialog.getPresetIndex();
-
-        this->progressDialog->reset();
-        this->progressDialog->show();
-
-        QString filePath = this->filesystemModel->filePath(this->currentFrameIndex);
-
-        WorkerFrameProcessing *converter = new WorkerFrameProcessing(
-            filePath
-            , /*isUpdateBrightnessContrast*/dialog.getBrightnessContrastEnable()
-            , /*isUpdateStress*/dialog.getStressEnable()
-            , /*isUpdateStretchContrast*/dialog.getStretchContrastEnable()
-            , /*brightness*/dialog.getBrightness()
-            , /*contrast*/dialog.getContrast()
-            , /*stress_radius*/dialog.getStressRadius()
-            , /*stress_samples*/dialog.getStressSamples()
-            , /*stress_iterations*/dialog.getStressIterations()
-            , /*stress_enhance_shadows*/dialog.getStressEnhanceShadows()
-            , /*stretch_contrast_keep_colors*/dialog.getStretchContrastKeepColors()
-            , /*stretch_contrast_perceptual*/dialog.getStretchContrastNonLinearComponents()
-            );
-
-        connect(converter, &WorkerFrameProcessing::cancelled, this, &TabFrame::onFrameConvertingCanceled);
-        connect(converter, &WorkerFrameProcessing::finished, this, &TabFrame::onFrameConvertingFinished);
-        connect(converter, &WorkerFrameProcessing::finished, converter, &QObject::deleteLater);  // QObject::deleteLater가 thread를 제거함
-
-        // dialog 취소 버튼 클릭하면 converting 중지
-        connect(this->progressDialog, &QProgressDialog::canceled, this, [=]() {
-            converter->requestInterruption();
-        });
-
-        converter->start();
+        TabFrame::ProcessingFrame(
+            /*presetIndex*/dialog->getPresetIndex()
+            , /*isUpdateBrightnessContrast*/dialog->getBrightnessContrastEnable()
+            , /*isUpdateStress*/dialog->getStressEnable()
+            , /*isUpdateStretchContrast*/dialog->getStretchContrastEnable()
+            , /*brightness*/dialog->getBrightness()
+            , /*contrast*/dialog->getContrast()
+            , /*stress_radius*/dialog->getStressRadius()
+            , /*stress_samples*/dialog->getStressSamples()
+            , /*stress_iterations*/dialog->getStressIterations()
+            , /*stress_enhance_shadows*/dialog->getStressEnhanceShadows()
+            , /*stretch_contrast_keep_colors*/dialog->getStretchContrastKeepColors()
+            , /*stretch_contrast_perceptual*/dialog->getStretchContrastNonLinearComponents()
+        );
     }
+
+    delete dialog;
 }
 
 void TabFrame::onFrameConvertingCanceled()
@@ -235,3 +233,54 @@ void TabFrame::btnFrameSave_Click()
     this->currentFrame.save(filePath);
 }
 
+void TabFrame::ProcessingFrame(
+    const int presetIndex
+    , const bool isUpdateBrightnessContrast
+    , const bool isUpdateStress
+    , const bool isUpdateStretchContrast
+    , const double brightness
+    , const double contrast
+    , const int stress_radius
+    , const int stress_samples
+    , const int stress_iterations
+    , const bool stress_enhance_shadows
+    , const bool stretch_contrast_keep_colors
+    , const bool stretch_contrast_perceptual
+    )
+{
+    // 처리가 되는 동안 disable
+    TabFrame::EnableUI(false);
+
+    this->lastPresetIndex = presetIndex;
+
+    this->progressDialog->reset();
+    this->progressDialog->show();
+
+    QString filePath = this->filesystemModel->filePath(this->currentFrameIndex);
+
+    WorkerFrameProcessing *converter = new WorkerFrameProcessing(
+        filePath
+        , /*isUpdateBrightnessContrast*/isUpdateBrightnessContrast
+        , /*isUpdateStress*/isUpdateStress
+        , /*isUpdateStretchContrast*/isUpdateStretchContrast
+        , /*brightness*/brightness
+        , /*contrast*/contrast
+        , /*stress_radius*/stress_radius
+        , /*stress_samples*/stress_samples
+        , /*stress_iterations*/stress_iterations
+        , /*stress_enhance_shadows*/stress_enhance_shadows
+        , /*stretch_contrast_keep_colors*/stretch_contrast_keep_colors
+        , /*stretch_contrast_perceptual*/stretch_contrast_perceptual
+        );
+
+    connect(converter, &WorkerFrameProcessing::cancelled, this, &TabFrame::onFrameConvertingCanceled);
+    connect(converter, &WorkerFrameProcessing::finished, this, &TabFrame::onFrameConvertingFinished);
+    connect(converter, &WorkerFrameProcessing::finished, converter, &QObject::deleteLater);  // QObject::deleteLater가 thread를 제거함
+
+    // dialog 취소 버튼 클릭하면 converting 중지
+    connect(this->progressDialog, &QProgressDialog::canceled, this, [=]() {
+        converter->requestInterruption();
+    });
+
+    converter->start();
+}
