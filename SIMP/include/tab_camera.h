@@ -5,6 +5,7 @@
 #include <QThread>
 #include <QButtonGroup>
 #include <QTime>
+#include <QProgressDialog>
 
 #include <opencv2/opencv.hpp>
 #include <miicam.h>
@@ -61,6 +62,10 @@ private slots:
     void UpdateMousePosition(int x, int y, const QColor &color);
     void EnableUI(bool isPlay);
 
+    void onVideoWritingProgress(int current, int total);
+    void onVideoWritingCanceled();
+    void onVideoWritingFinished(bool success);
+
 private:
     Ui::TabCamera *ui;
 
@@ -72,6 +77,7 @@ private:
 
     QButtonGroup *btnGroupCooling;
     QTimer *timerFPS, *timerVideoRecord;
+    QProgressDialog *videoWritingDialog;
 
     uchar *rawCameraData = nullptr;
     QImage resultFrame;

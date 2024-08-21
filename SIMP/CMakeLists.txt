@@ -43,6 +43,7 @@ file(GLOB_RECURSE SOURCE_FILES "source/*.cpp")
 file(GLOB_RECURSE FORMS_FILES "ui/*.cpp")
 file(GLOB_RECURSE UI_FILES "ui/*.ui")
 
+
 # Project source files
 set(PROJECT_SOURCES
     ${HEADER_FILES}

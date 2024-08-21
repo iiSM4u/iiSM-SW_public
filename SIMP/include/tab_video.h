@@ -47,12 +47,16 @@ private slots:
     void onVideoConvertingCanceled();
     void onVideoConvertingFinished(bool success, const std::vector<QImage>& frames);
 
+    void onVideoWritingProgress(int current, int total);
+    void onVideoWritingCanceled();
+    void onVideoWritingFinished(bool success);
+
 private:
     Ui::TabVideo *ui;
 
     std::thread threadVideo;
 
-    QProgressDialog *loadingDialog, *processingDialog;
+    QProgressDialog *loadingDialog, *processingDialog, *videoWritingDialog;
     QFileSystemModel *filesystemModel;
     QModelIndex currentVideoIndex;
     QString recordDir;

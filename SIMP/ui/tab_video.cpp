@@ -7,6 +7,7 @@
 #include "simp_util.h"
 #include "worker_video_loading.h"
 #include "worker_video_processing.h"
+#include "worker_video_writing_qimage.h"
 
 #include <QCoreApplication>
 #include <QFileDialog>
@@ -18,6 +19,7 @@ TabVideo::TabVideo(QWidget *parent)
     , ui(new Ui::TabVideo)
     , loadingDialog(new QProgressDialog(this))
     , processingDialog(new QProgressDialog(this))
+    , videoWritingDialog(new QProgressDialog(this))
     , filesystemModel(new QFileSystemModel(this))
     , recordDir(QCoreApplication::applicationDirPath() + SimpConstPath::DIR_RECORD_VIDEO)
 {
@@ -91,6 +93,12 @@ void TabVideo::InitUI()
     this->processingDialog->setModal(true);
     this->processingDialog->reset();
     this->processingDialog->hide();
+
+    this->videoWritingDialog->setLabelText("writing video...");
+    this->videoWritingDialog->setRange(0, 100);
+    this->videoWritingDialog->setModal(true);
+    this->videoWritingDialog->reset();
+    this->videoWritingDialog->hide();
 
     // Set model properties
     this->filesystemModel->setRootPath(this->recordDir);
@@ -262,18 +270,30 @@ void TabVideo::btnVideoSave_Click()
     QString dir = fileInfo.absolutePath();
     QString baseName = fileInfo.completeBaseName();
     QString extension = fileInfo.suffix();
-    QString filePath = QString("%1/%2_SIMP.%3").arg(dir, baseName, extension);
+    QString filePath = QString("%1/%2_SIMP.%3").arg(dir, baseName, extension);    
 
-    // 이것도 worker로 보낼 것
-    SimpUtil::WriteVideo(
+    this->videoWritingDialog->reset();
+    this->videoWritingDialog->show();
+
+    WorkerVideoWritingQImage *writer = new WorkerVideoWritingQImage(
         this->videoFrames
-        , SimpUtil::getVideoFormat(extension)
-        , this->videoFrameRates
-        , SimpConstValue::RECORD_QUALITY_DEFAULT
-        , filePath
+        , /*format*/SimpUtil::getVideoFormat(extension)
+        , /*recordSecond*/this->videoFrameRates
+        , /*quality*/SimpConstValue::RECORD_QUALITY_DEFAULT
+        , /*filePath*/filePath
     );
 
-    TabVideo::EnableUI(true);
+    connect(writer, &WorkerVideoWritingQImage::progress, this, &TabVideo::onVideoWritingProgress);
+    connect(writer, &WorkerVideoWritingQImage::cancelled, this, &TabVideo::onVideoWritingCanceled);
+    connect(writer, &WorkerVideoWritingQImage::finished, this, &TabVideo::onVideoWritingFinished);
+    connect(writer, &WorkerVideoWritingQImage::finished, writer, &QObject::deleteLater);  // QObject::deleteLater가 thread를 제거함
+
+    // dialog 취소 버튼 클릭하면 converting 중지
+    connect(this->videoWritingDialog, &QProgressDialog::canceled, this, [=]() {
+        writer->requestInterruption();
+    });
+
+    writer->start();
 }
 
 void TabVideo::btnPlayVideo_Click()
@@ -387,6 +407,35 @@ void TabVideo::onVideoConvertingFinished(bool success, const std::vector<QImage>
     else
     {
         QMessageBox::warning(this, "Error", "Could not open the video file.");
+    }
+}
+
+void TabVideo::onVideoWritingProgress(int current, int total)
+{
+    int value = ((current + 1) * 100) / total;
+    this->videoWritingDialog->setValue(value);
+}
+
+void TabVideo::onVideoWritingCanceled()
+{
+    this->videoWritingDialog->hide(); // Hide the progress dialog
+    QMessageBox::information(this, "Cancel", "Canceled Video Writing.");
+
+    TabVideo::EnableUI(true);
+}
+
+void TabVideo::onVideoWritingFinished(bool success)
+{
+    this->videoWritingDialog->hide(); // Hide the progress dialog
+
+    if (success)
+    {
+        // 처리가 완료 되었으므로 enable
+        TabVideo::EnableUI(true);
+    }
+    else
+    {
+        QMessageBox::warning(this, "Error", "Could not write the video file.");
     }
 }
 

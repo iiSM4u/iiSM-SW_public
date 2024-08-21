@@ -1,6 +1,8 @@
 #include "simp_util.h"
 #include "simp_const_key.h"
 
+#include <opencv2/opencv.hpp>
+
 #include <QPointF>
 #include <QJsonDocument>
 #include <QDir>
@@ -68,7 +70,7 @@ QString SimpUtil::getVideoExtension(VideoFormatType type)
     }
 }
 
-VideoFormatType SimpUtil::getVideoFormat(QString extension)
+VideoFormatType SimpUtil::getVideoFormat(QString& extension)
 {
     QString lower = extension.toLower();
 
@@ -97,88 +99,6 @@ int SimpUtil::getVideoFourcc(VideoFormatType type)
     //case VideoFormatType::NONE : return 0;
     default: return 0;
     }
-}
-
-void SimpUtil::WriteVideo(
-    const std::vector<cv::Mat>& frames
-    , const VideoFormatType format
-    , const int recordSecond
-    , const int quality
-    , const QString filePath
-)
-{
-    if (frames.size() == 0)
-    {
-        throw std::invalid_argument("frame size is 0!!");
-    }
-    else if (filePath.isEmpty())
-    {
-        throw std::invalid_argument("filePath is empty!!");
-    }
-
-    int fourcc = SimpUtil::getVideoFourcc(format);    
-    double frameRate = frames.size() / recordSecond;
-
-    // Create VideoWriter object
-    cv::VideoWriter writer(filePath.toStdString(), fourcc, frameRate, cv::Size(frames[0].cols, frames[0].rows));
-
-    // quality는 특정 format에만 적용된다.
-    if (format == VideoFormatType::MJPEG)
-    {
-        writer.set(cv::VIDEOWRITER_PROP_QUALITY, quality);
-    }
-
-    // Write frames to video file
-    for (const cv::Mat& mat : frames)
-    {
-        writer.write(mat);
-    }
-
-    // Release the VideoWriter
-    writer.release();
-}
-
-void SimpUtil::WriteVideo(
-    const std::vector<QImage>& frames
-    , const VideoFormatType format
-    , const int recordSecond
-    , const int quality
-    , const QString filePath
-)
-{
-    if (frames.size() == 0)
-    {
-        throw std::invalid_argument("frame size is 0!!");
-    }
-    else if (filePath.isEmpty())
-    {
-        throw std::invalid_argument("filePath is empty!!");
-    }
-
-    int fourcc = SimpUtil::getVideoFourcc(format);
-    double frameRate = frames.size() / recordSecond;
-
-    // Create VideoWriter object
-    cv::VideoWriter writer(filePath.toStdString(), fourcc, frameRate, cv::Size(frames[0].width(), frames[0].height()));
-
-    // quality는 특정 format에만 적용된다.
-    if (format == VideoFormatType::MJPEG)
-    {
-        writer.set(cv::VIDEOWRITER_PROP_QUALITY, quality);
-    }
-
-    // Write frames to video file
-    for (const QImage& frame : frames)
-    {
-        cv::Mat mat(frame.height(), frame.width(), CV_8UC3, const_cast<uchar*>(frame.bits()), frame.bytesPerLine());
-        cv::Mat matBGR;
-        cv::cvtColor(mat, matBGR, cv::COLOR_RGB2BGR);  // rgb -> bgr
-
-        writer.write(matBGR);
-    }
-
-    // Release the VideoWriter
-    writer.release();
 }
 
 std::vector<PresetBrightnessContrast> SimpUtil::convertJsonToBrightnessContrastPresets(const QJsonArray& jsonArray)

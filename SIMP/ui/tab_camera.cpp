@@ -10,6 +10,7 @@
 #include "pixel_format_type.h"
 #include "dialog_record_option.h"
 #include "dialog_contrast_curve.h"
+#include "worker_video_writing_cv.h"
 
 #include <QTimer>
 #include <QMessageBox>
@@ -21,6 +22,7 @@ TabCamera::TabCamera(QWidget *parent)
     , ui(new Ui::TabCamera)
     , timerFPS(new QTimer(this))
     , timerVideoRecord(new QTimer(this))
+    , videoWritingDialog(new QProgressDialog(this))
     , btnGroupCooling(new QButtonGroup(this))
     , recordDir(QCoreApplication::applicationDirPath() + SimpConstPath::DIR_RECORD_VIDEO)
     , captureDir(QCoreApplication::applicationDirPath() + SimpConstPath::DIR_CAPTURE_FRAME)
@@ -136,6 +138,12 @@ void TabCamera::InitUI()
     ui->editGamma->setPlainText(QString::number(MIICAM_GAMMA_DEF));
 
     ui->editDarkFieldCorrectionQuantity->setPlainText(QString::number(SimpConstValue::MIICAM_DARK_FIELD_QUANTITY_DEFAULT));
+
+    this->videoWritingDialog->setLabelText("writing video...");
+    this->videoWritingDialog->setRange(0, 100);
+    this->videoWritingDialog->setModal(true);
+    this->videoWritingDialog->reset();
+    this->videoWritingDialog->hide();
 }
 
 void TabCamera::EnableUI(bool isPlay)
@@ -761,19 +769,29 @@ void TabCamera::FinishRecord()
         QTime currentTime = QTime::currentTime();
         int elapsedSeconds = this->recordStartTime.secsTo(currentTime);
 
-        try
-        {
-            SimpUtil::WriteVideo(this->recordFrames, this->recordFormat, elapsedSeconds, this->recordQuality, filePath);
-        }
-        catch (cv::Exception ex)
-        {
-            QMessageBox::critical(this, SimpConstMenu::TITLE_ERROR, QString::fromStdString(ex.msg));
-        }
+        this->videoWritingDialog->reset();
+        this->videoWritingDialog->show();
 
-        this->recordFrames.clear();
+        WorkerVideoWritingCV *writer = new WorkerVideoWritingCV(
+            this->recordFrames
+            , /*format*/this->recordFormat
+            , /*recordSecond*/elapsedSeconds
+            , /*quality*/this->recordQuality
+            , /*filePath*/filePath
+            );
+
+        connect(writer, &WorkerVideoWritingCV::progress, this, &TabCamera::onVideoWritingProgress);
+        connect(writer, &WorkerVideoWritingCV::cancelled, this, &TabCamera::onVideoWritingCanceled);
+        connect(writer, &WorkerVideoWritingCV::finished, this, &TabCamera::onVideoWritingFinished);
+        connect(writer, &WorkerVideoWritingCV::finished, writer, &QObject::deleteLater);  // QObject::deleteLater가 thread를 제거함
+
+        // dialog 취소 버튼 클릭하면 converting 중지
+        connect(this->videoWritingDialog, &QProgressDialog::canceled, this, [=]() {
+            writer->requestInterruption();
+        });
+
+        writer->start();
     }
-
-    ui->btnRecordOn->setText(SimpConstMenu::BTN_RECORD_ON);
 }
 
 void TabCamera::UpdatePresetContrastCurve(const std::vector<PresetContrastCurve>& presets, const int index)
@@ -810,6 +828,42 @@ void TabCamera::UpdateContrastCurvePoints(const QVector<QPointF>& points)
 {
     this->contrastCurvePoints = points;
     this->isUpdateContrastCurve = true;
+}
+
+void TabCamera::onVideoWritingProgress(int current, int total)
+{
+    int value = ((current + 1) * 100) / total;
+    this->videoWritingDialog->setValue(value);
+}
+
+void TabCamera::onVideoWritingCanceled()
+{
+    this->videoWritingDialog->hide(); // Hide the progress dialog
+    QMessageBox::information(this, "Cancel", "Canceled Video Writing.");
+
+    this->recordFrames.clear();
+    ui->btnRecordOn->setText(SimpConstMenu::BTN_RECORD_ON);
+
+    // 처리가 완료 되었으므로 enable
+    TabCamera::EnableUI(true);
+}
+
+void TabCamera::onVideoWritingFinished(bool success)
+{
+    this->videoWritingDialog->hide(); // Hide the progress dialog
+
+    if (success)
+    {
+        this->recordFrames.clear();
+        ui->btnRecordOn->setText(SimpConstMenu::BTN_RECORD_ON);
+
+        // 처리가 완료 되었으므로 enable
+        TabCamera::EnableUI(true);
+    }
+    else
+    {
+        QMessageBox::warning(this, "Error", "Could not write the video file.");
+    }
 }
 
 
