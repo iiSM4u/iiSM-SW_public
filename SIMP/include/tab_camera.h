@@ -74,7 +74,7 @@ private:
     QTimer *timerFPS, *timerVideoRecord;
 
     uchar *rawCameraData = nullptr;
-    QImage resultPreview;
+    QImage resultFrame;
     std::vector<cv::Mat> recordFrames;
     QImage::Format imageFormat = QImage::Format_RGB888;
 
@@ -94,6 +94,7 @@ private:
     QString recordDir, captureDir; // 생성자에서 초기화 함
 
     bool isCameraOn = false, isCameraRun = false, isCameraPlay = false, isRecordOn = false, isDarkFieldCorrectCapture = false;
+    bool isRawCameraData = false;
 
     bool isUpdateContrastCurve = false;
     std::vector<PresetContrastCurve> presetsContrastCurve;

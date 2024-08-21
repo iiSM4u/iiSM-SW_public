@@ -259,11 +259,14 @@ void TabCamera::btnStopCamera_Click()
 
     ui->btnPlayCamera->setText(SimpConstMenu::BTN_PLAY);
     TabCamera::EnableUI(false);
+
+    // 명시적으로 false로 만든다
+    this->isRawCameraData = false;
 }
 
 void TabCamera::btnCaptureCamera_Click()
 {
-    if (!this->resultPreview.isNull())
+    if (!this->resultFrame.isNull())
     {
         QString pathDir = QCoreApplication::applicationDirPath() + SimpConstPath::DIR_CAPTURE_FRAME;
 
@@ -277,7 +280,7 @@ void TabCamera::btnCaptureCamera_Click()
         QString timestamp = currentDateTime.toString(SimpConstFormat::DATE_TIME);
         QString filePath = dir.absoluteFilePath(timestamp + SimpConstPath::EXTENSION_CAPTURE_IMAGE);
 
-        this->resultPreview.save(filePath);
+        this->resultFrame.save(filePath);
     }
 }
 
@@ -308,7 +311,6 @@ void TabCamera::btnRecordOption_Click()
         this->recordTimeLimit = dialog.getTimeLimit();
     }
 }
-
 
 void TabCamera::sliderExposureTime_sliderMoved(int position)
 {
@@ -675,12 +677,12 @@ void TabCamera::UpdatePreview()
 {
     while (this->isCameraOn)
     {
-        if (this->isCameraPlay && this->rawCameraData)
+        if (this->isCameraPlay && this->isRawCameraData)
         {
-            QImage source = QImage(this->rawCameraData, this->rawCameraWidth, this->rawCameraHeight, this->imageFormat);
+            QImage source(this->rawCameraData, this->rawCameraWidth, this->rawCameraHeight, this->imageFormat);
 
             // gegl에서는 rgba를 받기 때문에 무조건 rgba로 바꿔야 한다.
-            QImage formattedSource = this->imageFormat != QImage::Format_RGBA8888 ? source.convertToFormat(QImage::Format_RGBA8888) : source;
+            QImage formattedSource = source.convertToFormat(QImage::Format_RGBA8888);
 
             if (this->isUpdateContrastCurve)
             {
@@ -688,11 +690,11 @@ void TabCamera::UpdatePreview()
             }
 
             // gegl을 적용한 후에 result에 넣는다. 그래야 video나 capture에서 gegl이 적용된 이미지가 사용될 수 있음.
-            this->resultPreview = formattedSource.convertToFormat(QImage::Format_RGB888);
+            this->resultFrame = formattedSource.convertToFormat(QImage::Format_RGB888);
 
             if (this->isRecordOn)
             {
-                cv::Mat mat(this->resultPreview.height(), this->resultPreview.width(), CV_8UC3, const_cast<uchar*>(this->resultPreview.bits()), this->resultPreview.bytesPerLine());
+                cv::Mat mat(this->resultFrame.height(), this->resultFrame.width(), CV_8UC3, const_cast<uchar*>(this->resultFrame.bits()), this->resultFrame.bytesPerLine());
                 cv::Mat matBGR;
                 cv::cvtColor(mat, matBGR, cv::COLOR_RGB2BGR);  // rgb -> bgr
 
@@ -708,7 +710,7 @@ void TabCamera::UpdatePreview()
 
 void TabCamera::UpdatePreviewUI()
 {
-    ui->gvCamera->setImage(this->resultPreview);
+    ui->gvCamera->setImage(this->resultFrame);
 
     if (std::abs(this->zoomFactor - 1.0f) <= std::numeric_limits<float>::epsilon())
     {
@@ -885,6 +887,7 @@ void TabCamera::CloseCamera()
     if (this->rawCameraData)
     {
         delete[] this->rawCameraData;
+        this->rawCameraData = nullptr;
     }
 }
 
@@ -1034,7 +1037,5 @@ void TabCamera::handleImageEvent()
     QMutexLocker locker(&imageMutex);
 
     // camera의 이미지를 받아서 rawCameraData에 담는다.
-    if (SUCCEEDED(Miicam_PullImage(this->miiHcam, this->rawCameraData, 24, &this->rawCameraWidth, &this->rawCameraHeight)))
-    {
-    }
+    this->isRawCameraData = SUCCEEDED(Miicam_PullImage(this->miiHcam, this->rawCameraData, 24, &this->rawCameraWidth, &this->rawCameraHeight));
 }
