@@ -42,6 +42,7 @@ void VideoConverter::run()
 
     for (int i = 0; i < total; i++)
     {
+        // gegl에 넣기 위해 rgba8888로 변경
         QImage source = this->sources[i].convertToFormat(QImage::Format_RGBA8888);
 
         SimpGEGL::UpdateImageProcessing(
@@ -59,6 +60,7 @@ void VideoConverter::run()
             , /*stretch_contrast_perceptual*/this->stretch_contrast_perceptual
         );
 
+        // ui에 띄우기 위해 다시 rgb888로 돌림
         this->results.emplace_back(source.convertToFormat(QImage::Format_RGB888));
 
         emit progress(i, total);

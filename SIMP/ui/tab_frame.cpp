@@ -169,7 +169,8 @@ void TabFrame::btnFrameProcessing_Click()
         );
 
         // 업데이트된 이미지를 UI에 업데이트. UI에 띄우기 위해 다시 RGB888로 변경
-        ui->gvFrame->setImage(source.convertToFormat(QImage::Format_RGB888));
+        this->currentFrame = source.convertToFormat(QImage::Format_RGB888);
+        ui->gvFrame->setImage(this->currentFrame);
     }
 }
 
