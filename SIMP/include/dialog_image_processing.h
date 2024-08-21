@@ -16,27 +16,30 @@ public:
     DialogImageProcessing(const int selectedIndex, QWidget *parent = nullptr);
     ~DialogImageProcessing();
 
-    int getPresetIndex() const;
+    bool IsEdited() const;
+    bool IsApplied() const;
+    int GetPresetIndex() const;
 
-    bool getBrightnessContrastEnable() const;
-    double getBrightness() const;
-    double getContrast() const;
+    bool GetBrightnessContrastEnable() const;
+    double GetBrightness() const;
+    double GetContrast() const;
 
-    bool getStressEnable() const;
-    int getStressRadius() const;
-    int getStressSamples() const;
-    int getStressIterations() const;
-    bool getStressEnhanceShadows() const;
+    bool GetStressEnable() const;
+    int GetStressRadius() const;
+    int GetStressSamples() const;
+    int GetStressIterations() const;
+    bool GetStressEnhanceShadows() const;
 
-    bool getStretchContrastEnable() const;
-    bool getStretchContrastKeepColors() const;
-    bool getStretchContrastNonLinearComponents() const;
+    bool GetStretchContrastEnable() const;
+    bool GetStretchContrastKeepColors() const;
+    bool GetStretchContrastNonLinearComponents() const;
 
 signals:
     void applyClicked();  // Apply 버튼 클릭 시 시그널 발생
 
 private slots:
     void onOkClicked();
+    void btnApply_Click();
 
     void cbPreset_SelectedIndexChanged(int index);
     void btnSavePreset_Click();
@@ -86,7 +89,7 @@ private:
     Ui::DialogImageProcessing *ui;
     QPushButton *applyButton;  // Apply 버튼
 
-    bool isPresetChanged = false;
+    bool isEdited = false, isApplied = false;
     std::vector<PresetImageProcessing> presets;
 
     void ConnectUI();

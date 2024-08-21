@@ -218,37 +218,41 @@ void TabVideo::btnVideoProcessing_Click()
 
     connect(dialog, &DialogImageProcessing::applyClicked, this, [=]() {
         TabVideo::ProcessingVideo(
-            /*presetIndex*/dialog->getPresetIndex()
-            , /*isUpdateBrightnessContrast*/dialog->getBrightnessContrastEnable()
-            , /*isUpdateStress*/dialog->getStressEnable()
-            , /*isUpdateStretchContrast*/dialog->getStretchContrastEnable()
-            , /*brightness*/dialog->getBrightness()
-            , /*contrast*/dialog->getContrast()
-            , /*stress_radius*/dialog->getStressRadius()
-            , /*stress_samples*/dialog->getStressSamples()
-            , /*stress_iterations*/dialog->getStressIterations()
-            , /*stress_enhance_shadows*/dialog->getStressEnhanceShadows()
-            , /*stretch_contrast_keep_colors*/dialog->getStretchContrastKeepColors()
-            , /*stretch_contrast_perceptual*/dialog->getStretchContrastNonLinearComponents()
+            /*presetIndex*/dialog->GetPresetIndex()
+            , /*isUpdateBrightnessContrast*/dialog->GetBrightnessContrastEnable()
+            , /*isUpdateStress*/dialog->GetStressEnable()
+            , /*isUpdateStretchContrast*/dialog->GetStretchContrastEnable()
+            , /*brightness*/dialog->GetBrightness()
+            , /*contrast*/dialog->GetContrast()
+            , /*stress_radius*/dialog->GetStressRadius()
+            , /*stress_samples*/dialog->GetStressSamples()
+            , /*stress_iterations*/dialog->GetStressIterations()
+            , /*stress_enhance_shadows*/dialog->GetStressEnhanceShadows()
+            , /*stretch_contrast_keep_colors*/dialog->GetStretchContrastKeepColors()
+            , /*stretch_contrast_perceptual*/dialog->GetStretchContrastNonLinearComponents()
         );
     });
 
     if (dialog->exec() == QDialog::Accepted)
     {
-        TabVideo::ProcessingVideo(
-            /*presetIndex*/dialog->getPresetIndex()
-            , /*isUpdateBrightnessContrast*/dialog->getBrightnessContrastEnable()
-            , /*isUpdateStress*/dialog->getStressEnable()
-            , /*isUpdateStretchContrast*/dialog->getStretchContrastEnable()
-            , /*brightness*/dialog->getBrightness()
-            , /*contrast*/dialog->getContrast()
-            , /*stress_radius*/dialog->getStressRadius()
-            , /*stress_samples*/dialog->getStressSamples()
-            , /*stress_iterations*/dialog->getStressIterations()
-            , /*stress_enhance_shadows*/dialog->getStressEnhanceShadows()
-            , /*stretch_contrast_keep_colors*/dialog->getStretchContrastKeepColors()
-            , /*stretch_contrast_perceptual*/dialog->getStretchContrastNonLinearComponents()
-        );
+        // 수정이 있었는데 apply가 안 된 경우에만 ok시에 processing
+        if (dialog->IsEdited() && !dialog->IsApplied())
+        {
+            TabVideo::ProcessingVideo(
+                /*presetIndex*/dialog->GetPresetIndex()
+                , /*isUpdateBrightnessContrast*/dialog->GetBrightnessContrastEnable()
+                , /*isUpdateStress*/dialog->GetStressEnable()
+                , /*isUpdateStretchContrast*/dialog->GetStretchContrastEnable()
+                , /*brightness*/dialog->GetBrightness()
+                , /*contrast*/dialog->GetContrast()
+                , /*stress_radius*/dialog->GetStressRadius()
+                , /*stress_samples*/dialog->GetStressSamples()
+                , /*stress_iterations*/dialog->GetStressIterations()
+                , /*stress_enhance_shadows*/dialog->GetStressEnhanceShadows()
+                , /*stretch_contrast_keep_colors*/dialog->GetStretchContrastKeepColors()
+                , /*stretch_contrast_perceptual*/dialog->GetStretchContrastNonLinearComponents()
+            );
+        }
     }
 
     delete dialog;

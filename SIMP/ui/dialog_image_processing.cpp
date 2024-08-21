@@ -45,66 +45,76 @@ DialogImageProcessing::~DialogImageProcessing()
     delete ui;
 }
 
-int DialogImageProcessing::getPresetIndex() const
+bool DialogImageProcessing::IsEdited() const
+{
+    return this->isEdited;
+}
+
+bool DialogImageProcessing::IsApplied() const
+{
+    return this->isApplied;
+}
+
+int DialogImageProcessing::GetPresetIndex() const
 {
     return ui->cbPresets->currentIndex();
 }
 
-bool DialogImageProcessing::getBrightnessContrastEnable() const
+bool DialogImageProcessing::GetBrightnessContrastEnable() const
 {
     return ui->chkBrightnessContrast->isChecked();
 }
 
-double DialogImageProcessing::getBrightness() const
+double DialogImageProcessing::GetBrightness() const
 {
     bool ok;
     double value = ui->editBrightness->toPlainText().toDouble(&ok);
     return value;
 }
 
-double DialogImageProcessing::getContrast() const
+double DialogImageProcessing::GetContrast() const
 {
     bool ok;
     double value = ui->editContrast->toPlainText().toDouble(&ok);
     return value;
 }
 
-bool DialogImageProcessing::getStressEnable() const
+bool DialogImageProcessing::GetStressEnable() const
 {
     return ui->chkStress->isChecked();
 }
 
-int DialogImageProcessing::getStressRadius() const
+int DialogImageProcessing::GetStressRadius() const
 {
     return ui->sliderRadius->value();
 }
 
-int DialogImageProcessing::getStressSamples() const
+int DialogImageProcessing::GetStressSamples() const
 {
     return ui->sliderSamples->value();
 }
 
-int DialogImageProcessing::getStressIterations() const
+int DialogImageProcessing::GetStressIterations() const
 {
     return ui->sliderIterations->value();
 }
 
-bool DialogImageProcessing::getStressEnhanceShadows() const
+bool DialogImageProcessing::GetStressEnhanceShadows() const
 {
     return ui->chkEnhanceShadows->isChecked();
 }
 
-bool DialogImageProcessing::getStretchContrastEnable() const
+bool DialogImageProcessing::GetStretchContrastEnable() const
 {
     return ui->chkStretchContrast->isChecked();
 }
 
-bool DialogImageProcessing::getStretchContrastKeepColors() const
+bool DialogImageProcessing::GetStretchContrastKeepColors() const
 {
     return ui->chkKeepColors->isChecked();
 }
 
-bool DialogImageProcessing::getStretchContrastNonLinearComponents() const
+bool DialogImageProcessing::GetStretchContrastNonLinearComponents() const
 {
     return ui->chkNonLinearComponents->isChecked();
 }
@@ -112,7 +122,7 @@ bool DialogImageProcessing::getStretchContrastNonLinearComponents() const
 void DialogImageProcessing::ConnectUI()
 {
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &DialogImageProcessing::onOkClicked);
-    connect(this->applyButton, &QPushButton::clicked, this, &DialogImageProcessing::applyClicked);
+    connect(this->applyButton, &QPushButton::clicked, this, &DialogImageProcessing::btnApply_Click);
 
     connect(ui->cbPresets, &QComboBox::currentIndexChanged, this, &DialogImageProcessing::cbPreset_SelectedIndexChanged);
 
@@ -179,13 +189,19 @@ void DialogImageProcessing::InitUI()
 
 void DialogImageProcessing::onOkClicked()
 {
-    if (this->isPresetChanged)
+    if (this->isEdited)
     {
         DialogImageProcessing::UpdateOrInsertPreset(ui->cbPresets->currentIndex());
         DialogImageProcessing::SaveJson(this->presets);
     }
 
     accept();
+}
+
+void DialogImageProcessing::btnApply_Click()
+{
+    this->isApplied = true;
+    applyClicked();
 }
 
 void DialogImageProcessing::UpdatePresetCombobox(const std::vector<PresetImageProcessing>& presets, const int index)
@@ -246,7 +262,7 @@ void DialogImageProcessing::cbPreset_SelectedIndexChanged(int index)
         );
     }
 
-    this->isPresetChanged = false;
+    this->isEdited = false;
 }
 
 void DialogImageProcessing::btnRemovePreset_Click()
@@ -255,7 +271,7 @@ void DialogImageProcessing::btnRemovePreset_Click()
     {
         this->presets.erase(this->presets.begin() + ui->cbPresets->currentIndex());
         DialogImageProcessing::SaveJson(this->presets);
-        this->isPresetChanged = false;
+        this->isEdited = false;
 
         DialogImageProcessing::UpdatePresetCombobox(this->presets);
     }
@@ -266,7 +282,7 @@ void DialogImageProcessing::btnSavePreset_Click()
     int index = ui->cbPresets->currentIndex();
     DialogImageProcessing::UpdateOrInsertPreset(index);
     DialogImageProcessing::SaveJson(this->presets);
-    this->isPresetChanged = false;
+    this->isEdited = false;
 
     DialogImageProcessing::UpdatePresetCombobox(this->presets, index > -1 ? index : this->presets.size() - 1);
 }
@@ -286,19 +302,22 @@ void DialogImageProcessing::sliderBrightness_sliderMoved(int position)
 void DialogImageProcessing::chkBrightnessContrast_CheckedChanged(Qt::CheckState checkState)
 {
     DialogImageProcessing::EnableBrightnessContrast(checkState == Qt::CheckState::Checked);
-    this->isPresetChanged = true;
+    this->isEdited = true;
+    this->isApplied = false;
 }
 
 void DialogImageProcessing::chkStress_CheckedChanged(Qt::CheckState checkState)
 {
     DialogImageProcessing::EnableStress(checkState == Qt::CheckState::Checked);
-    this->isPresetChanged = true;
+    this->isEdited = true;
+    this->isApplied = false;
 }
 
 void DialogImageProcessing::chkStretchContrast_CheckedChanged(Qt::CheckState checkState)
 {
     DialogImageProcessing::EnableStretchContrast(checkState == Qt::CheckState::Checked);
-    this->isPresetChanged = true;
+    this->isEdited = true;
+    this->isApplied = false;
 }
 
 void DialogImageProcessing::editBrightness_editingFinished()
@@ -315,7 +334,8 @@ void DialogImageProcessing::editBrightness_editingFinished()
         {
             // slider에도 값 업데이트
             ui->sliderBrightness->setValue(valueInt);
-            this->isPresetChanged = true;
+            this->isEdited = true;
+            this->isApplied = false;
         }
         else
         {
@@ -341,7 +361,8 @@ void DialogImageProcessing::sliderContrast_sliderMoved(int position)
     // trackbar가 정수이므로 0.1을 곱한다.
     double value = ui->sliderContrast->value() * 0.1;
     ui->editContrast->setPlainText(QString::number(value, 'f', 1));
-    this->isPresetChanged = true;
+    this->isEdited = true;
+    this->isApplied = false;
 }
 
 void DialogImageProcessing::editContrast_editingFinished()
@@ -358,7 +379,8 @@ void DialogImageProcessing::editContrast_editingFinished()
         {
             // slider에도 값 업데이트
             ui->sliderContrast->setValue(valueInt);
-            this->isPresetChanged = true;
+            this->isEdited = true;
+            this->isApplied = false;
         }
         else
         {
@@ -383,7 +405,8 @@ void DialogImageProcessing::sliderRadius_sliderMoved(int position)
 {
     int value = ui->sliderRadius->value();
     ui->editRadius->setPlainText(QString::number(value));
-    this->isPresetChanged = true;
+    this->isEdited = true;
+    this->isApplied = false;
 }
 
 void DialogImageProcessing::editRadius_editingFinished()
@@ -397,7 +420,8 @@ void DialogImageProcessing::editRadius_editingFinished()
         {
             // slider에도 값 업데이트
             ui->sliderRadius->setValue(value);
-            this->isPresetChanged = true;
+            this->isEdited = true;
+            this->isApplied = false;
         }
         else
         {
@@ -420,7 +444,8 @@ void DialogImageProcessing::sliderSamples_sliderMoved(int position)
 {
     int value = ui->sliderSamples->value();
     ui->editSamples->setPlainText(QString::number(value));
-    this->isPresetChanged = true;
+    this->isEdited = true;
+    this->isApplied = false;
 }
 
 void DialogImageProcessing::editSamples_editingFinished()
@@ -434,7 +459,8 @@ void DialogImageProcessing::editSamples_editingFinished()
         {
             // slider에도 값 업데이트
             ui->sliderSamples->setValue(value);
-            this->isPresetChanged = true;
+            this->isEdited = true;
+            this->isApplied = false;
         }
         else
         {
@@ -458,7 +484,8 @@ void DialogImageProcessing::sliderIterations_sliderMoved(int position)
 {
     int value = ui->sliderIterations->value();
     ui->editIterations->setPlainText(QString::number(value));
-    this->isPresetChanged = true;
+    this->isEdited = true;
+    this->isApplied = false;
 }
 
 void DialogImageProcessing::editIterations_editingFinished()
@@ -472,7 +499,8 @@ void DialogImageProcessing::editIterations_editingFinished()
         {
             // slider에도 값 업데이트
             ui->sliderIterations->setValue(value);
-            this->isPresetChanged = true;
+            this->isEdited = true;
+            this->isApplied = false;
         }
         else
         {
