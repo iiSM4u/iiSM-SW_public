@@ -4,7 +4,9 @@
 #include <QThread>
 #include <QFileSystemModel>
 #include <QProgressDialog>
+
 #include "simp_const_value.h"
+#include "dialog_image_processing.h"
 
 namespace Ui {
 class TabVideo;
@@ -51,6 +53,7 @@ private slots:
     void onVideoWritingCanceled();
     void onVideoWritingFinished(bool success);
 
+
 private:
     Ui::TabVideo *ui;
 
@@ -58,6 +61,8 @@ private:
 
     QProgressDialog *loadingDialog, *processingDialog, *videoWritingDialog;
     QFileSystemModel *filesystemModel;
+    DialogImageProcessing *dialogImageProcessing;
+
     QModelIndex currentVideoIndex;
     QString recordDir;
 
@@ -75,18 +80,5 @@ private:
     void ConnectUI();
     void InitUI();
     void UpdateVideo();
-    void ProcessingVideo(
-        const int presetIndex
-        , const bool isUpdateBrightnessContrast
-        , const bool isUpdateStress
-        , const bool isUpdateStretchContrast
-        , const double brightness
-        , const double contrast
-        , const int stress_radius
-        , const int stress_samples
-        , const int stress_iterations
-        , const bool stress_enhance_shadows
-        , const bool stretch_contrast_keep_colors
-        , const bool stretch_contrast_perceptual
-    );
+    void ProcessingVideo();
 };

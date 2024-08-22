@@ -12,22 +12,8 @@ DialogImageProcessing::DialogImageProcessing(QWidget *parent)
     , ui(new Ui::DialogImageProcessing)
 {
     ui->setupUi(this);
-}
-
-DialogImageProcessing::DialogImageProcessing(const int selectedIndex, QWidget *parent)
-    : QDialog(parent)
-    , ui(new Ui::DialogImageProcessing)
-{
-    ui->setupUi(this);
     this->applyButton = new QPushButton(tr("Apply"), this);
     ui->buttonBox->addButton(this->applyButton, QDialogButtonBox::ApplyRole);
-
-    // ui를 초기화하기 위해 preset부터 load한다.
-    QJsonArray jsonArray;
-    if (SimpUtil::loadJsonFile(QCoreApplication::applicationDirPath() + SimpConstPath::PATH_JSON_IMAGE_PROCESSING, jsonArray))
-    {
-        this->presets = SimpUtil::convertJsonToPresetsImageProcessing(jsonArray);
-    }
 
     DialogImageProcessing::ConnectUI();
     DialogImageProcessing::InitUI();
@@ -36,28 +22,11 @@ DialogImageProcessing::DialogImageProcessing(const int selectedIndex, QWidget *p
     DialogImageProcessing::EnableBrightnessContrast(false);
     DialogImageProcessing::EnableStress(false);
     DialogImageProcessing::EnableStretchContrast(false);
-
-    DialogImageProcessing::UpdatePresetCombobox(this->presets, selectedIndex);
 }
 
 DialogImageProcessing::~DialogImageProcessing()
 {
     delete ui;
-}
-
-bool DialogImageProcessing::IsEdited() const
-{
-    return this->isEdited;
-}
-
-bool DialogImageProcessing::IsApplied() const
-{
-    return this->isApplied;
-}
-
-int DialogImageProcessing::GetPresetIndex() const
-{
-    return ui->cbPresets->currentIndex();
 }
 
 bool DialogImageProcessing::GetBrightnessContrastEnable() const
@@ -119,9 +88,26 @@ bool DialogImageProcessing::GetStretchContrastNonLinearComponents() const
     return ui->chkNonLinearComponents->isChecked();
 }
 
+int DialogImageProcessing::GetPresetIndex() const
+{
+    return ui->cbPresets->currentIndex();
+}
+
+void DialogImageProcessing::Reset(const int presetIndex)
+{
+    QJsonArray jsonArray;
+    if (SimpUtil::loadJsonFile(QCoreApplication::applicationDirPath() + SimpConstPath::PATH_JSON_IMAGE_PROCESSING, jsonArray))
+    {
+        this->presets = SimpUtil::convertJsonToPresetsImageProcessing(jsonArray);
+    }
+
+    DialogImageProcessing::UpdatePresetCombobox(this->presets, presetIndex);
+}
+
 void DialogImageProcessing::ConnectUI()
 {
-    connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &DialogImageProcessing::onOkClicked);
+    connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &DialogImageProcessing::btnOK_Click);
+    connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &DialogImageProcessing::btnCancel_Click);
     connect(this->applyButton, &QPushButton::clicked, this, &DialogImageProcessing::btnApply_Click);
 
     connect(ui->cbPresets, &QComboBox::currentIndexChanged, this, &DialogImageProcessing::cbPreset_SelectedIndexChanged);
@@ -145,7 +131,6 @@ void DialogImageProcessing::ConnectUI()
     connect(ui->editSamples, &CustomPlainTextEdit::editingFinished, this, &DialogImageProcessing::editSamples_editingFinished);
     connect(ui->sliderIterations, &QSlider::sliderMoved, this, &DialogImageProcessing::sliderIterations_sliderMoved);
     connect(ui->editIterations, &CustomPlainTextEdit::editingFinished, this, &DialogImageProcessing::editIterations_editingFinished);
-
 }
 
 void DialogImageProcessing::InitUI()
@@ -187,25 +172,40 @@ void DialogImageProcessing::InitUI()
     ui->chkNonLinearComponents->setCheckState(SimpConstValue::GEGL_STRETCH_CONTRAST_PERCEPTUAL_DEFAULT ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
 }
 
-void DialogImageProcessing::onOkClicked()
+void DialogImageProcessing::btnOK_Click()
 {
     if (this->isEdited)
     {
         DialogImageProcessing::UpdateOrInsertPreset(ui->cbPresets->currentIndex());
         DialogImageProcessing::SaveJson(this->presets);
+
+        if (!this->isApplied)
+        {
+            emit applyClicked();
+            this->isApplied = true;
+        }
     }
 
-    accept();
+    this->hide();
+}
+
+void DialogImageProcessing::btnCancel_Click()
+{
+    this->hide();
 }
 
 void DialogImageProcessing::btnApply_Click()
 {
     this->isApplied = true;
-    applyClicked();
+    emit applyClicked();
 }
 
 void DialogImageProcessing::UpdatePresetCombobox(const std::vector<PresetImageProcessing>& presets, const int index)
 {
+    // combobox라 reset 되면 수정도 다 날린다.
+    this->isEdited = false;
+    this->isApplied = false;
+
     ui->cbPresets->clear();
 
     if (presets.size() > 0)
@@ -271,8 +271,6 @@ void DialogImageProcessing::btnRemovePreset_Click()
     {
         this->presets.erase(this->presets.begin() + ui->cbPresets->currentIndex());
         DialogImageProcessing::SaveJson(this->presets);
-        this->isEdited = false;
-
         DialogImageProcessing::UpdatePresetCombobox(this->presets);
     }
 }
@@ -282,8 +280,6 @@ void DialogImageProcessing::btnSavePreset_Click()
     int index = ui->cbPresets->currentIndex();
     DialogImageProcessing::UpdateOrInsertPreset(index);
     DialogImageProcessing::SaveJson(this->presets);
-    this->isEdited = false;
-
     DialogImageProcessing::UpdatePresetCombobox(this->presets, index > -1 ? index : this->presets.size() - 1);
 }
 

@@ -135,7 +135,7 @@
             </size>
            </property>
            <property name="text">
-            <string>Image Processing</string>
+            <string>Video Processing</string>
            </property>
           </widget>
          </item>

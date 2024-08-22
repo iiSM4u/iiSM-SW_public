@@ -4,6 +4,8 @@
 #include <QFileSystemModel>
 #include <QProgressDialog>
 
+#include "dialog_image_processing.h"
+
 namespace Ui {
 class TabFrame;
 }
@@ -38,6 +40,8 @@ private:
 
     QProgressDialog *progressDialog;
     QFileSystemModel *filesystemModel;
+    DialogImageProcessing *dialogImageProcessing;
+
     QString captureDir;
     QImage currentFrame;
     QModelIndex currentFrameIndex;
@@ -47,18 +51,5 @@ private:
 
     void ConnectUI();
     void InitUI();
-    void ProcessingFrame(
-        const int presetIndex
-        , const bool isUpdateBrightnessContrast
-        , const bool isUpdateStress
-        , const bool isUpdateStretchContrast
-        , const double brightness
-        , const double contrast
-        , const int stress_radius
-        , const int stress_samples
-        , const int stress_iterations
-        , const bool stress_enhance_shadows
-        , const bool stretch_contrast_keep_colors
-        , const bool stretch_contrast_perceptual
-        );
+    void ProcessingFrame();
 };

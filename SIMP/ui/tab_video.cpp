@@ -1,6 +1,5 @@
 #include "tab_video.h"
 #include "ui_tab_video.h"
-#include "dialog_image_processing.h"
 #include "simp_const_path.h"
 #include "simp_const_value.h"
 #include "simp_const_menu.h"
@@ -21,6 +20,7 @@ TabVideo::TabVideo(QWidget *parent)
     , processingDialog(new QProgressDialog(this))
     , videoWritingDialog(new QProgressDialog(this))
     , filesystemModel(new QFileSystemModel(this))
+    , dialogImageProcessing(new DialogImageProcessing(this))
     , recordDir(QCoreApplication::applicationDirPath() + SimpConstPath::DIR_RECORD_VIDEO)
 {
     ui->setupUi(this);
@@ -34,6 +34,11 @@ TabVideo::TabVideo(QWidget *parent)
 
 TabVideo::~TabVideo()
 {
+    if (this->dialogImageProcessing)
+    {
+        delete this->dialogImageProcessing;
+    }
+
     delete ui;
 }
 
@@ -72,6 +77,8 @@ void TabVideo::ConnectUI()
     connect(ui->btnVideoStop, &QPushButton::clicked, this, &TabVideo::btnStopVideo_Click);
 
     connect(ui->sliderVideoFrame, &QSlider::sliderMoved, this, &TabVideo::sliderVideo_sliderMoved);
+
+    connect(this->dialogImageProcessing, &DialogImageProcessing::applyClicked, this, &TabVideo::ProcessingVideo);
 }
 
 void TabVideo::InitUI()
@@ -104,6 +111,8 @@ void TabVideo::InitUI()
     this->filesystemModel->setRootPath(this->recordDir);
     this->filesystemModel->setNameFilters(QStringList() << "*.avi" << "*.mp4" << "*.wmv");
     this->filesystemModel->setNameFilterDisables(false);
+
+    this->dialogImageProcessing->setWindowTitle("Video Processing");
 
     ui->lvVideo->setModel(this->filesystemModel);
     ui->lvVideo->setRootIndex(this->filesystemModel->index(this->recordDir)); // Set the root index
@@ -162,7 +171,9 @@ void TabVideo::lvVideo_Click(const QModelIndex &index)
 
     // dialog 취소 버튼 클릭하면 loading 중지
     connect(this->loadingDialog, &QProgressDialog::canceled, this, [=]() {
-        loader->requestInterruption();
+        if (loader) {
+            loader->requestInterruption();
+        }
     });
 
     loader->start();
@@ -214,48 +225,8 @@ void TabVideo::btnZoomOut_Click()
 
 void TabVideo::btnVideoProcessing_Click()
 {
-    DialogImageProcessing *dialog = new DialogImageProcessing(this->lastPresetIndex, this);
-
-    connect(dialog, &DialogImageProcessing::applyClicked, this, [=]() {
-        TabVideo::ProcessingVideo(
-            /*presetIndex*/dialog->GetPresetIndex()
-            , /*isUpdateBrightnessContrast*/dialog->GetBrightnessContrastEnable()
-            , /*isUpdateStress*/dialog->GetStressEnable()
-            , /*isUpdateStretchContrast*/dialog->GetStretchContrastEnable()
-            , /*brightness*/dialog->GetBrightness()
-            , /*contrast*/dialog->GetContrast()
-            , /*stress_radius*/dialog->GetStressRadius()
-            , /*stress_samples*/dialog->GetStressSamples()
-            , /*stress_iterations*/dialog->GetStressIterations()
-            , /*stress_enhance_shadows*/dialog->GetStressEnhanceShadows()
-            , /*stretch_contrast_keep_colors*/dialog->GetStretchContrastKeepColors()
-            , /*stretch_contrast_perceptual*/dialog->GetStretchContrastNonLinearComponents()
-        );
-    });
-
-    if (dialog->exec() == QDialog::Accepted)
-    {
-        // 수정이 있었는데 apply가 안 된 경우에만 ok시에 processing
-        if (dialog->IsEdited() && !dialog->IsApplied())
-        {
-            TabVideo::ProcessingVideo(
-                /*presetIndex*/dialog->GetPresetIndex()
-                , /*isUpdateBrightnessContrast*/dialog->GetBrightnessContrastEnable()
-                , /*isUpdateStress*/dialog->GetStressEnable()
-                , /*isUpdateStretchContrast*/dialog->GetStretchContrastEnable()
-                , /*brightness*/dialog->GetBrightness()
-                , /*contrast*/dialog->GetContrast()
-                , /*stress_radius*/dialog->GetStressRadius()
-                , /*stress_samples*/dialog->GetStressSamples()
-                , /*stress_iterations*/dialog->GetStressIterations()
-                , /*stress_enhance_shadows*/dialog->GetStressEnhanceShadows()
-                , /*stretch_contrast_keep_colors*/dialog->GetStretchContrastKeepColors()
-                , /*stretch_contrast_perceptual*/dialog->GetStretchContrastNonLinearComponents()
-            );
-        }
-    }
-
-    delete dialog;
+    this->dialogImageProcessing->Reset(this->lastPresetIndex);
+    this->dialogImageProcessing->show();
 }
 
 void TabVideo::btnVideoSave_Click()
@@ -288,7 +259,9 @@ void TabVideo::btnVideoSave_Click()
 
     // dialog 취소 버튼 클릭하면 converting 중지
     connect(this->videoWritingDialog, &QProgressDialog::canceled, this, [=]() {
-        writer->requestInterruption();
+        if (writer) {
+            writer->requestInterruption();
+        }
     });
 
     writer->start();
@@ -479,25 +452,12 @@ void TabVideo::UpdateVideo()
     }
 }
 
-void TabVideo::ProcessingVideo(
-    const int presetIndex
-    , const bool isUpdateBrightnessContrast
-    , const bool isUpdateStress
-    , const bool isUpdateStretchContrast
-    , const double brightness
-    , const double contrast
-    , const int stress_radius
-    , const int stress_samples
-    , const int stress_iterations
-    , const bool stress_enhance_shadows
-    , const bool stretch_contrast_keep_colors
-    , const bool stretch_contrast_perceptual
-    )
+void TabVideo::ProcessingVideo()
 {
     // 처리가 되는 동안 disable
     TabVideo::EnableUI(false);
 
-    this->lastPresetIndex = presetIndex;
+    this->lastPresetIndex = this->dialogImageProcessing->GetPresetIndex();
 
     // 일단 update를 중지시킨다.
     this->isVideoPlay = false;
@@ -509,17 +469,17 @@ void TabVideo::ProcessingVideo(
 
     WorkerVideoProcessing *converter = new WorkerVideoProcessing(
         filePath
-        , /*isUpdateBrightnessContrast*/isUpdateBrightnessContrast
-        , /*isUpdateStress*/isUpdateStress
-        , /*isUpdateStretchContrast*/isUpdateStretchContrast
-        , /*brightness*/brightness
-        , /*contrast*/contrast
-        , /*stress_radius*/stress_radius
-        , /*stress_samples*/stress_samples
-        , /*stress_iterations*/stress_iterations
-        , /*stress_enhance_shadows*/stress_enhance_shadows
-        , /*stretch_contrast_keep_colors*/stretch_contrast_keep_colors
-        , /*stretch_contrast_perceptual*/stretch_contrast_perceptual
+        , /*isUpdateBrightnessContrast*/this->dialogImageProcessing->GetBrightnessContrastEnable()
+        , /*isUpdateStress*/this->dialogImageProcessing->GetStressEnable()
+        , /*isUpdateStretchContrast*/this->dialogImageProcessing->GetStretchContrastEnable()
+        , /*brightness*/this->dialogImageProcessing->GetBrightness()
+        , /*contrast*/this->dialogImageProcessing->GetContrast()
+        , /*stress_radius*/this->dialogImageProcessing->GetStressRadius()
+        , /*stress_samples*/this->dialogImageProcessing->GetStressSamples()
+        , /*stress_iterations*/this->dialogImageProcessing->GetStressIterations()
+        , /*stress_enhance_shadows*/this->dialogImageProcessing->GetStressEnhanceShadows()
+        , /*stretch_contrast_keep_colors*/this->dialogImageProcessing->GetStretchContrastKeepColors()
+        , /*stretch_contrast_perceptual*/this->dialogImageProcessing->GetStretchContrastNonLinearComponents()
         );
 
     connect(converter, &WorkerVideoProcessing::progress, this, &TabVideo::onVideoConvertingProgress);
@@ -529,7 +489,9 @@ void TabVideo::ProcessingVideo(
 
     // dialog 취소 버튼 클릭하면 converting 중지
     connect(this->processingDialog, &QProgressDialog::canceled, this, [=]() {
-        converter->requestInterruption();
+        if (converter) {
+            converter->requestInterruption();
+        }
     });
 
     converter->start();

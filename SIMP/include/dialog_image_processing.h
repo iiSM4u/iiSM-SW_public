@@ -12,13 +12,8 @@ class DialogImageProcessing : public QDialog
     Q_OBJECT
 
 public:
-    explicit DialogImageProcessing(QWidget *parent = nullptr);    
-    DialogImageProcessing(const int selectedIndex, QWidget *parent = nullptr);
+    explicit DialogImageProcessing(QWidget *parent = nullptr);
     ~DialogImageProcessing();
-
-    bool IsEdited() const;
-    bool IsApplied() const;
-    int GetPresetIndex() const;
 
     bool GetBrightnessContrastEnable() const;
     double GetBrightness() const;
@@ -34,11 +29,16 @@ public:
     bool GetStretchContrastKeepColors() const;
     bool GetStretchContrastNonLinearComponents() const;
 
+    int GetPresetIndex() const;
+
+    void Reset(const int presetIndex = -1);
+
 signals:
-    void applyClicked();  // Apply 버튼 클릭 시 시그널 발생
+    void applyClicked();
 
 private slots:
-    void onOkClicked();
+    void btnOK_Click();
+    void btnCancel_Click();
     void btnApply_Click();
 
     void cbPreset_SelectedIndexChanged(int index);
