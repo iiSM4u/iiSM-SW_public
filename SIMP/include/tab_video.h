@@ -38,6 +38,7 @@ private slots:
 
     void btnPlayVideo_Click();
     void btnStopVideo_Click();
+    void btnSaveFrame_Click();
 
     void sliderVideo_sliderMoved(int position);
 

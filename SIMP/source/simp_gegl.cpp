@@ -48,6 +48,13 @@ void SimpGEGL::UpdateImageProcessing(
     GeglNode* stretch_contrast = nullptr;
 
     // gegl_node_set()은 gegl_node_link()를 하기 전에 마쳐야 한다.
+    // stretch-contrast를 가장 먼저 해야 나머지 효과가 잘 적용된다. stretch-contrast를 마지막에 하면 나머지 효과가 무시될 수 있음
+    if (isUpdateStretchContrast)
+    {
+        stretch_contrast = gegl_node_new_child(graph, "operation", "gegl:stretch-contrast", nullptr);
+        gegl_node_set(stretch_contrast, "keep-colors", stretch_contrast_keep_colors, "perceptual", stretch_contrast_perceptual, nullptr);
+    }
+
     if (isUpdateBrightnessContrast)
     {
         brightness_contrast = gegl_node_new_child(graph, "operation", "gegl:brightness-contrast", nullptr);
@@ -60,14 +67,13 @@ void SimpGEGL::UpdateImageProcessing(
         gegl_node_set(stress, "radius", stress_radius, "samples", stress_samples, "iterations", stress_iterations, "enhance-shadows", stress_enhance_shadows, nullptr);
     }
 
-    if (isUpdateStretchContrast)
-    {
-        stretch_contrast = gegl_node_new_child(graph, "operation", "gegl:stretch-contrast", nullptr);
-        gegl_node_set(stretch_contrast, "keep-colors", stretch_contrast_keep_colors, "perceptual", stretch_contrast_perceptual, nullptr);
-    }
-
     // Link nodes
     GeglNode* last_node = input;
+    if (stretch_contrast)
+    {
+        gegl_node_link(last_node, stretch_contrast);
+        last_node = stretch_contrast;
+    }
     if (brightness_contrast)
     {
         gegl_node_link(last_node, brightness_contrast);
@@ -77,11 +83,6 @@ void SimpGEGL::UpdateImageProcessing(
     {
         gegl_node_link(last_node, stress);
         last_node = stress;
-    }
-    if (stretch_contrast)
-    {
-        gegl_node_link(last_node, stretch_contrast);
-        last_node = stretch_contrast;
     }
     gegl_node_link(last_node, output);
 

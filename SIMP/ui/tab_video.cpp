@@ -75,6 +75,7 @@ void TabVideo::ConnectUI()
 
     connect(ui->btnVideoPlay, &QPushButton::clicked, this, &TabVideo::btnPlayVideo_Click);
     connect(ui->btnVideoStop, &QPushButton::clicked, this, &TabVideo::btnStopVideo_Click);
+    connect(ui->btnSaveFrame, &QPushButton::clicked, this, &TabVideo::btnSaveFrame_Click);
 
     connect(ui->sliderVideoFrame, &QSlider::sliderMoved, this, &TabVideo::sliderVideo_sliderMoved);
 
@@ -134,6 +135,8 @@ void TabVideo::EnableUI(bool enable)
 
     ui->btnVideoPlay->setEnabled(enable);
     ui->btnVideoStop->setEnabled(enable);
+    ui->btnSaveFrame->setEnabled(enable);
+
     ui->sliderVideoFrame->setEnabled(enable);
 }
 
@@ -281,6 +284,23 @@ void TabVideo::btnStopVideo_Click()
     // play를 중지시켰으므로 직접 업데이트 한다.
     this->currentFrame = this->videoFrames[this->currentFrameIndex];
     TabVideo::UpdateVideoUI();
+}
+
+void TabVideo::btnSaveFrame_Click()
+{
+    QString pathDir = QCoreApplication::applicationDirPath() + SimpConstPath::DIR_CAPTURE_FRAME;
+
+    QDir dir(pathDir);
+    if (!dir.exists())
+    {
+        dir.mkpath(pathDir);
+    }
+
+    QFileInfo fileInfo = this->filesystemModel->fileInfo(this->currentVideoIndex);
+    QString fileName = QString("%1_%2").arg(fileInfo.completeBaseName()).arg(QString::number(this->currentFrameIndex + 1));
+    QString filePath = dir.absoluteFilePath(fileName + SimpConstPath::EXTENSION_CAPTURE_IMAGE);
+
+    this->currentFrame.save(filePath);
 }
 
 void TabVideo::sliderVideo_sliderMoved(int position)
