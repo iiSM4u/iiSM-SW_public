@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Installer>
+    <Name>SIMP</Name>
+    <Version>1.0.0</Version>
+    <Title>SIMP Installer</Title>
+    <Publisher>IISM</Publisher>
+    <StartMenuDir>SIMP</StartMenuDir>
+    <TargetDir>@ApplicationsDir@/SIMP</TargetDir>
+</Installer>
