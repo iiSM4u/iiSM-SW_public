@@ -3,7 +3,7 @@
     <DisplayName>SIMP</DisplayName>
     <Description>SIMP Application</Description>
     <Version>1.0.0</Version>
-    <ReleaseDate>2024-08-22</ReleaseDate>
+    <ReleaseDate>2024-08-27</ReleaseDate>
     <Default>true</Default>
     <Script>installscript.qs</Script>
     <Licenses>
