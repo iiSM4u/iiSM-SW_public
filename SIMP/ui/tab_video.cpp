@@ -183,7 +183,12 @@ void TabVideo::lvVideo_Click(const QModelIndex &index)
 
 void TabVideo::btnOpenDir_Click()
 {
-    QString dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"), "", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    QString dir = QFileDialog::getExistingDirectory(
+        this,
+        tr("Open Directory"),
+        this->filesystemModel->rootPath(),
+        QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks
+    );
 
     if (!dir.isEmpty())
     {

@@ -120,7 +120,12 @@ void TabFrame::lvFrame_Click(const QModelIndex &index)
 
 void TabFrame::btnOpenDir_Click()
 {
-    QString dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"), "", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    QString dir = QFileDialog::getExistingDirectory(
+        this,
+        tr("Open Directory"),
+        this->filesystemModel->rootPath(),
+        QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks
+    );
 
     if (!dir.isEmpty())
     {

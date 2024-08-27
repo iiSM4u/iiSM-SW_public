@@ -15,6 +15,3 @@ const QString SimpConstPath::PATH_JSON_IMAGE_PROCESSING = SimpConstPath::DIR_PRE
 const QString SimpConstPath::PATH_LOG = SimpConstPath::DIR_LOG + "/log.txt";
 
 const QString SimpConstPath::EXTENSION_CAPTURE_IMAGE = ".png";
-
-
-
