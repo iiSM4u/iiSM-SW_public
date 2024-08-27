@@ -5,9 +5,11 @@
 class SimpConstPath
 {
 public:
+    static const QString DIR_SIMP;
     static const QString DIR_CAPTURE_FRAME;
     static const QString DIR_RECORD_VIDEO;
     static const QString DIR_PRESET;
+    static const QString DIR_LOG;
 
     static const QString PATH_JSON_CONTRAST_CURVE;
     static const QString PATH_JSON_IMAGE_PROCESSING;

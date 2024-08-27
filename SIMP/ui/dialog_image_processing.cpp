@@ -96,7 +96,7 @@ int DialogImageProcessing::GetPresetIndex() const
 void DialogImageProcessing::Reset(const int presetIndex)
 {
     QJsonArray jsonArray;
-    if (SimpUtil::loadJsonFile(QCoreApplication::applicationDirPath() + SimpConstPath::PATH_JSON_IMAGE_PROCESSING, jsonArray))
+    if (SimpUtil::loadJsonFile(SimpConstPath::PATH_JSON_IMAGE_PROCESSING, jsonArray))
     {
         this->presets = SimpUtil::convertJsonToPresetsImageProcessing(jsonArray);
     }
@@ -625,7 +625,5 @@ void DialogImageProcessing::SaveJson(const std::vector<PresetImageProcessing>& p
     // ok 버튼 눌리면 종료 전에 file로 preset 저장.
     QJsonArray jsonArray;
     SimpUtil::convertPresetsImageProcessingToJsonArray(presets, jsonArray);
-
-    QString pathPreset = QCoreApplication::applicationDirPath() + SimpConstPath::PATH_JSON_IMAGE_PROCESSING;
-    SimpUtil::saveJsonFile(pathPreset, jsonArray);
+    SimpUtil::saveJsonFile(SimpConstPath::PATH_JSON_IMAGE_PROCESSING, jsonArray);
 }

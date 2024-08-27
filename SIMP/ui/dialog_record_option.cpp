@@ -25,7 +25,7 @@ DialogRecordOption::DialogRecordOption(const QString& dir, const VideoFormatType
     connect(ui->sliderFrameRate, &QSlider::sliderMoved, this, &DialogRecordOption::sliderFrameRate_sliderMoved);
     connect(ui->editFrameRate, &CustomPlainTextEdit::editingFinished, this, &DialogRecordOption::editFrameRate_editingFinished);
 
-    ui->lbDir->setText(QCoreApplication::applicationDirPath() + SimpConstPath::DIR_RECORD_VIDEO);
+    ui->lbDir->setText(SimpConstPath::DIR_RECORD_VIDEO);
 
     ui->cbVideoFormat->clear();
     for (const auto& format : {VideoFormatType::MJPEG, VideoFormatType::XVID, VideoFormatType::MP4V, VideoFormatType::NONE })

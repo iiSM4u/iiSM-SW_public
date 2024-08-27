@@ -5,7 +5,6 @@
 #include "dialog_image_processing.h"
 #include "worker_frame_processing.h"
 
-#include <QCoreApplication>
 #include <QFileDialog>
 #include <QMessageBox>
 
@@ -15,7 +14,7 @@ TabFrame::TabFrame(QWidget *parent)
     , progressDialog(new QProgressDialog(this))
     , filesystemModel(new QFileSystemModel(this))
     , dialogImageProcessing(new DialogImageProcessing(this))
-    , captureDir(QCoreApplication::applicationDirPath() + SimpConstPath::DIR_CAPTURE_FRAME)
+    , captureDir(SimpConstPath::DIR_CAPTURE_FRAME)
 {
     ui->setupUi(this);
 

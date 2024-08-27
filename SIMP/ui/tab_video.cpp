@@ -8,7 +8,6 @@
 #include "worker_video_processing.h"
 #include "worker_video_writing_qimage.h"
 
-#include <QCoreApplication>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <thread>
@@ -21,7 +20,7 @@ TabVideo::TabVideo(QWidget *parent)
     , videoWritingDialog(new QProgressDialog(this))
     , filesystemModel(new QFileSystemModel(this))
     , dialogImageProcessing(new DialogImageProcessing(this))
-    , recordDir(QCoreApplication::applicationDirPath() + SimpConstPath::DIR_RECORD_VIDEO)
+    , recordDir(SimpConstPath::DIR_RECORD_VIDEO)
 {
     ui->setupUi(this);
 
@@ -288,12 +287,10 @@ void TabVideo::btnStopVideo_Click()
 
 void TabVideo::btnSaveFrame_Click()
 {
-    QString pathDir = QCoreApplication::applicationDirPath() + SimpConstPath::DIR_CAPTURE_FRAME;
-
-    QDir dir(pathDir);
+    QDir dir(SimpConstPath::DIR_CAPTURE_FRAME);
     if (!dir.exists())
     {
-        dir.mkpath(pathDir);
+        dir.mkpath(SimpConstPath::DIR_CAPTURE_FRAME);
     }
 
     QFileInfo fileInfo = this->filesystemModel->fileInfo(this->currentVideoIndex);

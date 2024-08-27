@@ -2,6 +2,7 @@
 #include "ui_tab_camera.h"
 #include "simp_gegl.h"
 #include "simp_util.h"
+#include "simp_logger.h"
 #include "simp_const_value.h"
 #include "simp_const_key.h"
 #include "simp_const_path.h"
@@ -24,8 +25,8 @@ TabCamera::TabCamera(QWidget *parent)
     , timerVideoRecord(new QTimer(this))
     , videoWritingDialog(new QProgressDialog(this))
     , btnGroupCooling(new QButtonGroup(this))
-    , recordDir(QCoreApplication::applicationDirPath() + SimpConstPath::DIR_RECORD_VIDEO)
-    , captureDir(QCoreApplication::applicationDirPath() + SimpConstPath::DIR_CAPTURE_FRAME)
+    , recordDir(SimpConstPath::DIR_RECORD_VIDEO)
+    , captureDir(SimpConstPath::DIR_CAPTURE_FRAME)
 {
     ui->setupUi(this);
 
@@ -276,12 +277,10 @@ void TabCamera::btnCaptureCamera_Click()
 {
     if (!this->resultFrame.isNull())
     {
-        QString pathDir = QCoreApplication::applicationDirPath() + SimpConstPath::DIR_CAPTURE_FRAME;
-
-        QDir dir(pathDir);
+        QDir dir(SimpConstPath::DIR_CAPTURE_FRAME);
         if (!dir.exists())
         {
-            dir.mkpath(pathDir);
+            dir.mkpath(SimpConstPath::DIR_CAPTURE_FRAME);
         }
 
         QDateTime currentDateTime = QDateTime::currentDateTime();
@@ -507,7 +506,7 @@ void TabCamera::btnCurveSetting_Click()
         QJsonArray jsonArray;
         SimpUtil::convertPresetsImageCurveToJsonArray(this->presetsContrastCurve, jsonArray);
 
-        QString pathPreset = QCoreApplication::applicationDirPath() + SimpConstPath::PATH_JSON_CONTRAST_CURVE;
+        QString pathPreset = SimpConstPath::PATH_JSON_CONTRAST_CURVE;
         SimpUtil::saveJsonFile(pathPreset, jsonArray);
 
         // 여기에는 none이 있기 때문에 index에 +1 해야 함.
@@ -691,27 +690,34 @@ void TabCamera::UpdatePreview()
         {
             QImage source(this->rawCameraData, this->rawCameraWidth, this->rawCameraHeight, this->imageFormat);
 
-            // gegl에서는 rgba를 받기 때문에 무조건 rgba로 바꿔야 한다.
-            QImage formattedSource = source.convertToFormat(QImage::Format_RGBA8888);
-
-            if (this->isUpdateContrastCurve)
+            try
             {
-                SimpGEGL::UpdateContrastCurve(formattedSource, this->contrastCurvePoints);
+                // gegl에서는 rgba를 받기 때문에 무조건 rgba로 바꿔야 한다.
+                QImage formattedSource = source.convertToFormat(QImage::Format_RGBA8888);
+
+                if (this->isUpdateContrastCurve)
+                {
+                    SimpGEGL::UpdateContrastCurve(formattedSource, this->contrastCurvePoints);
+                }
+
+                // gegl을 적용한 후에 result에 넣는다. 그래야 video나 capture에서 gegl이 적용된 이미지가 사용될 수 있음.
+                this->resultFrame = formattedSource.convertToFormat(QImage::Format_RGB888);
+
+                if (this->isRecordOn)
+                {
+                    cv::Mat mat(this->resultFrame.height(), this->resultFrame.width(), CV_8UC3, const_cast<uchar*>(this->resultFrame.bits()), this->resultFrame.bytesPerLine());
+                    cv::Mat matBGR;
+                    cv::cvtColor(mat, matBGR, cv::COLOR_RGB2BGR);  // rgb -> bgr
+
+                    this->recordFrames.emplace_back(matBGR);
+                }
+
+                QMetaObject::invokeMethod(this, "UpdatePreviewUI", Qt::QueuedConnection);
             }
-
-            // gegl을 적용한 후에 result에 넣는다. 그래야 video나 capture에서 gegl이 적용된 이미지가 사용될 수 있음.
-            this->resultFrame = formattedSource.convertToFormat(QImage::Format_RGB888);
-
-            if (this->isRecordOn)
+            catch(const std::exception &e)
             {
-                cv::Mat mat(this->resultFrame.height(), this->resultFrame.width(), CV_8UC3, const_cast<uchar*>(this->resultFrame.bits()), this->resultFrame.bytesPerLine());
-                cv::Mat matBGR;
-                cv::cvtColor(mat, matBGR, cv::COLOR_RGB2BGR);  // rgb -> bgr
-
-                this->recordFrames.emplace_back(matBGR);
+                SimpLogger::Log(e.what());
             }
-
-            QMetaObject::invokeMethod(this, "UpdatePreviewUI", Qt::QueuedConnection);
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(this->cameraDelay)); // Frame rate delay
@@ -818,7 +824,7 @@ void TabCamera::LoadPresets()
 {
     QJsonArray jsonArray;
 
-    if (SimpUtil::loadJsonFile(QCoreApplication::applicationDirPath() + SimpConstPath::PATH_JSON_CONTRAST_CURVE, jsonArray))
+    if (SimpUtil::loadJsonFile(SimpConstPath::PATH_JSON_CONTRAST_CURVE, jsonArray))
     {
         this->presetsContrastCurve = SimpUtil::convertJsonToPresetsImageCurve(jsonArray);
     }
