@@ -74,3 +74,4 @@ CMakeLists.txt.user*
 
 .qtcreator/
 __pycache__/
+dll/
