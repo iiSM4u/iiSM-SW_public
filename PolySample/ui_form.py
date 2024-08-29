@@ -181,7 +181,7 @@ class Ui_Widget(object):
 
     def retranslateUi(self, Widget):
         Widget.setWindowTitle(QCoreApplication.translate("Widget", u"Poly Sample", None))
-        self.lbPath.setText(QCoreApplication.translate("Widget", u"Path", None))
+        self.lbPath.setText(QCoreApplication.translate("Widget", u"File Path", None))
         self.btnPath.setText(QCoreApplication.translate("Widget", u"Open", None))
         self.btnConnect.setText(QCoreApplication.translate("Widget", u"Connect", None))
         self.btnDisconnect.setText(QCoreApplication.translate("Widget", u"Disconnect", None))

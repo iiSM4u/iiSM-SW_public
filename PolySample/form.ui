@@ -20,7 +20,7 @@
       <item>
        <widget class="QLabel" name="lbPath">
         <property name="text">
-         <string>Path</string>
+         <string>File Path</string>
         </property>
        </widget>
       </item>
