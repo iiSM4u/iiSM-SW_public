@@ -71,10 +71,10 @@
     <widget class="QWidget" name="widget_3" native="true">
      <layout class="QGridLayout" name="gridLayout">
       <item row="1" column="0">
-       <widget class="QLabel" name="lbRangeTitle">
+       <widget class="QLabel" name="lbSerialNoTitle">
         <property name="maximumSize">
          <size>
-          <width>60</width>
+          <width>80</width>
           <height>16777215</height>
          </size>
         </property>
@@ -87,7 +87,7 @@
          <enum>Qt::LeftToRight</enum>
         </property>
         <property name="text">
-         <string>Range</string>
+         <string>Serial No</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -102,17 +102,17 @@
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="QLabel" name="lbRange">
+       <widget class="QLabel" name="lbSerialNo">
         <property name="text">
-         <string>Wave Range</string>
+         <string>Serial No</string>
         </property>
        </widget>
       </item>
       <item row="2" column="0">
-       <widget class="QLabel" name="lbPortNoTitle">
+       <widget class="QLabel" name="lbWaveRangeTitle">
         <property name="maximumSize">
          <size>
-          <width>60</width>
+          <width>80</width>
           <height>16777215</height>
          </size>
         </property>
@@ -122,7 +122,7 @@
          </font>
         </property>
         <property name="text">
-         <string>Port No</string>
+         <string>Wave Range</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -133,7 +133,7 @@
        <widget class="QLabel" name="lbModelTitle">
         <property name="maximumSize">
          <size>
-          <width>60</width>
+          <width>80</width>
           <height>16777215</height>
          </size>
         </property>
@@ -151,9 +151,9 @@
        </widget>
       </item>
       <item row="2" column="1">
-       <widget class="QLabel" name="lbPortNo">
+       <widget class="QLabel" name="lbWaveRange">
         <property name="text">
-         <string>Port No</string>
+         <string>Wave Range</string>
         </property>
        </widget>
       </item>

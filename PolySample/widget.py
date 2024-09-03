@@ -99,15 +99,15 @@ class Widget(QWidget):
 
         if num == 0:
             model = ""
-            serial = ""
-            portNo = ""
-            num, model, serial, portNo = self.poly.GetInforData(model, serial, portNo)
+            serialNo = ""
+            waveRange = ""
+            num, model, serialNo, waveRange = self.poly.GetInforData(model, serialNo, waveRange)
             self.update_result_status(num)
 
             if num == 0:
                 self.ui.lbModel.setText(model)
-                self.ui.lbRange.setText(serial)
-                self.ui.lbPortNo.setText(portNo)
+                self.ui.lbSerialNo.setText(serialNo)
+                self.ui.lbWaveRange.setText(waveRange)
                 self.check_device_ready()  # waiting
 
         self.ui.btnConnect.setEnabled(num != 0)
