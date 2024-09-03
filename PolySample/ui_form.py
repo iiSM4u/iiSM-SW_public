@@ -23,7 +23,7 @@ class Ui_Widget(object):
     def setupUi(self, Widget):
         if not Widget.objectName():
             Widget.setObjectName(u"Widget")
-        Widget.resize(345, 336)
+        Widget.resize(345, 384)
         self.verticalLayout = QVBoxLayout(Widget)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.widget = QWidget(Widget)
@@ -160,13 +160,20 @@ class Ui_Widget(object):
 
         self.horizontalLayout_3.addWidget(self.btnBlank)
 
-        self.btnExit = QPushButton(self.widget_4)
-        self.btnExit.setObjectName(u"btnExit")
-
-        self.horizontalLayout_3.addWidget(self.btnExit)
-
 
         self.verticalLayout.addWidget(self.widget_4)
+
+        self.widget_6 = QWidget(Widget)
+        self.widget_6.setObjectName(u"widget_6")
+        self.verticalLayout_2 = QVBoxLayout(self.widget_6)
+        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.btnExit = QPushButton(self.widget_6)
+        self.btnExit.setObjectName(u"btnExit")
+
+        self.verticalLayout_2.addWidget(self.btnExit)
+
+
+        self.verticalLayout.addWidget(self.widget_6)
 
         self.lbStatus = QLabel(Widget)
         self.lbStatus.setObjectName(u"lbStatus")

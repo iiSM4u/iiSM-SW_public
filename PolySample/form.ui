@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>345</width>
-    <height>336</height>
+    <height>384</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -231,6 +231,12 @@
         </property>
        </widget>
       </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QWidget" name="widget_6" native="true">
+     <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
        <widget class="QPushButton" name="btnExit">
         <property name="text">
