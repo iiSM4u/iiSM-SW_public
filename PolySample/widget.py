@@ -119,7 +119,7 @@ class Widget(QWidget):
             self.setEnableUI(False)
 
     def go(self, cwl: str, fwhm: str) -> None:
-        num = self.poly.SetWavelength(cwl, fwhm)
+        num = self.poly.SetWavelength(str(cwl), str(fwhm))
         self.update_result_status(num)
 
     def blank(self) -> None:
