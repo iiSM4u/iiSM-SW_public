@@ -1,7 +1,7 @@
 # This Python file uses the following encoding: utf-8
 import sys
 import os
-import asyncio
+import time
 
 # pip install pythonnet
 import clr
@@ -27,6 +27,7 @@ class Widget(QWidget):
         self.initUI()
         self.poly = ClassPoly()
         self.poly.EventPolyUiUpdate += self.on_poly_update
+        self.isConnected = False
 
     # buttons
     def on_btnPath_click(self) -> None:
@@ -42,13 +43,15 @@ class Widget(QWidget):
     def on_btnDisconnect_click(self) -> None:
         self.disconnect()
 
-    def on_btnGo_click(self) -> None:        
+    def on_btnGo_click(self) -> None:
         self.go(self.ui.editCwl.text(), self.ui.editFwhm.text())
 
     def on_btnBlank_click(self) -> None:
-        self.blank(self.ui.editCwl.text(), self.ui.editFwhm.text())
+        self.blank()
 
     def on_btnExit_click(self) -> None:
+        if self.isConnected:
+            self.disconnect()
         QApplication.quit()
 
     # ui
@@ -80,7 +83,8 @@ class Widget(QWidget):
         self.ui.editFwhm.setEnabled(isConnected)
 
     def update_result_status(self, num: int) -> None:
-        self.ui.lbStatus.setText(self.poly.GetStringMsg(num))
+        msg = self.poly.GetStringMsg(num)
+        self.ui.lbStatus.setText(msg)
 
     # FWS - event
     def on_poly_update(self, sender, num: int) -> None:
@@ -94,46 +98,47 @@ class Widget(QWidget):
         self.update_result_status(num)
 
         if num == 0:
-            model = clr.Reference[str]("")
-            serial = clr.Reference[str]("")
-            portNo = clr.Reference[str]("")
-            num = self.poly.GetInforData(model, serial, portNo)
+            model = ""
+            serial = ""
+            portNo = ""
+            num, model, serial, portNo = self.poly.GetInforData(model, serial, portNo)
             self.update_result_status(num)
 
             if num == 0:
                 self.ui.lbModel.setText(model)
                 self.ui.lbRange.setText(serial)
-                self.ui.lbRange.setText(portNo)
-                asyncio.create_task(self.check_device_ready())  # waiting
+                self.ui.lbPortNo.setText(portNo)
+                self.check_device_ready()  # waiting
 
         self.ui.btnConnect.setEnabled(num != 0)
 
-    def disconnect(self, path: str) -> None:
+    def disconnect(self) -> None:
         num = self.poly.Disconnect()
         self.update_result_status(num)
-        if num == 0:
+        if num == 10:  # closed
             self.setEnableUI(False)
 
     def go(self, cwl: str, fwhm: str) -> None:
         num = self.poly.SetWavelength(cwl, fwhm)
         self.update_result_status(num)
 
-    def blank(self, cwl: str, fwhm: str) -> None:
-        num = self.poly.GoBlankPosition(cwl, fwhm)
+    def blank(self) -> None:
+        num = self.poly.GoBlankPosition()
         self.update_result_status(num)
 
-    async def check_device_ready(self) -> None:
-        is_ready = False
+    def check_device_ready(self) -> None:
+        self.isConnected = False
 
-        while not is_ready:
-            num = await self.poly.GetDeviceStatus()
+        while not self.isConnected:
+            num = self.poly.GetDeviceStatus()
             self.update_result_status(num)
 
             if num == 6:  # ready
                 self.setEnableUI(True)
-                is_ready = True
+                self.isConnected = True
 
-            await asyncio.sleep(0.1)  # 100ms
+            time.sleep(0.1)
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
