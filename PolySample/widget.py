@@ -2,6 +2,7 @@
 import sys
 import os
 import time
+import datetime
 
 # pip install pythonnet
 import clr
@@ -92,10 +93,12 @@ class Widget(QWidget):
 
     # FWS
     def connect(self, path: str) -> None:
+        self.log_to_file(f"Attempting to connect with path: {path}")
         self.ui.btnConnect.setEnabled(False)
         self.ui.lbStatus.setText("trying to connect..")
         num = self.poly.PolyConnect(path)
         self.update_result_status(num)
+        self.log_to_file(f"PolyConnect returned: {num}")
 
         if num == 0:
             model = ""
@@ -103,6 +106,7 @@ class Widget(QWidget):
             waveRange = ""
             num, model, serialNo, waveRange = self.poly.GetInforData(model, serialNo, waveRange)
             self.update_result_status(num)
+            self.log_to_file(f"GetInforData returned: {num}, Model: {model}, Serial: {serialNo}, WaveRange: {waveRange}")
 
             if num == 0:
                 self.ui.lbModel.setText(model)
@@ -138,6 +142,15 @@ class Widget(QWidget):
                 self.isConnected = True
 
             time.sleep(0.1)
+
+    def log_to_file(self, message: str) -> None:
+        log_dir = "logs"
+        os.makedirs(log_dir, exist_ok=True)
+        log_file = os.path.join(log_dir, f"{datetime.date.today()}.log")
+
+        with open(log_file, "a") as f:
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            f.write(f"[{timestamp}] {message}\n")
 
 
 if __name__ == "__main__":
