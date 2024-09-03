@@ -86,7 +86,6 @@ class Widget(QWidget):
     def update_result_status(self, num: int) -> None:
         msg = self.poly.GetStringMsg(num)
         self.ui.lbStatus.setText(msg)
-        self.log_to_file(f"status: {msg}")
 
     # FWS - event
     def on_poly_update(self, sender, num: int) -> None:
@@ -94,7 +93,7 @@ class Widget(QWidget):
 
     # FWS
     def connect(self, path: str) -> None:
-        self.log_to_file(f"Attempting to connect with path: {path}")
+        #self.log_to_file(f"Attempting to connect with path: {path}")
         self.ui.btnConnect.setEnabled(False)
         self.ui.lbStatus.setText("trying to connect..")
         num = self.poly.PolyConnect(path)
@@ -106,7 +105,6 @@ class Widget(QWidget):
             waveRange = ""
             num, model, serialNo, waveRange = self.poly.GetInforData(model, serialNo, waveRange)
             self.update_result_status(num)
-            self.log_to_file(f"GetInforData returned: {num}, Model: {model}, Serial: {serialNo}, WaveRange: {waveRange}")
 
             if num == 0:
                 self.ui.lbModel.setText(model)
@@ -117,19 +115,16 @@ class Widget(QWidget):
         self.ui.btnConnect.setEnabled(num != 0)
 
     def disconnect(self) -> None:
-        self.log_to_file("disconnect")
         num = self.poly.Disconnect()
         self.update_result_status(num)
         if num == 10:  # closed
             self.setEnableUI(False)
 
     def go(self, cwl: str, fwhm: str) -> None:
-        self.log_to_file(f"SetWavelength cwl: {cwl}, fwhm: {fwhm}")
         num = self.poly.SetWavelength(str(cwl), str(fwhm))
         self.update_result_status(num)
 
     def blank(self) -> None:
-        self.log_to_file("go blank")
         num = self.poly.GoBlankPosition()
         self.update_result_status(num)
 
