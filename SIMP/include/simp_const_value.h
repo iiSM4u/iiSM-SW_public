@@ -19,7 +19,7 @@ public:
 
     static constexpr int MARGIN_CHART_CLICK = 20;
 
-    static constexpr int MIICAM_EXPOGAIN_MAX = 5000;
+    static constexpr int MIICAM_EXPOGAIN_MAX = 25000;
 
     static constexpr double MIICAM_EXPOSURE_TIME_MIN = 0.1;
     static constexpr double MIICAM_EXPOSURE_TIME_MAX = 5000.0;
