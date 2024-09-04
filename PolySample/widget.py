@@ -32,7 +32,7 @@ class Widget(QWidget):
 
     # buttons
     def on_btnPath_click(self) -> None:
-        file_name, _ = QFileDialog.getOpenFileName(self, "Open ISM File", "", "ISM files (*.ism)", options=QFileDialog.Options())
+        file_name, _ = QFileDialog.getOpenFileName(self, "Open ISM File", "", "ISM files (*.ism *.ism2)", options=QFileDialog.Options())
         if file_name:
             file_name = os.path.normpath(file_name)
             self.ui.lbPath.setText(file_name)
