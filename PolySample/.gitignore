@@ -76,3 +76,4 @@ CMakeLists.txt.user*
 __pycache__/
 dll/
 build/
+*.pyproject.user
