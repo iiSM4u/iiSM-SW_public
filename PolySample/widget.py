@@ -25,12 +25,39 @@ from ISM_Device import ClassPoly  # namespace and class name
 class Widget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.ui = Ui_Widget()
+        self.ui.setupUi(self)
+
+        self.setStyleSheet("""
+            QPushButton:disabled { background-color: lightgray; color: darkgray; }
+            QLineEdit:disabled { background-color: lightgray; color: darkgray; }
+        """)
+
         self.initUI()
         self.poly = ClassPoly()
         self.poly.EventPolyUiUpdate += self.on_poly_update
         self.isConnected = False
 
-    # buttons
+    # ui
+    def initUI(self) -> None:
+        self.ui.btnPath.clicked.connect(self.on_btnPath_click)
+        self.ui.btnConnect.clicked.connect(self.on_btnConnect_click)
+        self.ui.btnDisconnect.clicked.connect(self.on_btnDisconnect_click)
+        self.ui.btnGo.clicked.connect(self.on_btnGo_click)
+        self.ui.btnBlank.clicked.connect(self.on_btnBlank_click)
+        self.ui.btnExit.clicked.connect(self.on_btnExit_click)
+
+        self.setEnableUI(False)
+        self.ui.btnConnect.setEnabled(False)
+
+    def setEnableUI(self, isConnected: bool) -> None:
+        self.ui.btnConnect.setEnabled(isConnected == False)
+        self.ui.btnDisconnect.setEnabled(isConnected)
+        self.ui.btnGo.setEnabled(isConnected)
+        self.ui.btnBlank.setEnabled(isConnected)
+        self.ui.editCwl.setEnabled(isConnected)
+        self.ui.editFwhm.setEnabled(isConnected)
+
     def on_btnPath_click(self) -> None:
         file_name, _ = QFileDialog.getOpenFileName(self, "Open ISM File", "", "ISM files (*.ism *.ism2)", options=QFileDialog.Options())
         if file_name:
@@ -54,34 +81,6 @@ class Widget(QWidget):
         if self.isConnected:
             self.disconnect()
         QApplication.quit()
-
-    # ui
-    def initUI(self):
-        self.ui = Ui_Widget()
-        self.ui.setupUi(self)
-
-        self.setStyleSheet("""
-            QPushButton:disabled { background-color: lightgray; color: darkgray; }
-            QLineEdit:disabled { background-color: lightgray; color: darkgray; }
-        """)
-
-        self.ui.btnPath.clicked.connect(self.on_btnPath_click)
-        self.ui.btnConnect.clicked.connect(self.on_btnConnect_click)
-        self.ui.btnDisconnect.clicked.connect(self.on_btnDisconnect_click)
-        self.ui.btnGo.clicked.connect(self.on_btnGo_click)
-        self.ui.btnBlank.clicked.connect(self.on_btnBlank_click)
-        self.ui.btnExit.clicked.connect(self.on_btnExit_click)
-
-        self.setEnableUI(False)
-        self.ui.btnConnect.setEnabled(False)
-
-    def setEnableUI(self, isConnected: bool) -> None:
-        self.ui.btnConnect.setEnabled(isConnected == False)
-        self.ui.btnDisconnect.setEnabled(isConnected)
-        self.ui.btnGo.setEnabled(isConnected)
-        self.ui.btnBlank.setEnabled(isConnected)
-        self.ui.editCwl.setEnabled(isConnected)
-        self.ui.editFwhm.setEnabled(isConnected)
 
     def update_result_status(self, num: int) -> None:
         msg = self.poly.GetStringMsg(num)
