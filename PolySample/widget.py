@@ -51,7 +51,7 @@ class Widget(QWidget):
         self.ui.btnConnect.setEnabled(False)
 
     def setEnableUI(self, isConnected: bool) -> None:
-        self.ui.btnConnect.setEnabled(isConnected == False)
+        self.ui.btnConnect.setEnabled(not isConnected)
         self.ui.btnDisconnect.setEnabled(isConnected)
         self.ui.btnGo.setEnabled(isConnected)
         self.ui.btnBlank.setEnabled(isConnected)

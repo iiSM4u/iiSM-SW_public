@@ -16,7 +16,7 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QComboBox, QFrame, QGridLayout,
-    QHBoxLayout, QLabel, QPlainTextEdit, QPushButton,
+    QHBoxLayout, QLabel, QLineEdit, QPushButton,
     QSizePolicy, QSlider, QSpacerItem, QVBoxLayout,
     QWidget)
 
@@ -24,7 +24,7 @@ class Ui_SlPicoSample(object):
     def setupUi(self, SlPicoSample):
         if not SlPicoSample.objectName():
             SlPicoSample.setObjectName(u"SlPicoSample")
-        SlPicoSample.resize(714, 345)
+        SlPicoSample.resize(814, 345)
         self.verticalLayout = QVBoxLayout(SlPicoSample)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.widget = QWidget(SlPicoSample)
@@ -113,14 +113,14 @@ class Ui_SlPicoSample(object):
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
         self.btnPowerOff = QPushButton(self.widget_3)
         self.btnPowerOff.setObjectName(u"btnPowerOff")
-        self.btnPowerOff.setMinimumSize(QSize(0, 0))
+        self.btnPowerOff.setMinimumSize(QSize(100, 0))
         self.btnPowerOff.setMaximumSize(QSize(16777215, 16777215))
 
         self.horizontalLayout_2.addWidget(self.btnPowerOff)
 
         self.btnPowerOn = QPushButton(self.widget_3)
         self.btnPowerOn.setObjectName(u"btnPowerOn")
-        self.btnPowerOn.setMinimumSize(QSize(0, 0))
+        self.btnPowerOn.setMinimumSize(QSize(100, 0))
         self.btnPowerOn.setMaximumSize(QSize(16777215, 16777215))
 
         self.horizontalLayout_2.addWidget(self.btnPowerOn)
@@ -142,13 +142,13 @@ class Ui_SlPicoSample(object):
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
         self.btnLaserOff = QPushButton(self.widget_4)
         self.btnLaserOff.setObjectName(u"btnLaserOff")
-        self.btnLaserOff.setMinimumSize(QSize(0, 0))
+        self.btnLaserOff.setMinimumSize(QSize(100, 0))
 
         self.horizontalLayout_3.addWidget(self.btnLaserOff)
 
         self.btnLaserOn = QPushButton(self.widget_4)
         self.btnLaserOn.setObjectName(u"btnLaserOn")
-        self.btnLaserOn.setMinimumSize(QSize(0, 0))
+        self.btnLaserOn.setMinimumSize(QSize(100, 0))
 
         self.horizontalLayout_3.addWidget(self.btnLaserOn)
 
@@ -185,12 +185,14 @@ class Ui_SlPicoSample(object):
         self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
         self.cbFrequency = QComboBox(self.widget_5)
         self.cbFrequency.setObjectName(u"cbFrequency")
+        self.cbFrequency.setMinimumSize(QSize(100, 0))
         self.cbFrequency.setMaximumSize(QSize(16777215, 16777215))
 
         self.horizontalLayout_4.addWidget(self.cbFrequency)
 
         self.btnFrequency = QPushButton(self.widget_5)
         self.btnFrequency.setObjectName(u"btnFrequency")
+        self.btnFrequency.setMinimumSize(QSize(100, 0))
         self.btnFrequency.setMaximumSize(QSize(16777215, 16777215))
 
         self.horizontalLayout_4.addWidget(self.btnFrequency)
@@ -261,9 +263,10 @@ class Ui_SlPicoSample(object):
         self.widget_6.setObjectName(u"widget_6")
         self.horizontalLayout_5 = QHBoxLayout(self.widget_6)
         self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
-        self.editPower = QPlainTextEdit(self.widget_6)
+        self.editPower = QLineEdit(self.widget_6)
         self.editPower.setObjectName(u"editPower")
-        self.editPower.setMaximumSize(QSize(100, 30))
+        self.editPower.setMaximumSize(QSize(100, 16777215))
+        self.editPower.setAlignment(Qt.AlignCenter)
 
         self.horizontalLayout_5.addWidget(self.editPower)
 

@@ -1,6 +1,13 @@
 {
     "files": [
         "slpicosample.py",
-        "form.ui"
+        "form.ui",
+        "sc_laser_type.py",
+        "sc_const_message.py",
+        "sc_const_code.py",
+        "sc_const_setting.py",
+        "sc_port.py",
+        "sc_port_wrapper.py",
+        "sc_status_type.py"
     ]
 }
