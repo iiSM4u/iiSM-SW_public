@@ -1,4 +1,9 @@
 class SC_CODE:
+    HEADER_1 = 0x55
+    HEADER_2 = 0xaa
+    SPACING = 0x01
+    FRAME_END = 0x0d
+
     POWER_ON_CODE = 0x06
     POWER_ON_DATA_1 = 0x0c
     POWER_ON_DATA_2 = 0xec

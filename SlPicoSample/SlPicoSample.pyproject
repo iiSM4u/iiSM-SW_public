@@ -8,6 +8,7 @@
         "sc_const_setting.py",
         "sc_port.py",
         "sc_port_wrapper.py",
-        "sc_status_type.py"
+        "sc_status_type.py",
+        "sc_error_type.py"
     ]
 }
