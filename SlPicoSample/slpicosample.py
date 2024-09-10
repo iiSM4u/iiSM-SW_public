@@ -28,14 +28,14 @@ class SlPicoSample(QWidget):
         self.setStyleSheet("""
             QPushButton:disabled { background-color: lightgray; color: darkgray; }
             QComboBox:disabled { background-color: lightgray; color: darkgray; }
-            QPlainTextEdit:disabled { background-color: lightgray; color: darkgray; }
+            QLineEdit:disabled { background-color: lightgray; color: darkgray; }
             QSlider:disabled { color: darkgray; }
         """)
 
-        self.isReady = False  # 초기화시에만 사용
         self.initUI()
-        self.setEnableUI(False)
+        self.offUI()
 
+        self.laserType = ScLaserType.none
         self.isScPortOpen = False
         self.isScPowerOn = False
         self.isScLaserOn = False
@@ -43,8 +43,6 @@ class SlPicoSample(QWidget):
 
         self.scPortWrapper = ScProWrapper()
         self.scPortWrapper.set_on_msg(self.on_update_msg)
-
-        self.isReady = True
 
     # ui
     def initUI(self) -> None:
@@ -54,7 +52,7 @@ class SlPicoSample(QWidget):
         self.ui.btnLaserOff.clicked.connect(self.on_btnLaserOff_click)
         self.ui.btnLaserOn.clicked.connect(self.on_btnLaserOn_click)
         self.ui.btnFrequency.clicked.connect(self.on_btnFrequency_click)
-        self.ui.btnPowerSet.clicked.connect(self.on_btnPowerSet_click)
+        self.ui.btnLaserPowerSet.clicked.connect(self.on_btnLaserPowerSet_click)
 
         self.ui.cbType.currentIndexChanged.connect(self.on_cbType_selectedIndexChanged)
         self.ui.cbType.addItems([laserType.name for laserType in ScLaserType])
@@ -64,24 +62,27 @@ class SlPicoSample(QWidget):
             self.ui.cbPort.addItem(port.device)
 
         self.ui.sliderLaserPower.setMinimum(SC_SETTING.LASER_MIN)
-        self.ui.sliderLaserPower.setMaximum(SC_SETTING.LASER_MAX)
-        self.ui.sliderLaserPower.sliderMoved.connect(self.on_sliderLaserPower_sliderMoved)
+        self.ui.sliderLaserPower.setMaximum(SC_SETTING.LASER_MAX + 1)
+        self.ui.sliderLaserPower.valueChanged.connect(self.on_sliderLaserPower_valueChanged)
 
         self.ui.editPower.setValidator(QIntValidator(SC_SETTING.LASER_MIN, SC_SETTING.LASER_MAX, self))
+        self.ui.editPower.setText("0")  # 0으로 초기화
         self.ui.editPower.editingFinished.connect(self.on_editPower_editingFinished)
 
-    def setEnableUI(self, enable: bool) -> None:
-        self.ui.btnRefresh.setEnabled(enable)
-        self.ui.btnPowerOff.setEnabled(enable)
-        self.ui.btnPowerOn.setEnabled(enable)
-        self.ui.btnLaserOff.setEnabled(enable)
-        self.ui.btnLaserOn.setEnabled(enable)
-        self.ui.btnFrequency.setEnabled(enable)
-        self.ui.btnPowerSet.setEnabled(enable)
-
-        self.ui.cbFrequency.setEnabled(enable)
-        # self.ui.sliderLaserPower.setEnabled(enable)
-        # self.ui.editPower.setEnabled(enable)
+    def offUI(self) -> None:
+        self.ui.btnRefresh.setEnabled(False)
+        self.ui.btnPowerOff.setEnabled(False)
+        self.ui.btnPowerOn.setEnabled(False)
+        self.ui.btnLaserOff.setEnabled(False)
+        self.ui.btnLaserOn.setEnabled(False)
+        self.ui.btnFrequency.setEnabled(False)
+        self.ui.btnLaserPowerSet.setEnabled(False)
+        self.ui.cbFrequency.setEnabled(False)
+        self.ui.sliderLaserPower.setEnabled(False)
+        self.ui.editPower.setEnabled(False)
+        # 다른 거는 다 끄고 type, port만 켠다.
+        self.ui.cbType.setEnabled(True)
+        self.ui.cbPort.setEnabled(True)
 
     def on_update_msg(self, msg):
         self.ui.lbMessage.setText(msg)
@@ -89,76 +90,139 @@ class SlPicoSample(QWidget):
     def on_btnRefresh_click(self) -> None:
         self.ui.lbMessage.setText("on_btnRefresh_click")
 
+    def on_btnPowerOn_click(self) -> None:
+        # power가 켜지면 type, port는 변경 불가
+        self.ui.cbType.setEnabled(False)
+        self.ui.cbPort.setEnabled(False)
+
+        # self.isScPowerOn = self.scPortWrapper.power_on()
+        # self.on_update_msg(SC_MESSAGE.POWER_ON.format(self.isScPowerOn))
+        self.isScPowerOn = True
+
+        if self.isScPowerOn == True:
+            self.ui.btnPowerOn.setEnabled(False)
+            self.ui.btnPowerOff.setEnabled(True)
+            self.ui.btnLaserOn.setEnabled(True)
+
     def on_btnPowerOff_click(self) -> None:
         # laser power = 0 -> laser off -> power off
-        self.scPortWrapper.set_laser_power(value=0)
-        self.isScLaserOn = not self.scPortWrapper.laser_off()
-        self.isScPowerOn = not self.scPortWrapper.power_off()
-        self.on_update_msg(SC_MESSAGE.POWER_OFF.format(not self.isScPowerOn))
+        # self.scPortWrapper.set_laser_power(value=0)
+        # self.isScLaserOn = not self.scPortWrapper.laser_off()
+        # self.isScPowerOn = not self.scPortWrapper.power_off()
+        # self.on_update_msg(SC_MESSAGE.POWER_OFF.format(not self.isScPowerOn))
+        if self.isScLaserOn == True:
+            self.ui.sliderLaserPower.setValue(0)
+            # laser off
 
-    def on_btnPowerOn_click(self) -> None:
-        self.isScPowerOn = self.scPortWrapper.power_on()
-        self.on_update_msg(SC_MESSAGE.POWER_ON.format(self.isScPowerOn))
+        self.isScPowerOn = False
+        self.offUI()
+        self.ui.btnPowerOn.setEnabled(True)
+
+    def on_btnLaserOn_click(self) -> None:
+        # laser가 켜지면 type, port는 변경 불가
+        if self.laserType == ScLaserType.SLF:
+            self.ui.cbType.setEnabled(False)
+            self.ui.cbPort.setEnabled(False)
+        # self.isScLaserOn = self.scPortWrapper.laser_on()
+        # self.on_update_msg(SC_MESSAGE.LASER_ON.format(self.isScLaserOn))
+        self.isScLaserOn = True
+
+        if self.isScLaserOn == True:
+            self.ui.btnLaserOn.setEnabled(False)
+            self.ui.btnLaserOff.setEnabled(True)
+            self.ui.btnLaserPowerSet.setEnabled(True)
+            self.ui.sliderLaserPower.setEnabled(True)
+            self.ui.editPower.setEnabled(True)
+
+            if self.laserType == ScLaserType.SLV:
+                self.ui.cbFrequency.setEnabled(True)
+                self.ui.btnFrequency.setEnabled(True)
 
     def on_btnLaserOff_click(self) -> None:
         # laser power = 0 -> laser off
-        self.scPortWrapper.set_laser_power(value=0)
-        self.isScLaserOn = not self.scPortWrapper.laser_off()
-        self.on_update_msg(SC_MESSAGE.LASER_OFF.format(not self.isScLaserOn))
+        # self.scPortWrapper.set_laser_power(value=0)
+        # self.isScLaserOn = not self.scPortWrapper.laser_off()
+        # self.on_update_msg(SC_MESSAGE.LASER_OFF.format(not self.isScLaserOn))
 
-    def on_btnLaserOn_click(self) -> None:
-        self.isScLaserOn = self.scPortWrapper.laser_on()
-        self.on_update_msg(SC_MESSAGE.LASER_ON.format(self.isScLaserOn))
+        self.ui.sliderLaserPower.setValue(0)
+
+        self.isScLaserOn = False
+
+        if self.isScLaserOn == False:
+            self.ui.btnLaserOn.setEnabled(True)
+            self.ui.btnLaserOff.setEnabled(False)
+            self.ui.btnLaserPowerSet.setEnabled(False)
+            self.ui.sliderLaserPower.setEnabled(False)
+            self.ui.editPower.setEnabled(False)
+
+            if self.laserType == ScLaserType.SLV:
+                self.ui.cbFrequency.setEnabled(False)
+                self.ui.btnFrequency.setEnabled(False)
+            else:
+                self.offUI()
+                self.ui.btnLaserOn.setEnabled(True)
 
     def on_btnFrequency_click(self) -> None:
         if self.ui.cbFrequency.currentIndex() > -1:
             value = self.frequencies[self.ui.cbFrequency.currentIndex()]
-            result = self.scPortWrapper.setFreq(value=value)
-            self.on_update_msg(SC_MESSAGE.UPDATE_LASER_FREQUENCY.format(str(value) if result else "Failed"))
+            # result = self.scPortWrapper.setFreq(value=value)
+            # self.on_update_msg(SC_MESSAGE.UPDATE_LASER_FREQUENCY.format(str(value) if result else "Failed"))
+            self.on_update_msg(f"set freq: {value}")
 
-    def on_btnPowerSet_click(self) -> None:
+    def on_btnLaserPowerSet_click(self) -> None:
         self.set_laser_power(self.ui.sliderLaserPower.value())
 
     def on_editPower_editingFinished(self) -> None:
         value = int(self.ui.editPower.text())
-        if value >= SC_SETTING.LASER_MIN and value <= SC_SETTING.LASER_MIN:
-            self.ui.sliderLaserPower.setValue(value)
+        if value >= SC_SETTING.LASER_MIN and value <= SC_SETTING.LASER_MAX:
+            # slider와 값이 다를 경우에만 udpate
+            if self.ui.sliderLaserPower.value() != value:
+                self.ui.sliderLaserPower.setValue(value)
         else:
             # 잘못된 범위면 slider의 값으로 돌림
             QMessageBox.warning(self, "Error", SC_MESSAGE.INVALIED_POWER_VALUE.format(str(value)))
             self.ui.editPower.setText(self.ui.sliderLaserPower.value())
 
-    def on_sliderLaserPower_sliderMoved(self, position) -> None:
-        self.ui.editPower.setText(self.ui.sliderLaserPower.value())
-        self.set_laser_power(self.ui.sliderLaserPower.value())
+    def on_sliderLaserPower_valueChanged(self, value) -> None:
+        # lineedit의 값과 다를 경우에만 udpate
+        if int(self.ui.editPower.text()) != value:
+            self.ui.editPower.setText(str(value))
+        self.set_laser_power(value)
 
     def on_cbType_selectedIndexChanged(self, index) -> None:
-        # 맨 처음 시작할 때 실행 안되게
-        if self.isReady:
-            if self.ui.cbPort.currentIndex() > -1:
-                type = ScLaserType[self.ui.cbType.currentText()]
-                portName = self.ui.cbPort.currentText()  # 테스트 필요
+        self.ui.cbFrequency.clear()
+        self.ui.cbFrequency.index = -1
+        self.offUI()
 
-                # 일단 combobox를 비운다
-                self.ui.cbFrequency.clear()
+        if self.ui.cbType.currentIndex() > 0:
+            # if self.ui.cbPort.currentIndex() > -1:
+                self.laserType = ScLaserType[self.ui.cbType.currentText()]
+                portName = self.ui.cbPort.currentText()
 
-                # SLV에서만 frequency 설정 가능하게
-                if type == ScLaserType.SLV:
-                    self.frequencies = SC_SETTING.FREQUENCY_SLV
-                    self.ui.cbFrequency.addItems([f"{freq} MHz" for freq in self.frequencies])
-                    self.ui.cbFrequency.index = 0
-                    self.ui.cbFrequency.setEnabled(True)
+                # self.isScPortOpen = self.scPortWrapper.open_port(laserType=type, port_name=portName)
+                self.isScPortOpen = True
+
+                if self.isScPortOpen:
+                    # SLV에서만 frequency 설정 가능하게
+                    if self.laserType == ScLaserType.SLV:
+                        self.frequencies = SC_SETTING.FREQUENCY_SLV
+                        self.ui.cbFrequency.addItems([f"{freq} MHz" for freq in self.frequencies])
+                        self.ui.cbFrequency.index = 0
+                        self.ui.btnPowerOn.setEnabled(True)
+                    else:
+                        self.ui.btnLaserOn.setEnabled(True)
                 else:
-                    self.ui.cbFrequency.index = -1
-                    self.ui.cbFrequency.setEnabled(False)
+                    QMessageBox.warning(self, "Error", SC_MESSAGE.ERROR_PORT)
 
-                self.isScPortOpen = self.scPortWrapper.open_port(laserType=type, port_name=portName)
-            else:
-                QMessageBox.warning(self, "Error", SC_MESSAGE.NO_PORT)
+            # else:
+            #     QMessageBox.warning(self, "Error", SC_MESSAGE.NO_PORT)
+            #     self.ui.cbType.setCurrentIndex(0)
 
     def set_laser_power(value: int) -> bool:
-        result = self.scPortWrapper.set_laser_power(value=value)
-        self.on_update_msg(SC_MESSAGE.UPDATE_LASER_POWER.format(str(value) if result else "Failed"))
+        self.on_update_msg(f"set power: {value}")
+        # result = self.scPortWrapper.set_laser_power(value=value)
+        # self.on_update_msg(SC_MESSAGE.UPDATE_LASER_POWER.format(str(value) if result else "Failed"))
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

@@ -496,7 +496,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="btnPowerSet">
+       <widget class="QPushButton" name="btnLaserPowerSet">
         <property name="text">
          <string>SET</string>
         </property>

@@ -1,5 +1,6 @@
 class SC_MESSAGE:
     NO_PORT = "Please check the LASER port number."
+    ERROR_PORT = "port opened error. please retry"
 
     POWER_ON = "Power On: {}"
     POWER_OFF = "Power Off: {}"

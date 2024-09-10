@@ -270,10 +270,10 @@ class Ui_SlPicoSample(object):
 
         self.horizontalLayout_5.addWidget(self.editPower)
 
-        self.btnPowerSet = QPushButton(self.widget_6)
-        self.btnPowerSet.setObjectName(u"btnPowerSet")
+        self.btnLaserPowerSet = QPushButton(self.widget_6)
+        self.btnLaserPowerSet.setObjectName(u"btnLaserPowerSet")
 
-        self.horizontalLayout_5.addWidget(self.btnPowerSet)
+        self.horizontalLayout_5.addWidget(self.btnLaserPowerSet)
 
         self.sliderLaserPower = QSlider(self.widget_6)
         self.sliderLaserPower.setObjectName(u"sliderLaserPower")
@@ -316,7 +316,7 @@ class Ui_SlPicoSample(object):
         self.label_9.setText(QCoreApplication.translate("SlPicoSample", u"Error", None))
         self.lbError.setText("")
         self.label_10.setText(QCoreApplication.translate("SlPicoSample", u"LASER Power", None))
-        self.btnPowerSet.setText(QCoreApplication.translate("SlPicoSample", u"SET", None))
+        self.btnLaserPowerSet.setText(QCoreApplication.translate("SlPicoSample", u"SET", None))
         self.lbMessage.setText("")
     # retranslateUi
 
