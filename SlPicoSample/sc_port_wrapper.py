@@ -101,8 +101,6 @@ class ScProWrapper:
                         return response[5] == value
         return False
 
-
-
     def query_status(self):
         if self.scPort is not None:
             cmd = self.make_send_query(func=SC_CODE.QUERY_STATUS_CODE, data1=SC_CODE.QUERY_STATUS_DATA_1, data2=SC_CODE.QUERY_STATUS_DATA_2)
@@ -125,8 +123,8 @@ class ScProWrapper:
             if self.scPort.send_cmd(cmd):
                 response = self.scPort.read()
                 if len(response) == 8:
-                    err_code, err_title, err_desc = self.convert_sc_error(code=response[5], type=typeresponse[6])
-                    return (True, err_code, err_title, err_desc)
+                    err_no, err_code, err_title, err_desc = self.convert_sc_error(code=response[5], type=typeresponse[6])
+                    return (True, err_no, err_code, err_title, err_desc)
         return (False, "", "", "")
 
     def make_send_query(self, func: int, data1: int, data2: int):

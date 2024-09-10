@@ -1,5 +1,6 @@
 class SC_SETTING:
     DELAY = 100
+    REFRESH_DELAY_SECOND = 5
 
     LASER_MIN = 0
     LASER_MAX = 100
