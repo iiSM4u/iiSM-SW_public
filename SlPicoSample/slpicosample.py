@@ -256,6 +256,7 @@ class SlPicoSample(QWidget):
 
         # err가 없을 때까지 반복
         while not result:
+            time.sleep(0.1)
             result2, msg = self.scPortWrapper.get_error();
             if not msg or msg == SC_MESSAGE.ERROR_NO:
                 result = True
@@ -275,6 +276,7 @@ class SlPicoSample(QWidget):
 
             # err가 없을 때까지 반복
             while not result:
+                time.sleep(0.1)
                 result2, msg = self.scPortWrapper.get_error();
                 if not msg or msg == SC_MESSAGE.ERROR_NO:
                     result = True
@@ -289,6 +291,7 @@ class SlPicoSample(QWidget):
 
         # err가 없을 때까지 반복
         while not result:
+            time.sleep(0.1)
             result2, msg = self.scPortWrapper.get_error();
             if not msg or msg == SC_MESSAGE.ERROR_NO:
                 result = True
@@ -303,6 +306,7 @@ class SlPicoSample(QWidget):
 
         # err가 없을 때까지 반복
         while not result:
+            time.sleep(0.1)
             result2, msg = self.scPortWrapper.get_error();
             if not msg or msg == SC_MESSAGE.ERROR_NO:
                 result = True
@@ -320,15 +324,10 @@ class SlPicoSample(QWidget):
 
     def update_status_alarm(self) -> None:
         (result1, status, temperature, powerPercent, frequency) = self.scPortWrapper.query_status()
-        # result = True
-        # temperature = random.randint(0, 100)
         if result1:
             self.ui.lbTemperature.setText(f"{temperature}°C")
 
         (result2, err_code, err_title, err_desc, err_type) = self.scPortWrapper.query_alarm()
-        # val = random.randint(0, 10)
-        # err_type = ScErrorType.NoError if val < 3 else ScErrorType.Error
-        # err_code = f"CODE{val}"
         if result2:
             self.ui.lbError.setText(err_code)
             if err_type == ScErrorType.NoError:
