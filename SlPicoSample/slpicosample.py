@@ -282,17 +282,17 @@ class SlPicoSample(QWidget):
         self.on_update_msg(SC_MESSAGE.UPDATE_LASER_FREQUENCY.format(str(value) if result else "Failed"))
 
     def update_status_alarm(self) -> None:
-        (result, status, temperature, powerPercent, frequency) = self.scPortWrapper.query_status()
+        (result1, status, temperature, powerPercent, frequency) = self.scPortWrapper.query_status()
         # result = True
         # temperature = random.randint(0, 100)
-        if result:
+        if result1:
             self.ui.lbTemperature.setText(f"{temperature}°C")
 
-        (result, err_code, err_title, err_desc, err_type) = self.scPortWrapper.query_alarm()
+        (result2, err_code, err_title, err_desc, err_type) = self.scPortWrapper.query_alarm()
         # val = random.randint(0, 10)
         # err_type = ScErrorType.NoError if val < 3 else ScErrorType.Error
         # err_code = f"CODE{val}"
-        if result:
+        if result2:
             self.ui.lbError.setText(err_code)
             if err_type == ScErrorType.NoError:
                 self.ui.lbError.setStyleSheet("background-color: lightgreen; border: 1px solid gray;")
