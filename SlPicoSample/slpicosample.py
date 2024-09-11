@@ -289,6 +289,7 @@ class SlPicoSample(QWidget):
         if self.isScLaserOn:
             # set laser 0
             self.ui.sliderLaserPower.setValue(0)
+            self.ui.editPower.setText("0")  # 0으로 초기화
             self.scPortWrapper.set_laser_power(value=0)
 
             result = self.scPortWrapper.laser_off()
