@@ -138,7 +138,7 @@ class ScProWrapper:
             if self.scPort.send_cmd(cmd):
                 response = self.scPort.read()
                 if len(response) > 0:
-                    return True, response.decode('ascii').strip('\r')
+                    return True, response.decode('utf-8', errors='ignore').strip('\r')
         return False
 
     # 이게 매뉴얼 상의 구현된 frequency - 1~12까지의 index를 16진수 형식으로 넣는다.
