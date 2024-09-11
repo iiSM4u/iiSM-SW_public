@@ -52,17 +52,22 @@ class SlPicoSample(QWidget):
         thread.start()
 
     def closeEvent(self, event):
-        # 종료 시 사용자 확인
-        reply = QMessageBox.question(self, 'Exit', 'Are you sure you want to quit?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        self.isRunning = False
+        self.off_laser()
+        self.off_power()
+        self.scPortWrapper.close_port()
+        event.accept()  # 애플리케이션 종료
+        # # 종료 시 사용자 확인
+        # reply = QMessageBox.question(self, 'Exit', 'Are you sure you want to quit?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
-        if reply == QMessageBox.Yes:
-            self.isRunning = False
-            self.off_laser()
-            self.off_power()
-            self.scPortWrapper.close_port()
-            event.accept()  # 애플리케이션 종료
-        else:
-            event.ignore()  # 애플리케이션 종료 방지
+        # if reply == QMessageBox.Yes:
+        #     self.isRunning = False
+        #     self.off_laser()
+        #     self.off_power()
+        #     self.scPortWrapper.close_port()
+        #     event.accept()  # 애플리케이션 종료
+        # else:
+        #     event.ignore()  # 애플리케이션 종료 방지
 
     # ui
     def initUI(self) -> None:
@@ -209,7 +214,7 @@ class SlPicoSample(QWidget):
         self.offUI()
 
         if self.ui.cbType.currentIndex() > 0:
-            # if self.ui.cbPort.currentIndex() > -1:
+            if self.ui.cbPort.currentIndex() > -1:
                 self.open_port()
 
                 if self.isScPortOpen:
@@ -225,40 +230,40 @@ class SlPicoSample(QWidget):
                         self.ui.btnLaserOn.setEnabled(True)
                 else:
                     QMessageBox.warning(self, "Error", SC_MESSAGE.ERROR_PORT)
-            # else:
-            #     QMessageBox.warning(self, "Error", SC_MESSAGE.NO_PORT)
-            #     self.ui.cbType.setCurrentIndex(0)
+            else:
+                QMessageBox.warning(self, "Error", SC_MESSAGE.NO_PORT)
+                self.ui.cbType.setCurrentIndex(0)
 
     def open_port(self) -> None:
         self.laserType = ScLaserType[self.ui.cbType.currentText()]
         portName = self.ui.cbPort.currentText()
-        # self.isScPortOpen = self.scPortWrapper.open_port(laserType=type, port_name=portName)
-        self.isScPortOpen = True
+        self.isScPortOpen = self.scPortWrapper.open_port(laserType=type, port_name=portName)
+        # self.isScPortOpen = True
 
     def on_power(self) -> None:
-        # self.isScPowerOn = self.scPortWrapper.power_on()
-        # self.on_update_msg(SC_MESSAGE.POWER_ON.format(self.isScPowerOn))
-        self.isScPowerOn = True
+        self.isScPowerOn = self.scPortWrapper.power_on()
+        self.on_update_msg(SC_MESSAGE.POWER_ON.format(self.isScPowerOn))
+        # self.isScPowerOn = True
 
     def off_power(self) -> None:
         if self.isScPowerOn:
-            # self.isScPowerOn = not self.scPortWrapper.power_off()
-            # self.on_update_msg(SC_MESSAGE.POWER_OFF.format(not self.isScPowerOn))
-            self.isScPowerOn = False
+            self.isScPowerOn = not self.scPortWrapper.power_off()
+            self.on_update_msg(SC_MESSAGE.POWER_OFF.format(not self.isScPowerOn))
+            # self.isScPowerOn = False
 
     def on_laser(self) -> None:
-        # self.isScLaserOn = self.scPortWrapper.laser_on()
-        # self.on_update_msg(SC_MESSAGE.LASER_ON.format(self.isScLaserOn))
-        self.isScLaserOn = True
+        self.isScLaserOn = self.scPortWrapper.laser_on()
+        self.on_update_msg(SC_MESSAGE.LASER_ON.format(self.isScLaserOn))
+        # self.isScLaserOn = True
 
     def off_laser(self) -> None:
         if self.isScLaserOn:
             # set laser 0
             self.ui.sliderLaserPower.setValue(0)
             self.scPortWrapper.set_laser_power(value=0)
-            # self.isScLaserOn = not self.scPortWrapper.laser_off()
-            # self.on_update_msg(SC_MESSAGE.LASER_OFF.format(not self.isScLaserOn))
-            self.isScLaserOn = False
+            self.isScLaserOn = not self.scPortWrapper.laser_off()
+            self.on_update_msg(SC_MESSAGE.LASER_OFF.format(not self.isScLaserOn))
+            # self.isScLaserOn = False
 
     def set_laser_power(self, value: int) -> None:
         result = self.scPortWrapper.set_laser_power(value=value)
@@ -268,7 +273,6 @@ class SlPicoSample(QWidget):
         # default
         result = self.scPortWrapper.set_freq(index=index)
         value = self.frequencies[index]
-
         # current
         # if self.laserType == ScLaserType.SLV:
         #     result = self.scPortWrapper.set_freq_SLV(freq=index)
@@ -278,16 +282,16 @@ class SlPicoSample(QWidget):
         self.on_update_msg(SC_MESSAGE.UPDATE_LASER_FREQUENCY.format(str(value) if result else "Failed"))
 
     def update_status_alarm(self) -> None:
-        # (result, status, temperature, powerPercent, frequency) = self.scPortWrapper.query_status()
-        result = True
-        temperature = random.randint(0, 100)
+        (result, status, temperature, powerPercent, frequency) = self.scPortWrapper.query_status()
+        # result = True
+        # temperature = random.randint(0, 100)
         if result:
             self.ui.lbTemperature.setText(f"{temperature}°C")
 
-        # (result, err_code, err_title, err_desc, err_type) = self.scPortWrapper.query_alarm()
-        val = random.randint(0, 10)
-        err_type = ScErrorType.NoError if val < 3 else ScErrorType.Error
-        err_code = f"CODE{val}"
+        (result, err_code, err_title, err_desc, err_type) = self.scPortWrapper.query_alarm()
+        # val = random.randint(0, 10)
+        # err_type = ScErrorType.NoError if val < 3 else ScErrorType.Error
+        # err_code = f"CODE{val}"
         if result:
             self.ui.lbError.setText(err_code)
             if err_type == ScErrorType.NoError:
