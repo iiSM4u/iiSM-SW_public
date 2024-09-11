@@ -1,6 +1,5 @@
 # This Python file uses the following encoding: utf-8
 import sys
-import random
 import threading
 import time
 
@@ -88,7 +87,7 @@ class SlPicoSample(QWidget):
 
         self.ui.sliderLaserPower.setMinimum(SC_SETTING.LASER_MIN)
         self.ui.sliderLaserPower.setMaximum(SC_SETTING.LASER_MAX + 1)
-        self.ui.sliderLaserPower.valueChanged.connect(self.on_sliderLaserPower_valueChanged)
+        self.ui.sliderLaserPower.sliderReleased.connect(self.on_sliderLaserPower_released)
 
         self.ui.editPower.setValidator(QIntValidator(SC_SETTING.LASER_MIN, SC_SETTING.LASER_MAX, self))
         self.ui.editPower.setText("0")  # 0으로 초기화
@@ -220,7 +219,8 @@ class SlPicoSample(QWidget):
             QMessageBox.warning(self, "Error", SC_MESSAGE.INVALIED_POWER_VALUE.format(str(value)))
             self.ui.editPower.setText(self.ui.sliderLaserPower.value())
 
-    def on_sliderLaserPower_valueChanged(self, value) -> None:
+    def on_sliderLaserPower_released(self) -> None:
+        value = self.ui.sliderLaserPower.value()
         # lineedit의 값과 다를 경우에만 udpate
         if int(self.ui.editPower.text()) != value:
             self.ui.editPower.setText(str(value))
