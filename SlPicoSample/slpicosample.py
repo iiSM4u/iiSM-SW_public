@@ -125,14 +125,21 @@ class SlPicoSample(QWidget):
         self.ui.cbType.setEnabled(False)
         self.ui.cbPort.setEnabled(False)
 
+        # button은 먼저 끈다
+        self.ui.btnPowerOn.setEnabled(False)
         self.on_power()
 
         if self.isScPowerOn:
-            self.ui.btnPowerOn.setEnabled(False)
             self.ui.btnPowerOff.setEnabled(True)
             self.ui.btnLaserOn.setEnabled(True)
+        else:
+            # 실패했으면 다시 켠다
+            self.ui.btnPowerOn.setEnabled(True)
 
     def on_btnPowerOff_click(self) -> None:
+        # button은 먼저 끈다
+        self.ui.btnPowerOff.setEnabled(False)
+
         # laser power = 0 -> laser off -> power off
         self.off_laser()
         self.off_power()
@@ -140,6 +147,9 @@ class SlPicoSample(QWidget):
         if not self.isScPowerOn:
             self.offUI()
             self.ui.btnPowerOn.setEnabled(True)
+        else:
+            # 실패했으면 다시 켠다
+            self.ui.btnPowerOff.setEnabled(True)
 
     def on_btnLaserOn_click(self) -> None:
         # laser가 켜지면 type, port는 변경 불가
@@ -147,13 +157,14 @@ class SlPicoSample(QWidget):
             self.ui.cbType.setEnabled(False)
             self.ui.cbPort.setEnabled(False)
 
+        # button은 먼저 끈다
+        self.ui.btnLaserOn.setEnabled(False)
         self.on_laser()
 
         if self.isScLaserOn:
             self.ui.lbStatus.setText("On")
             self.ui.lbStatus.setStyleSheet("background-color: lightgreen; border: 1px solid gray;")
 
-            self.ui.btnLaserOn.setEnabled(False)
             self.ui.btnLaserOff.setEnabled(True)
             self.ui.btnLaserPowerSet.setEnabled(True)
             self.ui.sliderLaserPower.setEnabled(True)
@@ -162,8 +173,14 @@ class SlPicoSample(QWidget):
             if self.laserType == ScLaserType.SLV:
                 self.ui.cbFrequency.setEnabled(True)
                 self.ui.btnFrequency.setEnabled(True)
+        else:
+            # 실패했으면 다시 켠다
+            self.ui.btnLaserOn.setEnabled(True)
 
     def on_btnLaserOff_click(self) -> None:
+        # button은 먼저 끈다
+        self.ui.btnLaserOff.setEnabled(False)
+
         self.off_laser()
 
         if not self.isScLaserOn:
@@ -171,7 +188,6 @@ class SlPicoSample(QWidget):
             self.ui.lbStatus.setStyleSheet("background-color: #ED8F98; border: 1px solid gray;")
 
             self.ui.btnLaserOn.setEnabled(True)
-            self.ui.btnLaserOff.setEnabled(False)
             self.ui.btnLaserPowerSet.setEnabled(False)
             self.ui.sliderLaserPower.setEnabled(False)
             self.ui.editPower.setEnabled(False)
@@ -182,6 +198,9 @@ class SlPicoSample(QWidget):
             else:
                 self.offUI()
                 self.ui.btnLaserOn.setEnabled(True)
+        else:
+            # 실패했으면 다시 켠다
+            self.ui.btnLaserOff.setEnabled(True)
 
     def on_btnFrequency_click(self) -> None:
         if self.ui.cbFrequency.currentIndex() > -1:
