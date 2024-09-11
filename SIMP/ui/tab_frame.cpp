@@ -1,8 +1,11 @@
 #include "tab_frame.h"
 #include "ui_tab_frame.h"
+#include "simp_const_key.h"
 #include "simp_const_value.h"
 #include "simp_const_path.h"
+#include "simp_util.h"
 #include "dialog_image_processing.h"
+#include "dialog_contrast_curve.h"
 #include "worker_frame_processing.h"
 
 #include <QFileDialog>
@@ -52,6 +55,9 @@ void TabFrame::ConnectUI()
     connect(ui->btnFrameProcessing, &QPushButton::clicked, this, &TabFrame::btnFrameProcessing_Click);
     connect(ui->btnFrameSave, &QPushButton::clicked, this, &TabFrame::btnFrameSave_Click);
 
+    connect(ui->btnCurveSetting, &QPushButton::clicked, this, &TabFrame::btnCurveSetting_Click);
+    connect(ui->cbCurvePreset, &QComboBox::currentIndexChanged, this, &TabFrame::cbCurvePreset_SelectedIndexChanged);
+
     connect(this->dialogImageProcessing, &DialogImageProcessing::applyClicked, this, &TabFrame::ProcessingFrame);
 }
 
@@ -92,6 +98,9 @@ void TabFrame::EnableUI(bool enable)
     ui->btnZoomOut->setEnabled(enable);
     ui->btnFrameProcessing->setEnabled(enable);
     ui->btnFrameSave->setEnabled(enable);
+
+    ui->btnCurveSetting->setEnabled(enable);
+    ui->cbCurvePreset->setEnabled(enable);
 }
 
 void TabFrame::UpdateMousePosition(int x, int y, const QColor &color)
@@ -209,6 +218,83 @@ void TabFrame::btnFrameSave_Click()
 
     // 저장할 때는 현재 gegl이 적용된 이미지를 저장함
     this->currentFrame.save(filePath);
+}
+
+void TabFrame::btnCurveSetting_Click()
+{
+    DialogContrastCurve dialog(this->presetsContrastCurve, ui->cbCurvePreset->currentIndex() - 1, this->isUpdateContrastCurve, this);
+    connect(&dialog, &DialogContrastCurve::contrastCurveUpdated, this, &TabFrame::UpdateContrastCurvePoints);
+
+    if (dialog.exec() == QDialog::Accepted)
+    {
+        this->presetsContrastCurve = dialog.getPresets();
+        this->isUpdateContrastCurve = dialog.getEnable();
+
+        QJsonArray jsonArray;
+        SimpUtil::convertPresetsImageCurveToJsonArray(this->presetsContrastCurve, jsonArray);
+
+        QString pathPreset = SimpConstPath::PATH_JSON_CONTRAST_CURVE;
+        SimpUtil::saveJsonFile(pathPreset, jsonArray);
+
+        // 여기에는 none이 있기 때문에 index에 +1 해야 함.
+        int index = this->isUpdateContrastCurve ? dialog.getSelectedIndex() + 1 : 0;
+        TabFrame::UpdatePresetContrastCurve(this->presetsContrastCurve, index);
+    }
+    else
+    {
+        int index = ui->cbCurvePreset->currentIndex();
+
+        // 선택된 preset이 있었으면 그것으로 업데이트
+        if (index > 0)
+        {
+            TabFrame::UpdateContrastCurvePoints(this->presetsContrastCurve[index - 1].GetPoints());
+        }
+        // none이면 update 안 함.
+        else
+        {
+            this->isUpdateContrastCurve = false;
+        }
+    }
+}
+
+void TabFrame::cbCurvePreset_SelectedIndexChanged(int index)
+{
+    // 0이면 none
+    if (index > 0)
+    {
+        PresetContrastCurve preset = this->presetsContrastCurve[index - 1];
+        TabFrame::UpdateContrastCurvePoints(preset.GetPoints());
+    }
+    else
+    {
+        this->isUpdateContrastCurve = false;
+    }
+}
+
+void TabFrame::UpdatePresetContrastCurve(const std::vector<PresetContrastCurve>& presets, const int index)
+{
+    ui->cbCurvePreset->clear();
+
+    ui->cbCurvePreset->addItem(SimpConstKey::NONE);
+
+    if (presets.size() > 0)
+    {
+        for (const PresetContrastCurve& preset : presets)
+        {
+            QString message = QString("index: %1, points: %2")
+                                  .arg(preset.GetIndex()) // 'f' for floating point, 2 decimal places
+                                  .arg(preset.GetPoints().size());
+            ui->cbCurvePreset->addItem(message);
+        }
+    }
+
+    ui->cbCurvePreset->setCurrentIndex(index);
+}
+
+void TabFrame::UpdateContrastCurvePoints(const QVector<QPointF>& points)
+{
+    this->contrastCurvePoints = points;
+    this->isUpdateContrastCurve = true;
 }
 
 void TabFrame::ProcessingFrame()

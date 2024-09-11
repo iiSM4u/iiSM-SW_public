@@ -50,6 +50,8 @@ private slots:
     void editGamma_editingFinished();
     void btnCurveSetting_Click();
     void cbCurvePreset_SelectedIndexChanged(int index);
+    void chkFlipHorizontal_CheckedChanged(Qt::CheckState checkState);
+    void chkFlipVertical_CheckedChanged(Qt::CheckState checkState);
     void chkDarkFieldCorrection_CheckedChanged(Qt::CheckState checkState);
     void btnDarkFieldCorrection_Click();
     void btnGroupCooling_Click(int id);
@@ -101,7 +103,7 @@ private:
     QString recordDir, captureDir; // 생성자에서 초기화 함
 
     bool isCameraOn = false, isCameraRun = false, isCameraPlay = false, isRecordOn = false, isDarkFieldCorrectCapture = false;
-    bool isRawCameraData = false;
+    bool isRawCameraData = false, isFlipHorizontal = false, isFlipVertical = false;
 
     bool isUpdateContrastCurve = false;
     std::vector<PresetContrastCurve> presetsContrastCurve;

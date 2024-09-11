@@ -98,6 +98,9 @@ void TabCamera::ConnectUI()
     connect(ui->btnCurveSetting, &QPushButton::clicked, this, &TabCamera::btnCurveSetting_Click);
     connect(ui->cbCurvePreset, &QComboBox::currentIndexChanged, this, &TabCamera::cbCurvePreset_SelectedIndexChanged);
 
+    connect(ui->chkFlipHorizontal, &QCheckBox::checkStateChanged, this, &TabCamera::chkFlipHorizontal_CheckedChanged);
+    connect(ui->chkFlipVertical, &QCheckBox::checkStateChanged, this, &TabCamera::chkFlipVertical_CheckedChanged);
+
     connect(ui->chkDarkFieldCorrection, &QCheckBox::checkStateChanged, this, &TabCamera::chkDarkFieldCorrection_CheckedChanged);
     connect(ui->btnDarkFieldCorrection, &QPushButton::clicked, this, &TabCamera::btnDarkFieldCorrection_Click);
 
@@ -326,8 +329,8 @@ void TabCamera::sliderExposureTime_sliderMoved(int position)
     // trackbar가 정수이므로 0.1을 곱한다.
     double value = ui->sliderExposureTime->value() * 0.1;
 
-    // time이 microsecond이고 range가 0.1-50000이기 때문에 0.01을 곱한다.
-    Miicam_put_ExpoTime(this->miiHcam, (unsigned int)(value * 100.0));
+    // ui상 value는 millisecond인데, 설정은 microseconds이므로 1000을 곱한다
+    Miicam_put_ExpoTime(this->miiHcam, (unsigned int)(value * 1000.0));
 
     // label도 업데이트
     ui->editExposureTime->setPlainText(QString::number(value, 'f', 1));
@@ -345,8 +348,8 @@ void TabCamera::editExposureTime_editingFinished()
 
         if (valueInt >= ui->sliderExposureTime->minimum() && valueInt <= ui->sliderExposureTime->maximum())
         {
-            // time이 microsecond이고 range가 0.1-50000이기 때문에 0.01을 곱한다.
-            Miicam_put_ExpoTime(this->miiHcam, (unsigned int)(value * 100.0));
+            // ui상 value는 millisecond인데, 설정은 microseconds이므로 1000을 곱한다
+            Miicam_put_ExpoTime(this->miiHcam, (unsigned int)(value * 1000.0));
 
             // slider에도 값 업데이트
             ui->sliderExposureTime->setValue(valueInt);
@@ -544,6 +547,16 @@ void TabCamera::cbCurvePreset_SelectedIndexChanged(int index)
     }
 }
 
+void TabCamera::chkFlipHorizontal_CheckedChanged(Qt::CheckState checkState)
+{
+    this->isFlipHorizontal = ui->chkFlipHorizontal->isChecked();
+}
+
+void TabCamera::chkFlipVertical_CheckedChanged(Qt::CheckState checkState)
+{
+    this->isFlipVertical = ui->chkFlipVertical->isChecked();
+}
+
 void TabCamera::chkDarkFieldCorrection_CheckedChanged(Qt::CheckState checkState)
 {
     int option = ui->chkDarkFieldCorrection->isChecked() ? 1 : 0;
@@ -712,6 +725,12 @@ void TabCamera::UpdatePreview()
                     this->recordFrames.emplace_back(matBGR);
                 }
 
+                // record 저장 후에 flip 한다.
+                if (this->isFlipHorizontal || this->isFlipVertical)
+                {
+                    this->resultFrame = resultFrame.mirrored(this->isFlipHorizontal , this->isFlipVertical);
+                }
+
                 QMetaObject::invokeMethod(this, "UpdatePreviewUI", Qt::QueuedConnection);
             }
             catch(const std::exception &e)
@@ -820,6 +839,12 @@ void TabCamera::UpdatePresetContrastCurve(const std::vector<PresetContrastCurve>
     ui->cbCurvePreset->setCurrentIndex(index);
 }
 
+void TabCamera::UpdateContrastCurvePoints(const QVector<QPointF>& points)
+{
+    this->contrastCurvePoints = points;
+    this->isUpdateContrastCurve = true;
+}
+
 void TabCamera::LoadPresets()
 {
     QJsonArray jsonArray;
@@ -828,12 +853,6 @@ void TabCamera::LoadPresets()
     {
         this->presetsContrastCurve = SimpUtil::convertJsonToPresetsImageCurve(jsonArray);
     }
-}
-
-void TabCamera::UpdateContrastCurvePoints(const QVector<QPointF>& points)
-{
-    this->contrastCurvePoints = points;
-    this->isUpdateContrastCurve = true;
 }
 
 void TabCamera::onVideoWritingProgress(int current, int total)
@@ -1056,7 +1075,8 @@ void TabCamera::onTimerFpsCallback()
 
     if (this->miiHcam && SUCCEEDED(Miicam_get_FrameRate(this->miiHcam, &nFrame, &nTime, &nTotalFrame)) && (nTime > 0))
     {
-        ui->lbCameraFPS->setText(QString::asprintf("%u, fps = %.1f", nTotalFrame, nFrame * 1000.0 / nTime));
+        double fps = nFrame * 1000.0 / nTime;
+        ui->lbCameraFPS->setText(QString::asprintf("%u, fps = %.1f", nTotalFrame, fps));
     }
 }
 

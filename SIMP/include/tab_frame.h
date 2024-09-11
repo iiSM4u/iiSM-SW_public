@@ -5,6 +5,7 @@
 #include <QProgressDialog>
 
 #include "dialog_image_processing.h"
+#include "preset_contrast_curve.h"
 
 namespace Ui {
 class TabFrame;
@@ -32,6 +33,9 @@ private slots:
     void btnFrameProcessing_Click();
     void btnFrameSave_Click();
 
+    void btnCurveSetting_Click();
+    void cbCurvePreset_SelectedIndexChanged(int index);
+
     void onFrameConvertingCanceled();
     void onFrameConvertingFinished(bool success, const QImage& frame);
 
@@ -49,7 +53,13 @@ private:
     int lastPresetIndex = -1;
     float zoomFactor = 1.0f;
 
+    bool isUpdateContrastCurve = false;
+    std::vector<PresetContrastCurve> presetsContrastCurve;
+    QVector<QPointF> contrastCurvePoints;
+
     void ConnectUI();
     void InitUI();
     void ProcessingFrame();
+    void UpdatePresetContrastCurve(const std::vector<PresetContrastCurve>& presets, const int index = 0);
+    void UpdateContrastCurvePoints(const QVector<QPointF>& points);
 };
