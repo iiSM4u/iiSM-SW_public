@@ -121,7 +121,7 @@ class ScProWrapper:
                     return True, status, temperature, powerPercent, frequency
         return False, ScStatusType.none, 0, 0, 0.0
 
-    def query_alarm(self) -> Tuple[bool, bool, str, str, str]:
+    def query_alarm(self) -> Tuple[bool, str, str, str, ScErrorType]:
         if self.scPort is not None:
             cmd = self.make_send_query(function=SC_CODE.QUERY_ALARM_CODE, data1=SC_CODE.QUERY_ALARM_DATA_1, data2=SC_CODE.QUERY_ALARM_DATA_2)
 
