@@ -252,32 +252,69 @@ class SlPicoSample(QWidget):
             # self.isScPowerOn = False
 
     def on_laser(self) -> None:
-        self.isScLaserOn = self.scPortWrapper.laser_on()
+        result = self.scPortWrapper.laser_on()
+
+        # err가 없을 때까지 반복
+        while not result:
+            result2, msg = self.scPortWrapper.get_error();
+            if not msg or msg == SC_MESSAGE.ERROR_NO:
+                result = True
+            else:
+                result = self.scPortWrapper.laser_on()
+
+        self.isScLaserOn = True
         self.on_update_msg(SC_MESSAGE.LASER_ON.format(self.isScLaserOn))
-        # self.isScLaserOn = True
 
     def off_laser(self) -> None:
         if self.isScLaserOn:
             # set laser 0
             self.ui.sliderLaserPower.setValue(0)
             self.scPortWrapper.set_laser_power(value=0)
-            self.isScLaserOn = not self.scPortWrapper.laser_off()
+
+            result = self.scPortWrapper.laser_off()
+
+            # err가 없을 때까지 반복
+            while not result:
+                result2, msg = self.scPortWrapper.get_error();
+                if not msg or msg == SC_MESSAGE.ERROR_NO:
+                    result = True
+                else:
+                    result = self.scPortWrapper.laser_off()
+
+            self.isScLaserOn = False
             self.on_update_msg(SC_MESSAGE.LASER_OFF.format(not self.isScLaserOn))
-            # self.isScLaserOn = False
 
     def set_laser_power(self, value: int) -> None:
-        result = self.scPortWrapper.set_laser_power(value=value)
+        result = self.scPortWrapper.set_laser_power(value=value)        
+
+        # err가 없을 때까지 반복
+        while not result:
+            result2, msg = self.scPortWrapper.get_error();
+            if not msg or msg == SC_MESSAGE.ERROR_NO:
+                result = True
+            else:
+                result = self.scPortWrapper.set_laser_power(value=value)
+
         self.on_update_msg(SC_MESSAGE.UPDATE_LASER_POWER.format(str(value) if result else "Failed"))
 
     def set_freq_value(self, index: int) -> None:
-        # default
+        # manual 기준
         result = self.scPortWrapper.set_freq(index=index)
+
+        # err가 없을 때까지 반복
+        while not result:
+            result2, msg = self.scPortWrapper.get_error();
+            if not msg or msg == SC_MESSAGE.ERROR_NO:
+                result = True
+            else:
+                result = self.scPortWrapper.set_freq(index=index)
+
         value = self.frequencies[index]
         # current
         # if self.laserType == ScLaserType.SLV:
-        #     result = self.scPortWrapper.set_freq_SLV(freq=index)
+        #     result = self.scPortWrapper.set_freq_SLV(freq=value)
         # else:
-        #     result = self.scPortWrapper.set_freq_SLF(freq=index)
+        #     result = self.scPortWrapper.set_freq_SLF(freq=value)
 
         self.on_update_msg(SC_MESSAGE.UPDATE_LASER_FREQUENCY.format(str(value) if result else "Failed"))
 

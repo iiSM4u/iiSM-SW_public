@@ -11,6 +11,8 @@ class SC_MESSAGE:
 
     INVALIED_POWER_VALUE = "Invalid Power value: {}"
 
+    ERROR_NO = "Err00"
+
     ERROR_00_CODE = "ERR0"
     ERROR_00_TITLE = "no error"
     ERROR_00_DESCRIPTION = ""

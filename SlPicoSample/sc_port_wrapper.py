@@ -132,6 +132,15 @@ class ScProWrapper:
                     return True, err_code, err_title, err_desc, err_type
         return False, "", "", "", ScErrorType.none
 
+    def get_error(self) -> bool:
+        if self.scPort is not None:
+            cmd = b'ER?\r'
+            if self.scPort.send_cmd(cmd):
+                response = self.scPort.read()
+                if len(response) > 0:
+                    return True, response.decode('ascii').strip('\r')
+        return False
+
     # 이게 매뉴얼 상의 구현된 frequency - 1~12까지의 index를 16진수 형식으로 넣는다.
     def set_freq(self, index: int) -> bool:
         if self.scPort is not None:
