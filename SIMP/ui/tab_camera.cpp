@@ -184,6 +184,9 @@ void TabCamera::EnableUI(bool isPlay)
     ui->btnCurveSetting->setEnabled(isPlay);
     ui->cbCurvePreset->setEnabled(isPlay);
 
+    ui->chkFlipHorizontal->setEnabled(isPlay);
+    ui->chkFlipVertical->setEnabled(isPlay);
+
     ui->editDarkFieldCorrectionQuantity->setEnabled(isPlay);
     ui->btnDarkFieldCorrection->setEnabled(isPlay);
     ui->chkDarkFieldCorrection->setEnabled(isPlay && this->isDarkFieldCorrectCapture);
