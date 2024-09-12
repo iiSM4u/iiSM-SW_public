@@ -344,7 +344,7 @@ void TabCamera::sliderExposureTime_valueChanged(int value)
     Miicam_put_ExpoTime(this->miiHcam, (unsigned int)(valueD * 1000.0));
 
     // label도 업데이트
-    ui->editExposureTime->setPlainText(QString::number(value, 'f', 1));
+    ui->editExposureTime->setPlainText(QString::number(valueD, 'f', 1));
 }
 
 void TabCamera::editExposureTime_editingFinished()
