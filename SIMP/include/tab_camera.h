@@ -26,6 +26,8 @@ public:
     explicit TabCamera(QWidget *parent = nullptr);
     ~TabCamera();
 
+    void onTabActivated();
+
 protected:
     void closeEvent(QCloseEvent*) override;
 
@@ -40,13 +42,14 @@ private slots:
     void btnCaptureCamera_Click();
     void btnRecordOn_Click();
     void btnRecordOption_Click();
-    void sliderExposureTime_sliderMoved(int position);
+
+    void sliderExposureTime_valueChanged(int value);
     void editExposureTime_editingFinished();
-    void sliderGain_sliderMoved(int position);
+    void sliderGain_valueChanged(int value);
     void editGain_editingFinished();
-    void sliderContrast_sliderMoved(int position);
+    void sliderContrast_valueChanged(int value);
     void editContrast_editingFinished();
-    void sliderGamma_sliderMoved(int position);
+    void sliderGamma_valueChanged(int value);
     void editGamma_editingFinished();
     void btnCurveSetting_Click();
     void cbCurvePreset_SelectedIndexChanged(int index);
@@ -55,7 +58,8 @@ private slots:
     void chkDarkFieldCorrection_CheckedChanged(Qt::CheckState checkState);
     void btnDarkFieldCorrection_Click();
     void btnGroupCooling_Click(int id);
-    void sliderTemperature_sliderMoved(int position);
+
+    void sliderTemperature_valueChanged(int value);
     void editTemperature_editingFinished();
     void btnZoomIn_Click();
     void btnZoomOut_Click();

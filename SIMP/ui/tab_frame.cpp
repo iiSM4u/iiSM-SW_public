@@ -1,5 +1,6 @@
 #include "tab_frame.h"
 #include "ui_tab_frame.h"
+#include "simp_gegl.h"
 #include "simp_const_key.h"
 #include "simp_const_value.h"
 #include "simp_const_path.h"
@@ -21,6 +22,7 @@ TabFrame::TabFrame(QWidget *parent)
 {
     ui->setupUi(this);
 
+    TabFrame::LoadPresets();
     TabFrame::ConnectUI();
     TabFrame::InitUI();
 }
@@ -42,6 +44,15 @@ void TabFrame::resizeEvent(QResizeEvent *event)
         ui->gvFrame->fitInView();
     }
 }
+
+void TabFrame::onTabActivated()
+{
+    int index = ui->cbCurvePreset->currentIndex();
+
+    TabFrame::LoadPresets();
+    TabFrame::UpdatePresetContrastCurve(this->presetsContrastCurve, index);
+}
+
 
 ///////////////////////////////////////////////// ui
 void TabFrame::ConnectUI()
@@ -120,8 +131,7 @@ void TabFrame::lvFrame_Click(const QModelIndex &index)
     QString filePath = this->filesystemModel->filePath(this->currentFrameIndex);
     this->currentFrame.load(filePath);
 
-    ui->gvFrame->setImage(this->currentFrame);
-    ui->gvFrame->fitInView();
+    TabFrame::UpdateFrame(ui->cbCurvePreset->currentIndex());
 
     // listview에서 항목을 선택했으면 true
     TabFrame::EnableUI(true);
@@ -222,13 +232,14 @@ void TabFrame::btnFrameSave_Click()
 
 void TabFrame::btnCurveSetting_Click()
 {
-    DialogContrastCurve dialog(this->presetsContrastCurve, ui->cbCurvePreset->currentIndex() - 1, this->isUpdateContrastCurve, this);
+    int presetIndex = ui->cbCurvePreset->currentIndex();
+    DialogContrastCurve dialog(this->presetsContrastCurve, presetIndex  - 1, presetIndex > 0, this);
     connect(&dialog, &DialogContrastCurve::contrastCurveUpdated, this, &TabFrame::UpdateContrastCurvePoints);
 
     if (dialog.exec() == QDialog::Accepted)
     {
         this->presetsContrastCurve = dialog.getPresets();
-        this->isUpdateContrastCurve = dialog.getEnable();
+        bool enable = dialog.getEnable();
 
         QJsonArray jsonArray;
         SimpUtil::convertPresetsImageCurveToJsonArray(this->presetsContrastCurve, jsonArray);
@@ -237,7 +248,7 @@ void TabFrame::btnCurveSetting_Click()
         SimpUtil::saveJsonFile(pathPreset, jsonArray);
 
         // 여기에는 none이 있기 때문에 index에 +1 해야 함.
-        int index = this->isUpdateContrastCurve ? dialog.getSelectedIndex() + 1 : 0;
+        int index = enable ? dialog.getSelectedIndex() + 1 : 0;
         TabFrame::UpdatePresetContrastCurve(this->presetsContrastCurve, index);
     }
     else
@@ -249,26 +260,12 @@ void TabFrame::btnCurveSetting_Click()
         {
             TabFrame::UpdateContrastCurvePoints(this->presetsContrastCurve[index - 1].GetPoints());
         }
-        // none이면 update 안 함.
-        else
-        {
-            this->isUpdateContrastCurve = false;
-        }
     }
 }
 
 void TabFrame::cbCurvePreset_SelectedIndexChanged(int index)
 {
-    // 0이면 none
-    if (index > 0)
-    {
-        PresetContrastCurve preset = this->presetsContrastCurve[index - 1];
-        TabFrame::UpdateContrastCurvePoints(preset.GetPoints());
-    }
-    else
-    {
-        this->isUpdateContrastCurve = false;
-    }
+    TabFrame::UpdateFrame(index);
 }
 
 void TabFrame::UpdatePresetContrastCurve(const std::vector<PresetContrastCurve>& presets, const int index)
@@ -291,10 +288,41 @@ void TabFrame::UpdatePresetContrastCurve(const std::vector<PresetContrastCurve>&
     ui->cbCurvePreset->setCurrentIndex(index);
 }
 
+void TabFrame::UpdateFrame(int presetIndex)
+{
+    // 0이면 none
+    if (presetIndex > 0)
+    {
+        PresetContrastCurve preset = this->presetsContrastCurve[presetIndex - 1];
+        TabFrame::UpdateContrastCurvePoints(preset.GetPoints());
+    }
+    // 원본 복귀
+    else
+    {
+        ui->gvFrame->setImage(this->currentFrame);
+        ui->gvFrame->fitInView();
+    }
+}
+
 void TabFrame::UpdateContrastCurvePoints(const QVector<QPointF>& points)
 {
-    this->contrastCurvePoints = points;
-    this->isUpdateContrastCurve = true;
+    // gegl에서는 rgba를 받기 때문에 무조건 rgba로 바꿔야 한다.
+    QImage formattedSource = this->currentFrame.convertToFormat(QImage::Format_RGBA8888);
+
+    SimpGEGL::UpdateContrastCurve(formattedSource, points);
+
+    // 원본은 그대로 둔 상태에서 변환한다
+    ui->gvFrame->setImage(formattedSource.convertToFormat(QImage::Format_RGB888));
+}
+
+void TabFrame::LoadPresets()
+{
+    QJsonArray jsonArray;
+
+    if (SimpUtil::loadJsonFile(SimpConstPath::PATH_JSON_CONTRAST_CURVE, jsonArray))
+    {
+        this->presetsContrastCurve = SimpUtil::convertJsonToPresetsImageCurve(jsonArray);
+    }
 }
 
 void TabFrame::ProcessingFrame()

@@ -66,6 +66,14 @@ void TabCamera::closeEvent(QCloseEvent*)
     TabCamera::CloseCamera();
 }
 
+void TabCamera::onTabActivated()
+{
+    int index = ui->cbCurvePreset->currentIndex();
+
+    TabCamera::LoadPresets();
+    TabCamera::UpdatePresetContrastCurve(this->presetsContrastCurve, index);
+}
+
 ///////////////////////////////////////////////// ui
 void TabCamera::ConnectUI()
 {
@@ -83,16 +91,16 @@ void TabCamera::ConnectUI()
     connect(ui->btnRecordOn, &QPushButton::clicked, this, &TabCamera::btnRecordOn_Click);
     connect(ui->btnRecordOption, &QPushButton::clicked, this, &TabCamera::btnRecordOption_Click);
 
-    connect(ui->sliderExposureTime, &QSlider::sliderMoved, this, &TabCamera::sliderExposureTime_sliderMoved);
+    connect(ui->sliderExposureTime, &QSlider::valueChanged, this, &TabCamera::sliderExposureTime_valueChanged);
     connect(ui->editExposureTime, &CustomPlainTextEdit::editingFinished, this, &TabCamera::editExposureTime_editingFinished);
 
-    connect(ui->sliderGain, &QSlider::sliderMoved, this, &TabCamera::sliderGain_sliderMoved);
+    connect(ui->sliderGain, &QSlider::valueChanged, this, &TabCamera::sliderGain_valueChanged);
     connect(ui->editGain, &CustomPlainTextEdit::editingFinished, this, &TabCamera::editGain_editingFinished);
 
-    connect(ui->sliderContrast, &QSlider::sliderMoved, this, &TabCamera::sliderContrast_sliderMoved);
+    connect(ui->sliderContrast, &QSlider::valueChanged, this, &TabCamera::sliderContrast_valueChanged);
     connect(ui->editContrast, &CustomPlainTextEdit::editingFinished, this, &TabCamera::editContrast_editingFinished);
 
-    connect(ui->sliderGamma, &QSlider::sliderMoved, this, &TabCamera::sliderGamma_sliderMoved);
+    connect(ui->sliderGamma, &QSlider::valueChanged, this, &TabCamera::sliderGamma_valueChanged);
     connect(ui->editGamma, &CustomPlainTextEdit::editingFinished, this, &TabCamera::editGamma_editingFinished);
 
     connect(ui->btnCurveSetting, &QPushButton::clicked, this, &TabCamera::btnCurveSetting_Click);
@@ -108,7 +116,7 @@ void TabCamera::ConnectUI()
     this->btnGroupCooling->addButton(ui->rbCoolingOff, 2);
     connect(this->btnGroupCooling, &QButtonGroup::idClicked, this, &TabCamera::btnGroupCooling_Click);
 
-    connect(ui->sliderTemperature, &QSlider::sliderMoved, this, &TabCamera::sliderTemperature_sliderMoved);
+    connect(ui->sliderTemperature, &QSlider::valueChanged, this, &TabCamera::sliderTemperature_valueChanged);
     connect(ui->editTemperature, &CustomPlainTextEdit::editingFinished, this, &TabCamera::editTemperature_editingFinished);
 
     connect(ui->btnZoomIn, &QPushButton::clicked, this, &TabCamera::btnZoomIn_Click);
@@ -324,13 +332,13 @@ void TabCamera::btnRecordOption_Click()
     }
 }
 
-void TabCamera::sliderExposureTime_sliderMoved(int position)
+void TabCamera::sliderExposureTime_valueChanged(int value)
 {
     // trackbar가 정수이므로 0.1을 곱한다.
-    double value = ui->sliderExposureTime->value() * 0.1;
+    double valueD = value * 0.1;
 
     // ui상 value는 millisecond인데, 설정은 microseconds이므로 1000을 곱한다
-    Miicam_put_ExpoTime(this->miiHcam, (unsigned int)(value * 1000.0));
+    Miicam_put_ExpoTime(this->miiHcam, (unsigned int)(valueD * 1000.0));
 
     // label도 업데이트
     ui->editExposureTime->setPlainText(QString::number(value, 'f', 1));
@@ -348,10 +356,7 @@ void TabCamera::editExposureTime_editingFinished()
 
         if (valueInt >= ui->sliderExposureTime->minimum() && valueInt <= ui->sliderExposureTime->maximum())
         {
-            // ui상 value는 millisecond인데, 설정은 microseconds이므로 1000을 곱한다
-            Miicam_put_ExpoTime(this->miiHcam, (unsigned int)(value * 1000.0));
-
-            // slider에도 값 업데이트
+            // slider에서 Miicam_put_ExpoTime()을 호출함.
             ui->sliderExposureTime->setValue(valueInt);
         }
         else
@@ -373,10 +378,8 @@ void TabCamera::editExposureTime_editingFinished()
     }
 }
 
-void TabCamera::sliderGain_sliderMoved(int position)
+void TabCamera::sliderGain_valueChanged(int value)
 {
-    int value = ui->sliderGain->value();
-
     Miicam_put_ExpoAGain(this->miiHcam, (unsigned short)(value));
 
     // label도 업데이트
@@ -392,9 +395,7 @@ void TabCamera::editGain_editingFinished()
     {
         if (value >= ui->sliderGain->minimum() && value <= ui->sliderGain->maximum())
         {
-            Miicam_put_ExpoAGain(this->miiHcam, (unsigned short)(value));
-
-            // slider에도 값 업데이트
+            // slider에서 Miicam_put_ExpoAGain()을 호출함.
             ui->sliderGain->setValue(value);
         }
         else
@@ -414,10 +415,8 @@ void TabCamera::editGain_editingFinished()
     }
 }
 
-void TabCamera::sliderContrast_sliderMoved(int position)
+void TabCamera::sliderContrast_valueChanged(int value)
 {
-    int value = ui->sliderContrast->value();
-
     Miicam_put_Contrast(this->miiHcam, value);
 
     // label도 업데이트
@@ -433,9 +432,7 @@ void TabCamera::editContrast_editingFinished()
     {
         if (value >= ui->sliderContrast->minimum() && value <= ui->sliderContrast->maximum())
         {
-            Miicam_put_Contrast(this->miiHcam, value);
-
-            // slider에도 값 업데이트
+            // slider에서 Miicam_put_Contrast()을 호출함
             ui->sliderContrast->setValue(value);
         }
         else
@@ -455,10 +452,8 @@ void TabCamera::editContrast_editingFinished()
     }
 }
 
-void TabCamera::sliderGamma_sliderMoved(int position)
+void TabCamera::sliderGamma_valueChanged(int value)
 {
-    int value = ui->sliderGamma->value();
-
     Miicam_put_Gamma(this->miiHcam, value);
 
     // label도 업데이트
@@ -474,9 +469,7 @@ void TabCamera::editGamma_editingFinished()
     {
         if (value >= ui->sliderGamma->minimum() && value <= ui->sliderGamma->maximum())
         {
-            Miicam_put_Gamma(this->miiHcam, value);
-
-            // slider에도 값 업데이트
+            // slider에서 Miicam_put_Gamma()을 호출함
             ui->sliderGamma->setValue(value);
         }
         else
@@ -601,16 +594,16 @@ void TabCamera::btnGroupCooling_Click(int id)
     ui->editTemperature->setEnabled(enable);
 }
 
-void TabCamera::sliderTemperature_sliderMoved(int position)
+void TabCamera::sliderTemperature_valueChanged(int value)
 {
     // trackbar가 정수이므로 0.1을 곱한다.
-    double value = ui->sliderTemperature->value() * 0.1;
+    double valueD = ui->sliderTemperature->value() * 0.1;
 
     // temperature는 3.2도를 32로 받기 때문에 10을 곱한다.
-    Miicam_put_Temperature(this->miiHcam, (short)(value * 10.0));
+    Miicam_put_Temperature(this->miiHcam, (short)(valueD * 10.0));
 
     // label도 업데이트
-    ui->editTemperature->setPlainText(QString::number(value, 'f', 1));
+    ui->editTemperature->setPlainText(QString::number(valueD, 'f', 1));
 }
 
 void TabCamera::editTemperature_editingFinished()
@@ -625,10 +618,7 @@ void TabCamera::editTemperature_editingFinished()
 
         if (valueInt >= ui->sliderTemperature->minimum() && valueInt <= ui->sliderTemperature->maximum())
         {
-            // temperature는 3.2도를 32로 받기 때문에 10을 곱한다.
-            Miicam_put_Temperature(this->miiHcam, (short)(value * 10.0));
-
-            // slider에도 값 업데이트
+            // slider에서 Miicam_put_Temperature()을 호출함
             ui->sliderTemperature->setValue(valueInt);
         }
         else
@@ -664,7 +654,6 @@ void TabCamera::btnZoomIn_Click()
     ui->gvCamera->scale(this->zoomFactor, this->zoomFactor);
 
     ui->lbZoom->setText(QString("Zoom x%1").arg(this->zoomFactor, 0, 'f', 2));
-
 }
 
 void TabCamera::btnZoomOut_Click()

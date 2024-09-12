@@ -59,6 +59,10 @@ void TabVideo::resizeEvent(QResizeEvent *event)
     }
 }
 
+void TabVideo::onTabActivated()
+{
+}
+
 
 ///////////////////////////////////////////////// ui
 void TabVideo::ConnectUI()

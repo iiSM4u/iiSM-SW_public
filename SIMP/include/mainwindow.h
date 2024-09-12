@@ -16,6 +16,9 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+private slots:
+    void onTabChanged(int index);
+
 private:
     Ui::MainWindow *ui;
 };

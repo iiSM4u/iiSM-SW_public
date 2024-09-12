@@ -19,6 +19,8 @@ public:
     explicit TabFrame(QWidget *parent = nullptr);
     ~TabFrame();
 
+    void onTabActivated();
+
 protected:
     void resizeEvent(QResizeEvent *event) override;
 
@@ -53,13 +55,16 @@ private:
     int lastPresetIndex = -1;
     float zoomFactor = 1.0f;
 
-    bool isUpdateContrastCurve = false;
     std::vector<PresetContrastCurve> presetsContrastCurve;
-    QVector<QPointF> contrastCurvePoints;
+    // bool isUpdateContrastCurve = false;
+    // QVector<QPointF> contrastCurvePoints;
 
+    void LoadPresets();
     void ConnectUI();
     void InitUI();
     void ProcessingFrame();
+    void UpdateFrame(int presetIndex);
+
     void UpdatePresetContrastCurve(const std::vector<PresetContrastCurve>& presets, const int index = 0);
     void UpdateContrastCurvePoints(const QVector<QPointF>& points);
 };

@@ -27,11 +27,33 @@ MainWindow::MainWindow(QWidget *parent)
     ui->tabWidget->addTab(new TabCamera(this), "Preview");
     ui->tabWidget->addTab(new TabVideo(this), "Video");
     ui->tabWidget->addTab(new TabFrame(this), "Capture");
+
+    // 탭 변경 이벤트 연결
+    connect(ui->tabWidget, &QTabWidget::currentChanged, this, &MainWindow::onTabChanged);
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::onTabChanged(int index)
+{
+    // 선택된 탭에 알림 보내기
+    QWidget* currentWidget = ui->tabWidget->widget(index);
+
+    if (auto* tabCamera = qobject_cast<TabCamera*>(currentWidget))
+    {
+        tabCamera->onTabActivated();
+    }
+    else if (auto* tabVideo = qobject_cast<TabVideo*>(currentWidget))
+    {
+        tabVideo->onTabActivated();
+    }
+    else if (auto* tabFrame = qobject_cast<TabFrame*>(currentWidget))
+    {
+        tabFrame->onTabActivated();
+    }
 }
 
 

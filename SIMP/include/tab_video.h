@@ -20,6 +20,8 @@ public:
     explicit TabVideo(QWidget *parent = nullptr);
     ~TabVideo();
 
+    void onTabActivated();
+
 protected:
     void closeEvent(QCloseEvent*) override;
     void resizeEvent(QResizeEvent *event) override;
